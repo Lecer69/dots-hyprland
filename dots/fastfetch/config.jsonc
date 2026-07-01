@@ -1,0 +1,51 @@
+{
+  "logo": {
+    "source": "~/.config/fastfetch/arch.txt",
+        "padding": {
+            "top": 0,
+            "right": 6
+        }
+    },
+    "display": {
+        "separator": " "
+    },
+    "modules": [
+    "break",
+
+    {
+      "type": "title",
+      "keyWidth": 10
+    },
+
+    "break",
+
+    {
+      "type": "os",
+      "key": " ",
+      "keyColor": "33"
+    },
+    {
+      "type": "shell",
+      "key": " ",
+      "keyColor": "33"
+    },
+    {
+      "type": "wm",
+      "key": " ",
+      "keyColor": "33"
+    },
+    {
+      "type": "uptime",
+      "key": " ",
+      "keyColor": "33"
+    },
+    {
+      "type": "command",
+      "key": " ",
+      "keyColor": "33",
+      "text": "birth_install=$(stat -c %W /); current=$(date +%s); time_progression=$((current - birth_install)); days_difference=$((time_progression / 86400)); printf '%s days' \"$days_difference\""
+    },
+
+    "break"
+  ]
+}

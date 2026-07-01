@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+case "$1" in
+    7z)
+        [ "$#" -ne 3 ] && exit 1
+        ARCHIVE="$2"
+        TARGET="$3"
+        7z a -t7z "$ARCHIVE" "$TARGET" -mx=9 -m0=lzma2 -mmt=on -ms=on
+        notify-send '7zip Compressor' 'File compressed successfully'
+        ;;
+    7zl)
+        [ "$#" -ne 3 ] && exit 1
+        ARCHIVE="$2"
+        TARGET="$3"
+        7z a -t7z "$ARCHIVE" "$TARGET" -mx=0 -mmt=on
+        notify-send '7zip Compressor' 'File compressed successfully'
+        ;;
+    compress)
+        [ "$#" -lt 3 ] && exit 1
+        INPUT="$2"
+        OUTPUT="$3"
+        CRF="${4:-23}"
+        ffmpeg -i "$INPUT" \
+        -c:v libx264 -crf "$CRF" -preset slow \
+        -profile:v high -level 4.2 -pix_fmt yuv420p \
+        -c:a aac -b:a 128k \
+        "$OUTPUT"
+        notify-send 'Video Compressor' 'Video compressed successfully'
+        ;;
+    shutdown)
+        pkill -TERM -f zen
+        pkill -TERM -f brave
+        pkill -TERM -f brave-origin
+        pkill -TERM -f intellij
+        pkill -TERM -f code
+        pkill -TERM -f kitty
+
+        for i in $(seq 1 20); do
+            pgrep -f 'zen|brave|brave-origin|intellij|code|kitty' >/dev/null || break
+            sleep 0.3
+        done
+
+        shutdown now
+        ;;
+    reboot)
+        pkill -TERM -f zen
+        pkill -TERM -f brave
+        pkill -TERM -f brave-origin
+        pkill -TERM -f intellij
+        pkill -TERM -f code
+        pkill -TERM -f kitty
+
+        for i in $(seq 1 20); do
+            pgrep -f 'zen|brave|brave-origin|intellij|code|kitty' >/dev/null || break
+            sleep 0.3
+        done
+
+        reboot
+        ;;
+    *)
+        echo "Usage:"
+        echo "  lis 7z <archive> <folder_or_file> ==> Compress folders or files"
+        echo "  lis 7zl <archive> <folder_or_file> ==> Compress lightly folders or files"
+        echo "  lis compress <input.mp4> <output.mp4> [size, def:23] ==> Compress a video"
+        echo "  lis shutdown ==> Safely shuts down"
+        echo "  lis reboot ==> Safely reboots"
+        ;;
+esac
