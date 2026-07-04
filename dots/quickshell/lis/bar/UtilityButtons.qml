@@ -78,8 +78,7 @@ Row {
 
                 onClicked: {
                     Quickshell.execDetached([
-                        "sh", "-c",
-                        "hyprshot --freeze --mode region --silent --output-folder /tmp && wl-copy < /tmp/screenshot_tmp.png && mkdir -p \"$(xdg-user-dir PICTURES)/Screenshots\" && cp \"$(ls -t /tmp/*.png | head -1)\" \"$(xdg-user-dir PICTURES)/Screenshots/screenshot_$(date '+%Y-%m-%d_%H.%M.%S').png\""
+                        "bash", "~/.config/hypr/hyprland/scripts/screenshot-region.sh"
                     ])
                 }
             }

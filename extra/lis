@@ -40,7 +40,7 @@ case "$1" in
             sleep 0.3
         done
 
-        shutdown now
+        systemctl poweroff
         ;;
     reboot)
         pkill -TERM -f zen
@@ -55,7 +55,7 @@ case "$1" in
             sleep 0.3
         done
 
-        reboot
+        systemctl reboot
         ;;
     *)
         echo "Usage:"

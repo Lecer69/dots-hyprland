@@ -77,7 +77,7 @@ run_with_retry() {
 
 # Package lists
 PACMAN_PACKAGES=(
-    polkit wget zenity fastfetch fish kitty sddm xorg-server dolphin btop
+    polkit wget zenity fastfetch fish kitty sddm xorg-server dolphin btop mpv
     hyprland hyprpaper hyprpicker hyprlock hypridle hyprpwcenter hyprshot
     playerctl 7zip nvim nethogs starship bluez bluedevil bluez-qt bluez-utils
     zip unzip power-profiles-daemon xdg-desktop-portal xdg-desktop-portal-hyprland

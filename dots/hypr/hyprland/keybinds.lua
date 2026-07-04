@@ -30,11 +30,11 @@ hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO
 
 --##! Utilities
 --# Screenshot
-hl.bind("Print", hl.dsp.exec_cmd([[grim -o "$(hyprctl monitors -j | jq -r ".[] | select(.focused) | .name")" /tmp/screenshot_tmp.png && wl-copy < /tmp/screenshot_tmp.png && mkdir -p "$(xdg-user-dir PICTURES)/Screenshots" && cp /tmp/screenshot_tmp.png "$(xdg-user-dir PICTURES)/Screenshots/screenshot_$(date "+%Y-%m-%d_%H.%M.%S").png"]]),
+hl.bind("Print", hl.dsp.exec_cmd("bash ~/.config/hypr/hyprland/scripts/screenshot-monitor.sh"),
     { locked = true, description = "Screenshot: Screenshot" })
-hl.bind("CTRL + Print", hl.dsp.exec_cmd([[grim /tmp/screenshot_tmp.png && wl-copy < /tmp/screenshot_tmp.png && mkdir -p "$(xdg-user-dir PICTURES)/Screenshots" && cp /tmp/screenshot_tmp.png "$(xdg-user-dir PICTURES)/Screenshots/screenshot_$(date "+%Y-%m-%d_%H.%M.%S").png"]]),
+hl.bind("CTRL + Print", hl.dsp.exec_cmd("bash ~/.config/hypr/hyprland/scripts/screenshot-all.sh"),
     { locked = true, description = "Screenshot: Screenshot all monitors" })
-hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd([[hyprshot --freeze --mode region --silent --output-folder /tmp && wl-copy < /tmp/screenshot_tmp.png && mkdir -p "$(xdg-user-dir PICTURES)/Screenshots" && cp "$(ls -t /tmp/*.png | head -1)" "$(xdg-user-dir PICTURES)/Screenshots/screenshot_$(date "+%Y-%m-%d_%H.%M.%S").png"]]),
+hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("bash ~/.config/hypr/hyprland/scripts/screenshot-region.sh"),
     { locked = true, description = "Screenshot: Screenshot region" })
 
 --##! Media
