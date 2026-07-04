@@ -82,7 +82,7 @@ PACMAN_PACKAGES=(
     playerctl 7zip nvim nethogs starship bluez bluedevil bluez-qt bluez-utils
     zip unzip power-profiles-daemon xdg-desktop-portal xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk xdg-desktop-portal-kde pipewire pipewire-alsa
-    pipewire-audio pipewire-jack pipewire-pulse xorg-xwayland nano
+    pipewire-audio pipewire-jack pipewire-pulse xorg-xwayland nano cargo
     noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-jetbrains-mono-nerd
     ttf-dejavu pavucontrol-qt ffmpeg git base base-devel systemsettings
     qt5ct qt6ct qt5-wayland kvantum fuzzel breeze breeze-icons plasma-desktop
@@ -333,6 +333,7 @@ setup_sddm() {
 [Autologin]
 User=$sddm_user
 Session=hyprland
+Relogin=true
 EOF
 
     success "SDDM autologin configured for user: $sddm_user"
