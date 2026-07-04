@@ -78,7 +78,7 @@ Row {
 
                 onClicked: {
                     Quickshell.execDetached([
-                        "bash", "~/.config/hypr/hyprland/scripts/screenshot-region.sh"
+                        "bash", Quickshell.env("HOME") + "/.config/hypr/hyprland/scripts/screenshot-region.sh"
                     ])
                 }
             }

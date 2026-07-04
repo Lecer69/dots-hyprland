@@ -20,12 +20,12 @@ Item {
             QtObject {
                 property string label: "Shutdown"
                 property string icon: "../icons/power.svg"
-                property var action: () => Quickshell.execDetached(["bash", "~/.local/bin/lis", "shutdown"])
+                property var action: () => Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.local/bin/lis", "shutdown"])
             },
             QtObject {
                 property string label: "Reboot"
                 property string icon: "../icons/restart.svg"
-                property var action: () => Quickshell.execDetached(["bash", "~/.local/bin/lis", "reboot"])
+                property var action: () => Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.local/bin/lis", "reboot"])
             },
             QtObject {
                 property string label: "Suspend"
