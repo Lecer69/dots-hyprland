@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import Quickshell.Io
 import qs.notification
 import qs.tools
 import qs.settings.data

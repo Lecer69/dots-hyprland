@@ -76,6 +76,11 @@ ShellRoot {
         Component.onCompleted: console.log("[shell] SettingsWindow completed")
     }
 
+    NotificationCenterWindow {
+        id: notificationCenterWindow
+        Component.onCompleted: console.log("[shell] NotificationCenterWindow completed")
+    }
+
     GammaWindow {
         id: gammaWindow
         Component.onCompleted: console.log("[shell] GammaWindow completed")
@@ -113,7 +118,7 @@ ShellRoot {
 
             property var bar: Bar {
                 screen: modelData
-                visible: !screenLock.isLocked
+                visible: !screenLock.isLocked && BarState.barShown
                 Component.onCompleted: console.log("[shell] Bar completed")
             }
             property var volBar: Loader {

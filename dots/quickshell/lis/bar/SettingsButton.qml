@@ -14,9 +14,16 @@ Item {
 
     DropdownMenu {
         id: settingsMenu
-        menuWidth: 150
+        menuWidth: 160
         targetScreen: root.screen
         items: [
+            QtObject {
+                property string label: "Notification Center"
+                property string icon: "../icons/notification.svg"
+                property var action: () => {
+                    return notificationCenterWindow.shown = true;
+                }
+            },
             QtObject {
                 property string label: "Audio Settings"
                 property string icon: "../icons/speaker-high.svg"

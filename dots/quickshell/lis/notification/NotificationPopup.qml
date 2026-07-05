@@ -20,10 +20,6 @@ PanelWindow {
     property var focusedScreen: null
     screen: focusedScreen ?? Quickshell.screens[0]
 
-    ListModel {
-        id: historyModel
-    }
-
     NotificationServer {
         id: server
         keepOnReload: true
@@ -53,7 +49,7 @@ PanelWindow {
                 : (icon.startsWith("/") || icon.startsWith("file://")) ? icon
                 : "image://icon/" + icon
 
-            historyModel.insert(0, {
+            NotificationHistory.add({
                 appName: notif.appName,
                 summary: notif.summary,
                 body: notif.body,

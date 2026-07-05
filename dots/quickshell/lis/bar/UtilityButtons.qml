@@ -213,7 +213,14 @@ Row {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: NotificationState.notificationsEnabled = !NotificationState.notificationsEnabled
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function(mouse) {
+                    if (mouse.button === Qt.RightButton) {
+                        notificationCenterWindow.shown = true
+                    } else {
+                        NotificationState.notificationsEnabled = !NotificationState.notificationsEnabled
+                    }
+                }
             }
         }
     }

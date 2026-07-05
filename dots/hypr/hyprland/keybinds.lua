@@ -15,9 +15,10 @@ hl.bind("SUPER + Slash", hl.dsp.global("quickshell:cheatsheet"), { description =
 hl.bind("SUPER + G", hl.dsp.global("quickshell:gamma"), { description = "Shell: Toggle gamma settings" })
 hl.bind("SUPER + N", hl.dsp.global("quickshell:internetusage"), { description = "Shell: Toggle Internet Usage panel" })
 hl.bind("SUPER + Y", hl.dsp.global("quickshell:wellbeing"), { description = "Shell: Digital Wellbeing panel" })
+hl.bind("SUPER + O", hl.dsp.global("quickshell:notificationCenter"), { description = "Shell: Notification Center panel" })
 
 hl.bind("SUPER + CTRL + R", hl.dsp.exec_cmd("killall qs quickshell; qs -c $qsConfig &"), { description = "Shell: Restart shell" })
-hl.bind("SUPER + J", hl.dsp.global("quickshell:overlayToggle"), { description = "Shell: [TODO] Toggle widget overlay" })
+hl.bind("SUPER + J", hl.dsp.global("quickshell:overlayToggle"), { description = "Shell: Toggle widget overlay" })
 
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(qsIpcCall .. " brightness increment || brightnessctl s 5%+"),
     { locked = true, repeating = true })
