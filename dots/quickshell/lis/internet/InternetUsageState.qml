@@ -66,7 +66,7 @@ QtObject {
 
         stderr: SplitParser {
             onRead: function(line) {
-                console.log("[InternetUsage][nethogs-stderr]", line);
+                // console.log("[InternetUsage][nethogs-stderr]", line);
             }
         }
 

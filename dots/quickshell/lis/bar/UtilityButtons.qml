@@ -117,6 +117,49 @@ Row {
         }
     }
 
+    // Game Mode
+    Loader {
+        active: SettingsData.s.bar.showGameMode
+        visible: active
+        sourceComponent: Item {
+            id: gameModeItem
+            width: 16
+            height: 16
+
+            property bool toggled: false
+
+            Image {
+                anchors.centerIn: parent
+                width: 16
+                height: 16
+
+                smooth: true
+                antialiasing: true
+                mipmap: true
+
+                source: gameModeItem.toggled ? "../icons/gamemode-on.svg" : "../icons/gamemode-off.svg"
+                opacity: gameModeItem.toggled ? 1.0 : 0.5
+                fillMode: Image.PreserveAspectFit
+
+                Behavior on opacity { NumberAnimation { duration: 120 } }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    gameModeItem.toggled = !gameModeItem.toggled
+
+                    if (gameModeItem.toggled) {
+                        Quickshell.execDetached(["bash", "-c", `hyprctl --batch "keyword animations:enabled 0; keyword decoration:shadow:enabled 0; keyword decoration:blur:enabled 0; keyword general:gaps_in 0; keyword general:gaps_out 5; keyword general:border_size 1; keyword decoration:rounding 0; keyword general:allow_tearing 1"`])
+                    } else {
+                        Quickshell.execDetached(["hyprctl", "reload"])
+                    }
+                }
+            }
+        }
+    }
+
     // Idle inhibit
     Loader {
         sourceComponent: Item {

@@ -48,6 +48,7 @@ Singleton {
             // Bar
             property JsonObject bar: JsonObject {
                 property bool showBluetooth: true
+                property bool showGameMode: true
                 property bool showNetwork: true
                 property bool showClockAndDate: true
                 property bool showColorPicker: true

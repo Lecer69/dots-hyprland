@@ -10,6 +10,14 @@ QtObject {
         onTriggered: BrightnessPopupState.visible = false
     }
 
+    property var _ipc: IpcHandler {
+        target: "brightness"
+
+        function update(): void {
+            BrightnessPopupState.showStatic()
+        }
+    }
+
     property var _proc: Process {
         command: ["brightnessctl", "-m", "info"]
         stdout: SplitParser {

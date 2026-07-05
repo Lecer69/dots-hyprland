@@ -51,6 +51,13 @@ ScrollView {
             }
         }
         SettingRow {
+            label: "Show Game Mode"
+            ToggleSwitch {
+                checked: SettingsData.s.bar.showGameMode
+                onToggled: v => SettingsData.s.bar.showGameMode = v
+            }
+        }
+        SettingRow {
             label: "Show Bluetooth"
             ToggleSwitch {
                 checked: SettingsData.s.bar.showBluetooth

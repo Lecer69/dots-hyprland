@@ -88,24 +88,11 @@ QtObject {
         root.lockedChanged()
     }
 
-    property Process _keyringUnlock: Process {
-        id: keyringUnlock
-        command: ["gnome-keyring-daemon", "--unlock"]
-        stdinEnabled: true
-        onStarted: {
-            keyringUnlock.write(_pendingPassword + "\n")
-            _pendingPassword = ""
-        }
-    }
-
-    property string _pendingPassword: ""
-
     property LockContext _ctx: LockContext {
         id: lockCtx
         onUnlocked: root._unlock()
         onUnlockedWithPassword: (pw) => {
-            root._pendingPassword = pw
-            keyringUnlock.running = true
+            Quickshell.execDetached(["sh", "-c", "echo -n \"" + pw + "\" | gnome-keyring-daemon --replace --unlock --components=secrets"])
         }
     }
 

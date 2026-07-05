@@ -14,7 +14,6 @@ HoverBar {
     property real pendingBrightness: 0.5
 
     property string busNum: ""
-    property var ddcMonitors: []
 
     property bool useBrightnessctl: false
     property string brightnessDevice: ""
@@ -23,45 +22,34 @@ HoverBar {
     value: brightness
     onValueChanged: if (ready) BrightnessPopupState.show(value)
 
-    Process {
-        id: detectProc
-        command: ["ddcutil", "detect", "--brief"]
-        running: true
+    Component.onCompleted: {
+        DdcMonitorState.ensureDetected()
+        tryMatch()
+    }
 
-        stdout: SplitParser {
-            splitMarker: "\n\n"
-            onRead: data => {
-                if (data.startsWith("Display ")) {
-                    const lines = data.split("\n").map(l => l.trim())
-                    const busLine = lines.find(l => l.startsWith("I2C bus:"))
-                    const drmLine = lines.find(l => l.startsWith("DRM connector:"))
-                    if (busLine && drmLine) {
-                        const bus = busLine.split("/dev/i2c-")[1]
-                        const drm = drmLine.split("DRM connector:")[1].trim()
-                        brightnessBar.ddcMonitors.push({ name: drm, busNum: bus })
-                    }
-                }
-            }
+    Connections {
+        target: DdcMonitorState
+        function onReadyChanged() {
+            if (DdcMonitorState.ready) tryMatch()
         }
+    }
 
-        onExited: code => {
-            console.log("ddcutil detect exited, code:", code)
-            console.log("screen name:", brightnessBar.screen?.name)
+    function tryMatch() {
+        if (!DdcMonitorState.ready) return
+        if (brightnessBar.ready || brightnessBar.busNum !== "") return // already resolved
 
-            const match = brightnessBar.ddcMonitors.find(m => {
-                const stripped = m.name.replace(/^card\d+-/, "")
-                return stripped === brightnessBar.screen?.name
-            })
+        console.log("screen name:", brightnessBar.screen?.name)
 
-            if (match) {
-                brightnessBar.busNum = match.busNum
-                initProc.running = true
-            } else {
-                // No valid ddcutil display found — fall back to brightnessctl
-                console.log("ddcutil: no matching display, trying brightnessctl")
-                brightnessBar.useBrightnessctl = true
-                bctlListProc.running = true
-            }
+        const match = DdcMonitorState.findMatch(brightnessBar.screen?.name)
+
+        if (match) {
+            brightnessBar.busNum = match.busNum
+            initProc.running = true
+        } else {
+            console.log("ddcutil: no matching display for", brightnessBar.screen?.name,
+                        "trying brightnessctl")
+            brightnessBar.useBrightnessctl = true
+            bctlListProc.running = true
         }
     }
 
