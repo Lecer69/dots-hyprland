@@ -20,6 +20,7 @@ import qs.wellbeing
 import qs.battery
 import qs.workspaces
 import qs.internet
+import qs.osu
 
 ShellRoot {
     id: root
@@ -40,7 +41,7 @@ ShellRoot {
             screenLock.lock()
             root.startupMode = false
         }
-    } 
+    }
 
     property ScreenLock screenLock: ScreenLock {
         Component.onCompleted: console.log("[shell] ScreenLock completed")
@@ -95,6 +96,10 @@ ShellRoot {
     NotificationPopup {
         visible: !screenLock.isLocked
         Component.onCompleted: console.log("[shell] NotificationPopup completed")
+    }
+
+    OsuBackdrop {
+        Component.onCompleted: console.log("[shell] OsuBackdrop completed")
     }
 
     Overview {

@@ -26,11 +26,20 @@ ScrollView {
             }
         }
         SettingRow {
-            label: "Disable Overview"
-            description: "Disables any overview keybinds in-game"
+            label: "Backdrop Other Monitors"
+            description: "Makes other monitors darker"
             ToggleSwitch {
-                checked: SettingsData.s.osu.disableOverview
-                onToggled: v => SettingsData.s.osu.disableOverview = v
+                checked: SettingsData.s.osu.backdropOtherMonitors
+                onToggled: v => SettingsData.s.osu.backdropOtherMonitors = v
+            }
+        }
+        SettingRow {
+            label: "Backdrop Opacity"
+            description: "Opacity for backdrop"
+            FloatSlider {
+                from: 0.01; to: 0.95; stepSize: 0.01; decimals: 2
+                value: SettingsData.s.osu.backdropOpacity
+                onChanged: v => SettingsData.s.osu.backdropOpacity = v
             }
         }
 

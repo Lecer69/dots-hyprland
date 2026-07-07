@@ -4,10 +4,34 @@
 
 set -uo pipefail
 
+# Flags
+SKIP_UPDATE=0
+SKIP_PACKAGES=0
+SKIP_QUICKSHELL=0
+SKIP_BACKUP=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --skip-update)
+            SKIP_UPDATE=1
+            ;;
+        --no-packages)
+            SKIP_PACKAGES=1
+            ;;
+        --skip-quickshell)
+            SKIP_QUICKSHELL=1
+            ;;
+        --skip-backup)
+            SKIP_BACKUP=1
+            ;;
+    esac
+done
+
 # Setup / helpers
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTS_DIR="$SCRIPT_DIR/dots"
 CONFIG_DIR="$HOME/.config"
+BACKUP_DIR="$HOME/.dots-hyprland-backups"
 
 # Colors
 C_RESET='\033[0m'
@@ -124,6 +148,94 @@ hypr_is_preserved_item() {
     return 1
 }
 
+# Backup
+backup_dotfiles() {
+    local mode="${1:-install}"
+
+    step "Backing up existing config"
+
+    if [[ "$SKIP_BACKUP" -eq 1 ]]; then
+        warn "Skipping backup (--skip-backup passed). This is not recommended."
+        return 0
+    fi
+
+    if ! command -v zip >/dev/null 2>&1; then
+        error "zip is not installed, cannot create a backup."
+        error "Install zip, or re-run with --skip-backup to proceed without one (not recommended)."
+        exit 1
+    fi
+
+    # Figure out which top-level names under $CONFIG_DIR we're about to touch.
+    local -a candidates=()
+    if [[ "$mode" == "update" ]]; then
+        candidates=("hypr")
+        if [[ "$SKIP_QUICKSHELL" -eq 0 ]]; then
+            candidates+=("quickshell")
+        fi
+    else
+        if [[ -d "$DOTS_DIR" ]]; then
+            shopt -s dotglob nullglob
+            local item
+            for item in "$DOTS_DIR"/*; do
+                local name
+                name="$(basename "$item")"
+                if [[ "$name" == "quickshell" && "$SKIP_QUICKSHELL" -eq 1 ]]; then
+                    continue
+                fi
+                candidates+=("$name")
+            done
+            shopt -u dotglob nullglob
+        fi
+    fi
+
+    # Only back up what actually exists right now.
+    local -a to_backup=()
+    local name
+    for name in "${candidates[@]}"; do
+        if [[ -e "$CONFIG_DIR/$name" ]]; then
+            to_backup+=("$name")
+        fi
+    done
+
+    if [[ ${#to_backup[@]} -eq 0 ]]; then
+        info "Nothing existing to back up, skipping."
+        return 0
+    fi
+
+    if ! mkdir -p "$BACKUP_DIR"; then
+        error "Could not create backup directory: $BACKUP_DIR"
+        exit 1
+    fi
+
+    local timestamp
+    timestamp="$(date +%Y-%m-%d_%H-%M-%S)"
+    local stage_dir
+    stage_dir="$(mktemp -d)" || {
+        error "Could not create temporary staging directory for backup."
+        exit 1
+    }
+
+    info "Staging backup of: ${to_backup[*]}"
+    for name in "${to_backup[@]}"; do
+        if ! cp -r "$CONFIG_DIR/$name" "$stage_dir/$name"; then
+            error "Failed to stage $CONFIG_DIR/$name for backup."
+            rm -rf "$stage_dir"
+            exit 1
+        fi
+    done
+
+    local zip_path="$BACKUP_DIR/${timestamp}.zip"
+    info "Creating $zip_path"
+    if ! (cd "$stage_dir" && zip -r -q "$zip_path" .); then
+        error "Failed to create backup zip: $zip_path"
+        rm -rf "$stage_dir"
+        exit 1
+    fi
+
+    rm -rf "$stage_dir"
+    success "Backup created: $zip_path"
+}
+
 # Steps
 replace_dotfiles() {
     # $1 (optional): "update" -> only sync quickshell/ and hypr/ (preserving
@@ -132,13 +244,15 @@ replace_dotfiles() {
     #                replacing everything found in dots/.
     local mode="${1:-}"
 
-    step "Replacing dotfiles in $CONFIG_DIR"
-
     if [[ ! -d "$DOTS_DIR" ]]; then
         error "Could not find dots folder at: $DOTS_DIR"
         error "Make sure you're running this script from inside the cloned repo."
         exit 1
     fi
+
+    backup_dotfiles "${mode:-install}"
+
+    step "Replacing dotfiles in $CONFIG_DIR"
 
     mkdir -p "$CONFIG_DIR"
 
@@ -147,6 +261,11 @@ replace_dotfiles() {
         local name
 
         for name in "${update_items[@]}"; do
+            if [[ "$name" == "quickshell" && "$SKIP_QUICKSHELL" -eq 1 ]]; then
+                info "Skipping quickshell (--skip-quickshell passed)"
+                continue
+            fi
+
             local item="$DOTS_DIR/$name"
             local target="$CONFIG_DIR/$name"
 
@@ -192,7 +311,11 @@ replace_dotfiles() {
             cp -r "$item" "$target"
         done
 
-        success "Dotfiles updated (quickshell, hypr)."
+        if [[ "$SKIP_QUICKSHELL" -eq 1 ]]; then
+            success "Dotfiles updated (hypr)."
+        else
+            success "Dotfiles updated (quickshell, hypr)."
+        fi
     else
         shopt -s dotglob nullglob
         local items=("$DOTS_DIR"/*)
@@ -206,6 +329,12 @@ replace_dotfiles() {
         for item in "${items[@]}"; do
             local name
             name="$(basename "$item")"
+
+            if [[ "$name" == "quickshell" && "$SKIP_QUICKSHELL" -eq 1 ]]; then
+                info "Skipping quickshell (--skip-quickshell passed)"
+                continue
+            fi
+
             local target="$CONFIG_DIR/$name"
 
             if [[ -e "$target" ]]; then
@@ -230,11 +359,32 @@ replace_dotfiles() {
 
 run_pre_commands() {
     step "Running update commands"
+
+    if [[ "$SKIP_PACKAGES" -eq 1 ]]; then
+        warn "Skipping sudo pacman -Syu (--no-packages passed)."
+        return
+    fi
+
+    if [[ "$SKIP_UPDATE" -eq 1 ]]; then
+        warn "Skipping sudo pacman -Syu (--skip-update passed). This is not recommended and may cause package conflicts later."
+        return
+    fi
+
+    if confirm "Skip full system update (sudo pacman -Syu)? NOT recommended — partial upgrades can break your system."; then
+        warn "Skipping sudo pacman -Syu. This is not recommended and may cause package conflicts later."
+        return
+    fi
+
     run_with_retry 10 sudo pacman -Syu
 }
 
 install_pacman_packages() {
     step "Installing pacman packages"
+
+    if [[ "$SKIP_PACKAGES" -eq 1 ]]; then
+        warn "Skipping pacman package installation (--no-packages passed)."
+        return
+    fi
 
     run_with_retry 10 sudo pacman -S --needed "${PACMAN_PACKAGES[@]}"
 }
@@ -250,13 +400,6 @@ run_after_package_commands() {
     else
         warn "nethogs not found, skipping setcap step."
     fi
-
-    info "Cloning NvChad starter config into ~/.config/nvim"
-    if [[ -d "$HOME/.config/nvim" ]]; then
-        warn "$HOME/.config/nvim already exists, removing it first."
-        rm -rf "$HOME/.config/nvim"
-    fi
-    (cd /tmp && run git clone https://github.com/NvChad/starter "$HOME/.config/nvim")
 }
 
 install_yay() {
@@ -285,6 +428,11 @@ install_yay() {
 install_aur_packages() {
     step "Installing AUR packages"
 
+    if [[ "$SKIP_PACKAGES" -eq 1 ]]; then
+        warn "Skipping AUR helper (yay) and AUR package installation (--no-packages passed)."
+        return
+    fi
+
     install_yay
 
     info "Installing quickshell-git"
@@ -302,7 +450,13 @@ do_systemctl() {
 
     run sudo systemctl enable --now power-profiles-daemon.service
 
-    if confirm "Enable bluetooth.service now?"; then
+    if confirm "Enable systemd-oomd.service?"; then
+        run sudo systemctl enable --now systemd-oomd.service
+    else
+        info "Skipping systemd-oomd.service."
+    fi
+
+    if confirm "Enable bluetooth.service?"; then
         run sudo systemctl enable --now bluetooth.service
     else
         info "Skipping bluetooth.service."
@@ -376,6 +530,11 @@ install_custom_commands() {
 
 install_optional_packages() {
     step "Optional packages"
+
+    if [[ "$SKIP_PACKAGES" -eq 1 ]]; then
+        warn "Skipping optional package installation (--no-packages passed)."
+        return
+    fi
 
     for pkg in "${OPTIONAL_PACKAGES[@]}"; do
         if confirm "Install optional package '$pkg'?"; then

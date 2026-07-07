@@ -69,7 +69,9 @@ Singleton {
             // osu!
             property JsonObject osu: JsonObject {
                 property bool disableNotifications: true
-                property bool disableOverview: false
+                property bool backdropOtherMonitors: false
+                property real backdropOpacity: 0.6
+                property string backdropColor: "#000000"
             }
         }
     }

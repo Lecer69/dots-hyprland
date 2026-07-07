@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
+import qs.settings.data
 
 PanelWindow {
     id: root
@@ -29,6 +30,11 @@ PanelWindow {
         onNotification: (notif) => {
             console.log("[Notifications] Received:", notif.appName, "|", notif.summary, "|", notif.body)
             if (!NotificationState.notificationsEnabled) return
+
+            if (SettingsData.s.osu.disableNotifications) {
+                const focusedAppId = ToplevelManager.activeToplevel?.appId ?? ""
+                if (focusedAppId === "osu!.exe" || focusedAppId === "osu!") return
+            }
 
             if (notifModel.count === 0) {
                 const focusedName = Hyprland.focusedMonitor?.name

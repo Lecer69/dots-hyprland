@@ -10,7 +10,7 @@ My personal Hyprland dotfiles using quickshell. (fast and lightweight)
 ```bash
 git clone https://github.com/Lecer69/dots-hyprland.git
 cd dots-hyprland
-./install.sh
+bash install.sh
 ```
 
 Choose the **install** option from the menu.
@@ -18,9 +18,8 @@ Choose the **install** option from the menu.
 ## Updating
 
 ```bash
-git clone https://github.com/Lecer69/dots-hyprland.git
 cd dots-hyprland
-./install.sh
+git stash && git pull && bash install.sh
 ```
 
 Choose the **update** option from the menu.
