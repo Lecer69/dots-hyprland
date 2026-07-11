@@ -2,7 +2,7 @@ import QtQuick
 
 Rectangle {
     width: 1
-    height: 14
+    height: 15
     anchors.verticalCenter: parent.verticalCenter
-    color: "#1e2d3a"
+    color: "#0c0c0c"
 }

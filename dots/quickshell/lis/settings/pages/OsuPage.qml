@@ -37,7 +37,7 @@ ScrollView {
             label: "Backdrop Opacity"
             description: "Opacity for backdrop"
             FloatSlider {
-                from: 0.01; to: 0.95; stepSize: 0.01; decimals: 2
+                from: 0.01; to: 1.00; stepSize: 0.01; decimals: 2
                 value: SettingsData.s.osu.backdropOpacity
                 onChanged: v => SettingsData.s.osu.backdropOpacity = v
             }

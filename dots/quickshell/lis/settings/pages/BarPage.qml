@@ -37,6 +37,13 @@ ScrollView {
             }
         }
         SettingRow {
+            label: "Show Clock Only"
+            ToggleSwitch {
+                checked: SettingsData.s.bar.showClockOnly
+                onToggled: v => SettingsData.s.bar.showClockOnly = v
+            }
+        }
+        SettingRow {
             label: "Show Color Picker"
             ToggleSwitch {
                 checked: SettingsData.s.bar.showColorPicker

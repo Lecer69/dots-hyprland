@@ -74,4 +74,9 @@ QtObject {
     function clearPassword() {
         root.password = ""
     }
+
+    function selectAllClear() {
+        if (!root.authenticating)
+            root.password = ""
+    }
 }

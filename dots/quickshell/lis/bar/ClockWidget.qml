@@ -1,12 +1,16 @@
 import QtQuick
+import qs.settings.data
 
 Item {
     id: root
-    implicitWidth: timeText.implicitWidth + dateText.implicitWidth + 18
+    implicitWidth: showDate
+        ? (timeText.implicitWidth + dateText.implicitWidth + 18)
+        : timeText.implicitWidth
     implicitHeight: 22
 
     property color timeColor: '#cdcdcd'
     property color dateColor: '#aeaeae'
+    property bool showDate: !SettingsData.s.bar.showClockOnly
 
     Timer {
         interval: 1000
@@ -50,6 +54,8 @@ Item {
             color: root.dateColor
             verticalAlignment: Text.AlignVCenter
             opacity: 0.8
+            visible: root.showDate
+            width: root.showDate ? implicitWidth : 0
         }
 
         Rectangle {
@@ -58,6 +64,7 @@ Item {
             radius: 1.5
             color: '#ffffff'
             anchors.verticalCenter: parent.verticalCenter
+            visible: root.showDate
         }
 
         Text {

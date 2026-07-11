@@ -7,6 +7,7 @@ import Quickshell.Io
 import qs.notification
 import qs.tools
 import qs.settings.data
+import qs.media
 
 PanelWindow {
     id: bar
@@ -119,6 +120,17 @@ PanelWindow {
                     id: batteryWidget
                     visible: !vertical
                     anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Divider {
+                    visible: !vertical && mediaWidget.hasMedia
+                }
+
+                MediaWidget {
+                    id: mediaWidget
+                    visible: !vertical && hasMedia
+                    anchors.verticalCenter: parent.verticalCenter
+                    screen: bar.screen
                 }
 
                 Divider {

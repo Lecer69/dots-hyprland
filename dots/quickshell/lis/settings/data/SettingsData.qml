@@ -51,6 +51,7 @@ Singleton {
                 property bool showGameMode: true
                 property bool showNetwork: true
                 property bool showClockAndDate: true
+                property bool showClockOnly: false
                 property bool showColorPicker: true
                 property bool showScreenshot: true
                 property int workspaceNumbers: 10

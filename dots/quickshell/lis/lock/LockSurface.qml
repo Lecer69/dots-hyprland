@@ -31,46 +31,96 @@ Item {
         spacing: 6
 
         // Time
-        Text {
-            id: timeText
+        Item {
+            id: timeWrap
             anchors.horizontalCenter: parent.horizontalCenter
-            color: root.text
-            font {
-                pixelSize: 88
-                weight: Font.Light
-                letterSpacing: -2
-            }
-            opacity: 0.92
+            width: timeText.implicitWidth
+            height: timeText.implicitHeight
 
-            function formatted() {
-                var d = new Date()
-                var h = d.getHours()
-                var m = d.getMinutes()
-                return Qt.formatTime(d, "hh:mm")
+            readonly property string outlineColor: "#40000000"
+            readonly property real outlineOffset: 2.2
+
+            // 8-direction outline layer, drawn behind the main text
+            Repeater {
+                model: [
+                    [-1,-1], [0,-1], [1,-1],
+                    [-1, 0],         [1, 0],
+                    [-1, 1], [0, 1], [1, 1]
+                ]
+                delegate: Text {
+                    required property var modelData
+                    x: modelData[0] * timeWrap.outlineOffset
+                    y: modelData[1] * timeWrap.outlineOffset
+                    text: timeText.text
+                    color: timeWrap.outlineColor
+                    font: timeText.font
+                    opacity: 0.85
+                }
             }
-            text: formatted()
+
+            Text {
+                id: timeText
+                color: root.text
+                font {
+                    pixelSize: 108
+                    weight: Font.Light
+                    letterSpacing: -2
+                }
+                opacity: 0.92
+
+                function formatted() {
+                    return Qt.formatTime(new Date(), "hh:mm")
+                }
+                text: formatted()
+            }
         }
 
-        // Date
-        Text {
-            id: dateText
+        // Date (with outline for legibility on light backgrounds)
+        Item {
+            id: dateWrap
             anchors.horizontalCenter: parent.horizontalCenter
-            color: root.subtext0
-            font {
-                pixelSize: 15
-                weight: Font.Normal
-                letterSpacing: 1.5
-            }
-            opacity: 0.75
+            width: dateText.implicitWidth
+            height: dateText.implicitHeight
 
-            function formatted() {
-                var d = new Date()
-                var days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
-                var months = ["January","February","March","April","May","June",
-                              "July","August","September","October","November","December"]
-                return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
+            readonly property string outlineColor: "#59000000"
+            readonly property real outlineOffset: 1.1
+
+            Repeater {
+                model: [
+                    [0,-1],
+                    [-1, 0],
+                    [1, 0],
+                    [0, 1]
+                ]
+                delegate: Text {
+                    required property var modelData
+                    x: modelData[0] * dateWrap.outlineOffset
+                    y: modelData[1] * dateWrap.outlineOffset
+                    text: dateText.text
+                    color: dateWrap.outlineColor
+                    font: dateText.font
+                    opacity: 0.75
+                }
             }
-            text: formatted().toUpperCase()
+
+            Text {
+                id: dateText
+                color: root.subtext0
+                font {
+                    pixelSize: 20
+                    weight: Font.Normal
+                    letterSpacing: 1.5
+                }
+                opacity: 0.75
+
+                function formatted() {
+                    var d = new Date()
+                    var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+                    var months = ["January","February","March","April","May","June", "July","August","September","October","November","December"]
+                    return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
+                }
+                text: formatted().toUpperCase()
+            }
         }
 
         Timer {
@@ -89,8 +139,8 @@ Item {
         id: errorText
         anchors {
             horizontalCenter: parent.horizontalCenter
-            bottom: capsRow.top
-            bottomMargin: 6
+            top: bottomCol.bottom
+            topMargin: 10
         }
         text: "✗ Wrong password"
         color: root.red
@@ -204,9 +254,7 @@ Item {
                         rightMargin: 14
                         verticalCenter: parent.verticalCenter
                     }
-                    text: root.context.password.length > 0
-                          ? "●".repeat(root.context.password.length)
-                          : "Password..."
+                    text: root.context.password.length > 0 ? "●".repeat(root.context.password.length) : "Password..."
                     color: root.context.password.length > 0 ? root.text : root.overlay0
                     font {
                         pixelSize: root.context.password.length > 0 ? 11 : 14
@@ -242,9 +290,14 @@ Item {
             } else if (event.key === Qt.Key_Escape) {
                 root.context.clearPassword()
                 event.accepted = true
+            } else if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
+                root.context.selectAllClear()
+                event.accepted = true
             } else if (event.key === Qt.Key_CapsLock) {
                 root.context.capsLockOn = !root.context.capsLockOn
                 event.accepted = false
+            } else if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) {
+                event.accepted = true
             } else if (event.text.length > 0 && !event.isAutoRepeat) {
                 root.context.appendChar(event.text)
                 event.accepted = true
@@ -285,6 +338,106 @@ Item {
         anchors.fill: parent
         z: -1
         onClicked: keyItem.forceActiveFocus()
+    }
+
+    // Power / reboot controls
+    Row {
+        id: powerRow
+        anchors {
+            right: parent.right
+            bottom: parent.bottom
+            rightMargin: 32
+            bottomMargin: 32
+        }
+        spacing: 12
+
+        component PowerButton: Rectangle {
+            id: btn
+            required property string iconSource
+            required property string label
+            required property string command
+            property bool armed: false
+
+            width: 44
+            height: 44
+            radius: 22
+            color: mouseArea.containsMouse ? "#f01a1a1a" : "#e30f0f0f"
+            border.width: armed ? 1 : 0
+            border.color: root.red
+
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            Image {
+                anchors.centerIn: parent
+                source: btn.iconSource
+                sourceSize.width: 20
+                sourceSize.height: 20
+                opacity: 0.9
+            }
+
+            // Tooltip / confirm label
+            Rectangle {
+                visible: mouseArea.containsMouse
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    bottom: parent.top
+                    bottomMargin: 8
+                }
+                width: tipText.implicitWidth + 16
+                height: tipText.implicitHeight + 8
+                radius: 6
+                color: "#cc111118"
+
+                Text {
+                    id: tipText
+                    anchors.centerIn: parent
+                    text: btn.armed ? "Click again to confirm" : btn.label
+                    color: root.text
+                    font.pixelSize: 11
+                }
+            }
+
+            Timer {
+                id: disarmTimer
+                interval: 2500
+                onTriggered: btn.armed = false
+            }
+
+            MouseArea {
+                id: mouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (btn.armed) {
+                        powerProc.command = ["systemctl", btn.command]
+                        powerProc.running = true
+                        btn.armed = false
+                        disarmTimer.stop()
+                    } else {
+                        btn.armed = true
+                        disarmTimer.restart()
+                    }
+                }
+            }
+        }
+
+        PowerButton {
+            iconSource: "../icons/restart.svg"
+            label: "Reboot"
+            command: "reboot"
+        }
+
+        PowerButton {
+            iconSource: "../icons/power.svg"
+            label: "Shut down"
+            command: "poweroff"
+        }
+    }
+
+    Process {
+        id: powerProc
+        command: []
     }
 
     Timer {

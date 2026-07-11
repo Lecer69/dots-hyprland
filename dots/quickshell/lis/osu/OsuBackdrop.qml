@@ -10,7 +10,7 @@ Variants {
     model: Quickshell.screens
 
     property string focusedAppId: ToplevelManager.activeToplevel?.appId ?? ""
-    readonly property bool osuFocused: focusedAppId === "osu!.exe" || focusedAppId === "osu!"
+    readonly property bool osuFocused: focusedAppId && (focusedAppId.toLowerCase().includes("osu!") || focusedAppId.toLowerCase().includes("osu.exe"))
     readonly property bool enabled: SettingsData.s.osu.backdropOtherMonitors && osuFocused
 
     delegate: PanelWindow {
