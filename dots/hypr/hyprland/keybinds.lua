@@ -59,6 +59,8 @@ hl.bind("ALT + XF86AudioMute", hl.dsp.exec_cmd("pactl set-source-mute @DEFAULT_S
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("pactl set-source-mute @DEFAULT_SOURCE@ toggle && [ $(pactl get-source-mute @DEFAULT_SOURCE@ | grep -o yes) ] && paplay ~/.config/hypr/sounds/mute.wav || paplay ~/.config/hypr/sounds/unmute.wav"), { locked = true })
 hl.bind("SUPER + ALT + M", hl.dsp.exec_cmd("pactl set-source-mute @DEFAULT_SOURCE@ toggle && [ $(pactl get-source-mute @DEFAULT_SOURCE@ | grep -o yes) ] && paplay ~/.config/hypr/sounds/mute.wav || paplay ~/.config/hypr/sounds/unmute.wav"),
     { locked = true, description = "Media: Toggle mic" })
+hl.bind("mouse:275", hl.dsp.exec_cmd("pactl set-source-mute @DEFAULT_SOURCE@ toggle && [ $(pactl get-source-mute @DEFAULT_SOURCE@ | grep -o yes) ] && paplay ~/.config/hypr/sounds/mute.wav || paplay ~/.config/hypr/sounds/unmute.wav"),
+    { locked = true, description = "Media: Toggle mic" })
 
 --##! Workspace
 --# Switching

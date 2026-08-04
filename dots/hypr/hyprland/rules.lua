@@ -9,7 +9,7 @@ hl.window_rule({match = {class = ".*" }, no_blur = true })
 -- Shadow
 -- uncomment this for applying opacity on every window
 -- hl.window_rule({match = {class = ".*" }, opacity = 0.92 })
-hl.window_rule({match = {class = "^(org.kde.gwenview|wpsoffice|zen|brave-browser|brave-origin|firefox|chromium|vlc|com.obsproject.Studio|steam|org.gnome.SystemMonitor)$" }, opacity = 1.0 })
+-- hl.window_rule({match = {class = "^(org.kde.gwenview|wpsoffice|zen|brave-browser|brave-origin|firefox|chromium|vlc|com.obsproject.Studio|steam|org.gnome.SystemMonitor)$" }, opacity = 1.0 })
 hl.window_rule({match = {fullscreen = true }, opacity = 1.0})
 hl.window_rule({match = {title = ".*\\.exe" }, opacity = 1.0})
 
@@ -49,6 +49,8 @@ hl.window_rule({match = {class = "kcm_.*" },                                  fl
 hl.window_rule({match = {class = "^(org.kde.gwenview)$" },                    float = true})
 hl.window_rule({match = {class = "^(org.kde.gwenview)$" },                    size = {"(monitor_w*0.60)", "(monitor_h*0.65)"}})
 hl.window_rule({match = {class = "^(pavucontrol-qt)$" },                      float = true})
+hl.window_rule({match = {class = "^(pavucontrol-qt)$" },                      size = {"(monitor_w*0.45)", "(monitor_h*0.45)"} })
+hl.window_rule({match = {class = "^(pavucontrol-qt)$" },                      center = true})
 hl.window_rule({match = {class = ".*bluedevilwizard" },                       float = true})
 hl.window_rule({match = {title = ".*Welcome" },                               float = true})
 hl.window_rule({match = {title = "^(illogical-impulse Settings)$" },          float = true})
