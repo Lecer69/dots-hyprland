@@ -156,6 +156,7 @@ PACMAN_PACKAGES=(
 AUR_PACKAGES=(
     snixembed
     bibata-cursor-theme-bin
+    wl-gammactl-rust
     darkly-bin
 )
 
