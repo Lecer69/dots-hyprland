@@ -40,6 +40,13 @@ Item {
                 property var action: () => Quickshell.execDetached(["gnome-system-monitor"])
             },
             QtObject {
+                property string label: "To-Do"
+                property string icon: "../icons/todo.svg"
+                property var action: () => {
+                    return todoWindow.shown = true;
+                }
+            },
+            QtObject {
                 property string label: "Color Settings"
                 property string icon: "../icons/color.svg"
                 property var action: () => {

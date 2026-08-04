@@ -10,6 +10,29 @@ SKIP_PACKAGES=0
 SKIP_QUICKSHELL=0
 SKIP_BACKUP=0
 
+print_help() {
+    cat <<EOF
+dots-hyprland installer
+
+Usage: $(basename "${BASH_SOURCE[0]}") [OPTIONS]
+
+You will be prompted to choose [i]nstall or [u]pdate after launch.
+
+Options:
+  --skip-update       Skip the full system update (sudo pacman -Syu)
+  --no-packages       Skip all pacman/AUR package installation (implies skipping the
+                      system update as well)
+  --skip-quickshell   Don't install/update the quickshell config
+  --skip-backup       Don't back up existing config before overwriting it (not recommended)
+  -h, --help          Show this help message and exit
+
+Examples:
+  $(basename "${BASH_SOURCE[0]}")                   # interactive install/update
+  $(basename "${BASH_SOURCE[0]}") --skip-backup     # skip backup step
+  $(basename "${BASH_SOURCE[0]}") --no-packages     # only sync dotfiles, no package install
+EOF
+}
+
 for arg in "$@"; do
     case "$arg" in
         --skip-update)
@@ -23,6 +46,15 @@ for arg in "$@"; do
             ;;
         --skip-backup)
             SKIP_BACKUP=1
+            ;;
+        -h|--help)
+            print_help
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $arg" >&2
+            print_help
+            exit 1
             ;;
     esac
 done
@@ -112,6 +144,7 @@ PACMAN_PACKAGES=(
     qt5ct qt6ct qt5-wayland kvantum fuzzel breeze breeze-icons plasma-desktop
     grim wl-clipboard gwenview slurp plasma-nm ddcutil brightnessctl eza glu
     libqalculate cliphist gnome-system-monitor xdg-user-dirs xdotool ufw ark
+    gamemode
 )
 
 AUR_PACKAGES=(
@@ -160,9 +193,14 @@ backup_dotfiles() {
     fi
 
     if ! command -v zip >/dev/null 2>&1; then
-        error "zip is not installed, cannot create a backup."
-        error "Install zip, or re-run with --skip-backup to proceed without one (not recommended)."
-        exit 1
+        warn "zip is not installed. Attempting to install it now..."
+        if command -v pacman >/dev/null 2>&1 && sudo pacman -S --needed --noconfirm zip; then
+            success "zip installed."
+        else
+            error "Could not install zip automatically."
+            error "Install zip manually, or re-run with --skip-backup to proceed without one (not recommended)."
+            exit 1
+        fi
     fi
 
     # Figure out which top-level names under $CONFIG_DIR we're about to touch.
@@ -234,6 +272,35 @@ backup_dotfiles() {
 
     rm -rf "$stage_dir"
     success "Backup created: $zip_path"
+}
+
+# Fix up hyprpaper.conf's monitor name to match this machine
+fix_hyprpaper_monitor() {
+    local hyprpaper_conf="$CONFIG_DIR/hypr/hyprpaper.conf"
+
+    if [[ ! -f "$hyprpaper_conf" ]]; then
+        return 0
+    fi
+
+    if ! command -v hyprctl >/dev/null 2>&1; then
+        info "hyprctl not found, leaving hyprpaper.conf monitor as-is."
+        return 0
+    fi
+
+    local detected_monitor
+    detected_monitor="$(hyprctl monitors -j 2>/dev/null | grep -o '"name": *"[^"]*"' | head -n1 | sed -E 's/.*"name": *"([^"]*)".*/\1/')"
+
+    if [[ -z "$detected_monitor" ]]; then
+        warn "Could not detect a connected monitor via hyprctl, leaving hyprpaper.conf monitor as-is."
+        return 0
+    fi
+
+    info "Setting hyprpaper.conf monitor to detected monitor: $detected_monitor"
+    if sed -i -E "s/^([[:space:]]*monitor[[:space:]]*=[[:space:]]*).*/\1${detected_monitor}/" "$hyprpaper_conf"; then
+        success "hyprpaper.conf monitor updated to $detected_monitor."
+    else
+        warn "Failed to update hyprpaper.conf monitor, leaving as-is."
+    fi
 }
 
 # Steps
@@ -347,6 +414,8 @@ replace_dotfiles() {
         done
 
         success "Dotfiles installed."
+
+        fix_hyprpaper_monitor
     fi
 
     if command -v hyprctl >/dev/null 2>&1; then

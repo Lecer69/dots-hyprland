@@ -62,10 +62,17 @@ Rectangle {
                 }
                 NavItem {
                     Layout.fillWidth: true
-                    label: "osu!"
-                    icon: "../../icons/osu.svg"
+                    label: "Lock"
+                    icon: "../../icons/lock.svg"
                     active: pager.currentIndex === 2
                     onClicked: pager.currentIndex = 2
+                }
+                NavItem {
+                    Layout.fillWidth: true
+                    label: "osu!"
+                    icon: "../../icons/osu.svg"
+                    active: pager.currentIndex === 3
+                    onClicked: pager.currentIndex = 3
                 }
 
                 Item { Layout.fillHeight: true }
@@ -92,7 +99,7 @@ Rectangle {
                 Layout.rightMargin: 16
 
                 Text {
-                    text: ["General","Bar","osu!"][pager.currentIndex]
+                    text: ["General","Bar","Lock","osu!"][pager.currentIndex]
                     font { pixelSize: 15; weight: Font.DemiBold }
                     color: "#dddddd"
                 }
@@ -132,6 +139,7 @@ Rectangle {
 
                 GeneralPage {}
                 BarPage {}
+                LockPage {}
                 OsuPage {}
             }
         }

@@ -3,21 +3,107 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import Qt5Compat.GraphicalEffects
 
 Item {
     id: root
 
     required property var context
+    property bool enableBlur: false
+    property real blurSize: 32
+    property int blurPasses: 2
+    property real brightness: 0.8172
+    property string wallpaperPath: ""
 
-    readonly property color text:     "#cdd6f4"
+    readonly property color text: "#cdd6f4"
     readonly property color subtext0: '#b8c0e1'
     readonly property color overlay0: '#8b90ac'
-    readonly property color red:      '#ea7496'
-    readonly property color yellow:   '#f9da98'
+    readonly property color red: '#ea7496'
+    readonly property color yellow: '#f9da98'
 
     Rectangle {
         anchors.fill: parent
         color: "transparent"
+    }
+
+    Image {
+        id: wallpaperImage
+        anchors.fill: parent
+        visible: false
+        fillMode: Image.PreserveAspectCrop
+        cache: false
+        asynchronous: true
+        source: (root.enableBlur && root.wallpaperPath.length > 0)
+            ? "file://" + root.wallpaperPath
+            : ""
+    }
+
+    FastBlur {
+        id: bp1; anchors.fill: parent; source: wallpaperImage;
+        radius: root.blurSize; visible: root.blurPasses >= 1
+    }
+    FastBlur {
+        id: bp2; anchors.fill: parent; source: bp1;
+        radius: root.blurSize; visible: root.blurPasses >= 2
+    }
+    FastBlur {
+        id: bp3; anchors.fill: parent; source: bp2;
+        radius: root.blurSize; visible: root.blurPasses >= 3
+    }
+    FastBlur {
+        id: bp4; anchors.fill: parent; source: bp3;
+        radius: root.blurSize; visible: root.blurPasses >= 4
+    }
+    FastBlur {
+        id: bp5; anchors.fill: parent; source: bp4;
+        radius: root.blurSize; visible: root.blurPasses >= 5
+    }
+    FastBlur {
+        id: bp6; anchors.fill: parent; source: bp5;
+        radius: root.blurSize; visible: root.blurPasses >= 6
+    }
+    FastBlur {
+        id: bp7; anchors.fill: parent; source: bp6;
+        radius: root.blurSize; visible: root.blurPasses >= 7
+    }
+    FastBlur {
+        id: bp8; anchors.fill: parent; source: bp7;
+        radius: root.blurSize; visible: root.blurPasses >= 8
+    }
+
+    readonly property var _blurStages: [bp1, bp2, bp3, bp4, bp5, bp6, bp7, bp8]
+    readonly property var _finalBlurStage: _blurStages[Math.max(0, Math.min(root.blurPasses, 8) - 1)]
+
+    BrightnessContrast {
+        id: backgroundOutput
+        anchors.fill: parent
+        source: root._finalBlurStage
+        brightness: root.brightness - 1.0
+        contrast: 0
+        visible: root.enableBlur && wallpaperImage.status === Image.Ready
+        opacity: 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 250; easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    Connections {
+        target: wallpaperImage
+
+        function onStatusChanged() {
+            if (wallpaperImage.status === Image.Ready && root.enableBlur) {
+                backgroundOutput.opacity = 1
+            }
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#1e1e2e"
+        opacity: root.enableBlur ? (1 - backgroundOutput.opacity) * 0.6 : 0
+        visible: root.enableBlur
     }
 
     // Clock and Date
@@ -37,27 +123,6 @@ Item {
             width: timeText.implicitWidth
             height: timeText.implicitHeight
 
-            readonly property string outlineColor: "#40000000"
-            readonly property real outlineOffset: 2.2
-
-            // 8-direction outline layer, drawn behind the main text
-            Repeater {
-                model: [
-                    [-1,-1], [0,-1], [1,-1],
-                    [-1, 0],         [1, 0],
-                    [-1, 1], [0, 1], [1, 1]
-                ]
-                delegate: Text {
-                    required property var modelData
-                    x: modelData[0] * timeWrap.outlineOffset
-                    y: modelData[1] * timeWrap.outlineOffset
-                    text: timeText.text
-                    color: timeWrap.outlineColor
-                    font: timeText.font
-                    opacity: 0.85
-                }
-            }
-
             Text {
                 id: timeText
                 color: root.text
@@ -71,37 +136,17 @@ Item {
                 function formatted() {
                     return Qt.formatTime(new Date(), "hh:mm")
                 }
+
                 text: formatted()
             }
         }
 
-        // Date (with outline for legibility on light backgrounds)
+        // Date
         Item {
             id: dateWrap
             anchors.horizontalCenter: parent.horizontalCenter
             width: dateText.implicitWidth
             height: dateText.implicitHeight
-
-            readonly property string outlineColor: "#59000000"
-            readonly property real outlineOffset: 1.1
-
-            Repeater {
-                model: [
-                    [0,-1],
-                    [-1, 0],
-                    [1, 0],
-                    [0, 1]
-                ]
-                delegate: Text {
-                    required property var modelData
-                    x: modelData[0] * dateWrap.outlineOffset
-                    y: modelData[1] * dateWrap.outlineOffset
-                    text: dateText.text
-                    color: dateWrap.outlineColor
-                    font: dateText.font
-                    opacity: 0.75
-                }
-            }
 
             Text {
                 id: dateText
@@ -115,10 +160,11 @@ Item {
 
                 function formatted() {
                     var d = new Date()
-                    var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
-                    var months = ["January","February","March","April","May","June", "July","August","September","October","November","December"]
+                    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
                     return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
                 }
+
                 text: formatted().toUpperCase()
             }
         }
@@ -144,13 +190,25 @@ Item {
         }
         text: "✗ Wrong password"
         color: root.red
-        font { pixelSize: 12 }
+        font {
+            pixelSize: 12
+        }
         opacity: 0
         visible: opacity > 0
-        Behavior on opacity { NumberAnimation { duration: 180 } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 180
+            }
+        }
 
-        function show() { opacity = 1; hideTimer.restart() }
-        Timer { id: hideTimer; interval: 2400; onTriggered: errorText.opacity = 0 }
+        function show() {
+            opacity = 1;
+            hideTimer.restart()
+        }
+
+        Timer {
+            id: hideTimer; interval: 2400; onTriggered: errorText.opacity = 0
+        }
     }
 
     // Caps lock warning
@@ -164,19 +222,27 @@ Item {
         spacing: 5
         opacity: root.context.capsLockOn ? 1 : 0
         visible: opacity > 0
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "\uf023"
-            font { pixelSize: 11 }
+            font {
+                pixelSize: 11
+            }
             color: root.yellow
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "Caps Lock is on"
             color: root.yellow
-            font { pixelSize: 11 }
+            font {
+                pixelSize: 11
+            }
         }
     }
 
@@ -199,14 +265,18 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf007"
-                    font { pixelSize: 13 }
+                    font {
+                        pixelSize: 13
+                    }
                     color: root.subtext0
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: userCollect.text.trim().length > 0 ? userCollect.text.trim() : "user"
                     color: root.subtext0
-                    font { pixelSize: 13 }
+                    font {
+                        pixelSize: 13
+                    }
                 }
             }
 
@@ -214,7 +284,9 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "·"
                 color: root.overlay0
-                font { pixelSize: 13 }
+                font {
+                    pixelSize: 13
+                }
             }
 
             Row {
@@ -222,14 +294,18 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "\uf11c"
-                    font { pixelSize: 13 }
+                    font {
+                        pixelSize: 13
+                    }
                     color: root.subtext0
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: kbCollect.text.trim().length > 0 ? kbCollect.text.trim() : "en"
                     color: root.subtext0
-                    font { pixelSize: 13 }
+                    font {
+                        pixelSize: 13
+                    }
                 }
             }
         }
@@ -259,7 +335,6 @@ Item {
                     font {
                         pixelSize: root.context.password.length > 0 ? 11 : 14
                         letterSpacing: root.context.password.length > 0 ? 4 : 1
-                        family: root.nerdFont
                     }
                     clip: true
                 }
@@ -267,6 +342,7 @@ Item {
 
             Connections {
                 target: root.context
+
                 function onAuthFailed() {
                     errorText.show()
                 }
@@ -309,14 +385,18 @@ Item {
         id: userProc
         command: ["id", "-un"]
         running: true
-        stdout: StdioCollector { id: userCollect }
+        stdout: StdioCollector {
+            id: userCollect
+        }
     }
 
     Process {
         id: kbProc
         command: ["bash", "-c", "hyprctl devices -j | jq -r '[.keyboards[]|select(.main)][0].active_keymap // \"en\"'"]
         running: true
-        stdout: StdioCollector { id: kbCollect }
+        stdout: StdioCollector {
+            id: kbCollect
+        }
     }
     Timer {
         interval: 2000; running: true; repeat: true
@@ -365,7 +445,11 @@ Item {
             border.width: armed ? 1 : 0
             border.color: root.red
 
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
 
             Image {
                 anchors.centerIn: parent

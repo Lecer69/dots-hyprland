@@ -15,6 +15,7 @@ import qs.lock
 import qs.polkit
 import qs.settings
 import qs.gamma
+import qs.todo
 import qs.cheatsheet
 import qs.wellbeing
 import qs.battery
@@ -85,6 +86,11 @@ ShellRoot {
     GammaWindow {
         id: gammaWindow
         Component.onCompleted: console.log("[shell] GammaWindow completed")
+    }
+
+    TodoWindow {
+        id: todoWindow
+        Component.onCompleted: console.log("[shell] TodoWindow completed")
     }
 
     Process {

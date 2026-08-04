@@ -67,6 +67,15 @@ Singleton {
                 property bool centerIcons: false
             }
 
+            // Lock Screen
+            property JsonObject lockScreen: JsonObject {
+                property bool enableBlur: false
+                property int blurSize: 15
+                property int blurPasses: 5
+                property real brightness: 0.8
+                property bool blockVerticalScreens: false
+           }
+
             // osu!
             property JsonObject osu: JsonObject {
                 property bool disableNotifications: true

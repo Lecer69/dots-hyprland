@@ -33,7 +33,7 @@ PanelWindow {
 
             if (SettingsData.s.osu.disableNotifications) {
                 const focusedAppId = ToplevelManager.activeToplevel?.appId ?? ""
-                if (focusedAppId.toLowerCase().contains("osu!") || focusedAppId.toLowerCase().contains("osu.exe")) return
+                if (focusedAppId.toLowerCase().includes("osu!") || focusedAppId.toLowerCase().includes("osu.exe")) return
             }
 
             if (notifModel.count === 0) {
