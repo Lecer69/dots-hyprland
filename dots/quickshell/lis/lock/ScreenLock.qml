@@ -21,27 +21,94 @@ QtObject {
 
     Component.onCompleted: {
         if (SettingsData.s.lockScreen.enableBlur) {
-            _wallpaperConfCat.running = true
+            _hyprctlActiveQuery.running = true
         }
     }
+
+    property bool _wallpaperResolvedForBlur: false
+
+    onEnableBlurStateChanged: {
+        var enabled = SettingsData.s.lockScreen.enableBlur
+        if (enabled && !root._wallpaperResolvedForBlur) {
+            root._wallpaperResolvedForBlur = true
+            _hyprctlActiveQuery.running = true
+        } else if (!enabled) {
+            root._wallpaperResolvedForBlur = false
+        }
+    }
+
+    signal enableBlurStateChanged()
+
+    property Connections _enableBlurWatcher: Connections {
+        target: SettingsData.s ? SettingsData.s.lockScreen : null
+        function onEnableBlurChanged() {
+            root.enableBlurStateChanged()
+        }
+    }
+
+    property Process _hyprctlActiveQuery: Process {
+        id: hyprctlActiveQuery
+        command: ["hyprctl", "hyprpaper", "listactive"]
+        stdout: StdioCollector { id: hyprctlActiveOutput }
+        stderr: StdioCollector { id: hyprctlActiveError }
+        onRunningChanged: {
+            if (!running) {
+                var resolvedOk = false
+                if (hyprctlActiveQuery.exitCode === 0) {
+                    var out = hyprctlActiveOutput.text.trim()
+                    if (out.length > 0) {
+                        resolvedOk = root._parseHyprctlActive(out)
+                    }
+                }
+
+                if (!resolvedOk) {
+                    _wallpaperConfCat.running = true
+                }
+            }
+        }
+    }
+
+    function _parseHyprctlActive(text) {
+        var map = {}
+        var lines = text.split("\n")
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim()
+            if (line.length === 0) continue
+            var eq = line.indexOf("=")
+            if (eq < 0) continue
+            var mon = line.slice(0, eq).trim()
+            var path = line.slice(eq + 1).trim()
+            if (mon.length === 0 || path.length === 0) continue
+            map[mon] = path
+        }
+        var merged = Object.assign({}, root._wallpaperPaths, map)
+        root._wallpaperPaths = merged
+        root._hpHyprctlMonitors = Object.keys(map)
+        return Object.keys(map).length > 0
+    }
+
+    property var _hpHyprctlMonitors: []
 
     property Process _wallpaperConfCat: Process {
         id: wallpaperConfCat
         command: ["bash", "-c",
             "conf=\"$HOME/.config/hypr/hyprpaper.conf\"; " +
-            "[ -f \"$conf\" ] || exit 0; " +
+            "if [ ! -f \"$conf\" ]; then echo \"HYPRPAPER_CONF_MISSING:$conf\" >&2; exit 0; fi; " +
             "while IFS= read -r line; do " +
             "  trimmed=$(echo \"$line\" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'); " +
             "  case \"$trimmed\" in " +
             "    source\\ =*|source=*) " +
             "      src=$(echo \"$trimmed\" | sed -e 's/^source[[:space:]]*=[[:space:]]*//'); " +
             "      src=$(eval echo \"$src\"); " +
-            "      for f in $src; do [ -f \"$f\" ] && cat \"$f\"; done ;; " +
+            "      for f in $src; do " +
+            "        if [ -f \"$f\" ]; then cat \"$f\"; else echo \"HYPRPAPER_SOURCE_MISSING:$f\" >&2; fi; " +
+            "      done ;; " +
             "    *) echo \"$line\" ;; " +
             "  esac; " +
             "done < \"$conf\""
         ]
         stdout: StdioCollector { id: wallpaperConfOutput }
+        stderr: StdioCollector { id: wallpaperConfError }
         onRunningChanged: {
             if (!running) {
                 root._parseWallpaperConf(wallpaperConfOutput.text)
@@ -98,8 +165,18 @@ QtObject {
             }
         }
 
-        root._wallpaperPaths = map
-        root._wallpaperFallback = fallback
+        var hyprctlMonitors = root._hpHyprctlMonitors || []
+        for (var k = 0; k < hyprctlMonitors.length; k++) {
+            var name = hyprctlMonitors[k]
+            if (map.hasOwnProperty(name)) {
+                delete map[name]
+            }
+        }
+
+        root._wallpaperPaths = Object.assign({}, root._wallpaperPaths, map)
+        if (fallback.length > 0 || root._wallpaperFallback.length === 0) {
+            root._wallpaperFallback = fallback
+        }
     }
 
     function _expandPath(p) {
@@ -133,7 +210,7 @@ QtObject {
         root.isLocked = true
 
         if (SettingsData.s.lockScreen.enableBlur) {
-            _wallpaperConfCat.running = true
+            _hyprctlActiveQuery.running = true
         }
 
         _wlLock.locked = true

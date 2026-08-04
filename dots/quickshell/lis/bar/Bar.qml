@@ -154,7 +154,7 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                Divider { visible: !vertical }
+                Divider {}
 
                 BluetoothWidget {
                     visible: !vertical && SettingsData.s.bar.showBluetooth
@@ -168,7 +168,6 @@ PanelWindow {
 
                 SettingsButton {
                     id: settingsBtn
-                    visible: !vertical
                     anchors.verticalCenter: parent.verticalCenter
                     otherMenu: powerBtn.menu
                     screen: bar.screen

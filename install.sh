@@ -9,6 +9,7 @@ SKIP_UPDATE=0
 SKIP_PACKAGES=0
 SKIP_QUICKSHELL=0
 SKIP_BACKUP=0
+BACKUP_ONLY=0
 
 print_help() {
     cat <<EOF
@@ -24,12 +25,14 @@ Options:
                       system update as well)
   --skip-quickshell   Don't install/update the quickshell config
   --skip-backup       Don't back up existing config before overwriting it (not recommended)
+  --backup            Only back up existing config (hypr, quickshell) and exit, no install/update
   -h, --help          Show this help message and exit
 
 Examples:
   $(basename "${BASH_SOURCE[0]}")                   # interactive install/update
   $(basename "${BASH_SOURCE[0]}") --skip-backup     # skip backup step
   $(basename "${BASH_SOURCE[0]}") --no-packages     # only sync dotfiles, no package install
+  $(basename "${BASH_SOURCE[0]}") --backup          # take a backup only, don't install/update
 EOF
 }
 
@@ -46,6 +49,9 @@ for arg in "$@"; do
             ;;
         --skip-backup)
             SKIP_BACKUP=1
+            ;;
+        --backup)
+            BACKUP_ONLY=1
             ;;
         -h|--help)
             print_help
@@ -205,12 +211,7 @@ backup_dotfiles() {
 
     # Figure out which top-level names under $CONFIG_DIR we're about to touch.
     local -a candidates=()
-    if [[ "$mode" == "update" ]]; then
-        candidates=("hypr")
-        if [[ "$SKIP_QUICKSHELL" -eq 0 ]]; then
-            candidates+=("quickshell")
-        fi
-    else
+    if [[ "$mode" == "standalone" || "$mode" == "install" ]]; then
         if [[ -d "$DOTS_DIR" ]]; then
             shopt -s dotglob nullglob
             local item
@@ -223,6 +224,11 @@ backup_dotfiles() {
                 candidates+=("$name")
             done
             shopt -u dotglob nullglob
+        fi
+    elif [[ "$mode" == "update" ]]; then
+        candidates=("hypr")
+        if [[ "$SKIP_QUICKSHELL" -eq 0 ]]; then
+            candidates+=("quickshell")
         fi
     fi
 
@@ -641,6 +647,19 @@ do_install() {
     fi
 }
 
+# Backup-only path
+do_backup_only() {
+    if [[ "$SKIP_BACKUP" -eq 1 ]]; then
+        error "--backup and --skip-backup cannot be used together."
+        exit 1
+    fi
+
+    backup_dotfiles "standalone"
+
+    echo
+    success "Backup done!"
+}
+
 # Update path
 do_update() {
     step "Updating dots-hyprland"
@@ -661,6 +680,11 @@ do_update() {
 # Entry point
 main() {
     require_not_root
+
+    if [[ "$BACKUP_ONLY" -eq 1 ]]; then
+        do_backup_only
+        return
+    fi
 
     echo -e "${C_BOLD}${C_GREEN}Welcome!${C_RESET} This script will install ${C_BOLD}dots-hyprland${C_RESET} on your system."
     echo
