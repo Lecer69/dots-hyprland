@@ -93,7 +93,7 @@ Column {
                         onPressed: {
                             if (root.draggingTargetWorkspace === -1) {
                                 WorkspaceOverviewState.overviewOpen = false
-                                Hyprland.dispatch(`workspace ${workspace.workspaceValue}`)
+                                Hyprland.dispatch(`hl.dsp.focus({ workspace = "${workspace.workspaceValue}" })`)
                             }
                         }
                     }

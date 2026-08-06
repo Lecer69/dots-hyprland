@@ -2,12 +2,14 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import qs.settings.data
 
 QtObject {
     id: root
 
     readonly property var _palette: ["#89b4fa", "#a6e3a1", "#f9e2af", "#cba6f7", "#f38ba8", "#94e2d5", "#fab387", "#89dceb"]
 
+    readonly property bool enabled: SettingsData.s.tracking.wellbeingEnabled
     property string activeApp: ""
     property string todayKey: Qt.formatDate(new Date(), "yyyy-MM-dd")
     property var sessionTotals: ({})
@@ -19,6 +21,9 @@ QtObject {
 
     _hyprConn: Connections {
         function onRawEvent(event) {
+            if (!root.enabled)
+                return ;
+
             if (event.name === "activewindow") {
                 var idx = event.data.indexOf(",");
                 root.activeApp = idx >= 0 ? event.data.substring(0, idx) : event.data;
@@ -28,12 +33,19 @@ QtObject {
         target: Hyprland
     }
 
+    onEnabledChanged: {
+        if (!enabled) {
+            activeApp = "";
+            _flush();
+        }
+    }
+
     property Timer _ticker
 
     _ticker: Timer {
         interval: 1000
         repeat: true
-        running: root._loaded
+        running: root._loaded && root.enabled
         onTriggered: {
             if (root.activeApp !== "") {
                 var t = root.sessionTotals;

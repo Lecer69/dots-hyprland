@@ -125,6 +125,26 @@ ScrollView {
         }
 
         Item { height: 16 }
+        SectionHeader { title: "Tracking" }
+
+        SettingRow {
+            label: "Enable Digital Wellbeing"
+            description: "Track active-app usage time for the Wellbeing panel"
+            ToggleSwitch {
+                checked: SettingsData.s.tracking.wellbeingEnabled
+                onToggled: v => SettingsData.s.tracking.wellbeingEnabled = v
+            }
+        }
+        SettingRow {
+            label: "Enable Internet Usage"
+            description: "Track per-app network traffic for the Internet Usage panel"
+            ToggleSwitch {
+                checked: SettingsData.s.tracking.internetUsageEnabled
+                onToggled: v => SettingsData.s.tracking.internetUsageEnabled = v
+            }
+        }
+
+        Item { height: 16 }
         SectionHeader { title: "Workspace Overview" }
 
         SettingRow {

@@ -310,6 +310,12 @@ fix_hyprpaper_monitor() {
     fi
 }
 
+run_hyprpaper() {
+    killall hyprpaper
+    nohup hyprpaper >/dev/null 2>&1 &
+    disown
+}
+
 # Steps
 replace_dotfiles() {
     # $1 (optional): "update" -> only sync quickshell/ and hypr/ (preserving
@@ -367,8 +373,11 @@ replace_dotfiles() {
                     fi
 
                     local hypr_target="$target/$hname"
-                    if [[ -e "$hypr_target" ]]; then
-                        rm -rf "$hypr_target"
+                    if [[ -e "$hypr_target" || -L "$hypr_target" ]]; then
+                        if ! rm -rf "$hypr_target"; then
+                            error "Failed to remove existing $hypr_target, aborting to avoid nesting copy."
+                            exit 1
+                        fi
                     fi
                     cp -r "$hypr_item" "$hypr_target"
                 done
@@ -411,18 +420,28 @@ replace_dotfiles() {
 
             local target="$CONFIG_DIR/$name"
 
-            if [[ -e "$target" ]]; then
+            if [[ -e "$target" || -L "$target" ]]; then
                 info "Removing existing $target"
-                rm -rf "$target"
+                if ! rm -rf "$target"; then
+                    error "Failed to remove existing $target, aborting to avoid nesting copy."
+                    exit 1
+                fi
+                if [[ -e "$target" || -L "$target" ]]; then
+                    error "$target still exists after rm -rf, aborting to avoid nesting copy."
+                    exit 1
+                fi
             fi
 
             info "Copying $name -> $target"
             cp -r "$item" "$target"
         done
 
-        success "Dotfiles installed."
+        info "Running wallpaper service."
 
         fix_hyprpaper_monitor
+        run_hyprpaper
+
+        success "Dotfiles installed."
     fi
 
     if command -v hyprctl >/dev/null 2>&1; then

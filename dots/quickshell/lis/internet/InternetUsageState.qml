@@ -1,12 +1,14 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.settings.data
 
 QtObject {
     id: root
 
     readonly property var _palette: ["#89b4fa", "#a6e3a1", "#f9e2af", "#cba6f7", "#f38ba8", "#94e2d5", "#fab387", "#89dceb"]
 
+    readonly property bool enabled: SettingsData.s.tracking.internetUsageEnabled
     property string activeApp: ""
     property string todayKey: Qt.formatDate(new Date(), "yyyy-MM-dd")
     property var sessionTotals: ({})
@@ -40,6 +42,10 @@ QtObject {
     }
 
     function _restartNetHogs(ifaceList) {
+        if (!root.enabled) {
+            _netHogs.running = false;
+            return ;
+        }
         if (ifaceList.length === 0) {
             if (root.debugLogging)
                 console.log("[InternetUsage] no interfaces found, skipping nethogs (will retry)");
@@ -163,7 +169,7 @@ QtObject {
     _interfacePoller: Timer {
         interval: 15000
         repeat: true
-        running: root._loaded
+        running: root._loaded && root.enabled
         triggeredOnStart: true
         onTriggered: {
             if (!interfaceWatcher.running)
@@ -172,7 +178,21 @@ QtObject {
         }
     }
 
+    onEnabledChanged: {
+        if (!enabled) {
+            _netHogs.running = false;
+            activeApp = "";
+            currentSessionMB = 0;
+            _flush();
+        } else if (_loaded) {
+            interfaceWatcher.running = true;
+        }
+    }
+
     function _applySample(appName, sentKBps, recvKBps) {
+        if (!root.enabled)
+            return ;
+
         var mb = (sentKBps + recvKBps) / 1024;
         if (mb <= 0)
             return ;
@@ -251,7 +271,8 @@ QtObject {
                 };
             }
             root._loaded = true;
-            interfaceWatcher.running = true;
+            if (root.enabled)
+                interfaceWatcher.running = true;
         }
 
         stdout: SplitParser {

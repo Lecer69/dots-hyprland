@@ -58,6 +58,12 @@ Singleton {
                 property int workspaceNumbers: 10
             }
 
+            // Tracking
+            property JsonObject tracking: JsonObject {
+                property bool wellbeingEnabled: true
+                property bool internetUsageEnabled: true
+            }
+
             // Workspace Overview
             property JsonObject workspaceOverview: JsonObject {
                 property int rows: 2
