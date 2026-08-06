@@ -18,6 +18,7 @@ hl.bind("SUPER + Y", hl.dsp.global("quickshell:wellbeing"), { description = "She
 hl.bind("SUPER + O", hl.dsp.global("quickshell:notificationCenter"), { description = "Shell: Notification Center panel" })
 
 hl.bind("SUPER + CTRL + R", hl.dsp.exec_cmd("killall qs quickshell; qs -c $qsConfig &"), { description = "Shell: Restart shell" })
+hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("killall hyprpaper; hyprpaper &"), { description = "Shell: Restart wallpaper" })
 hl.bind("SUPER + J", hl.dsp.global("quickshell:overlayToggle"), { description = "Shell: Toggle widget overlay" })
 
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(qsIpcCall .. " brightness increment || brightnessctl s 5%+"),

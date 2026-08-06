@@ -1,6 +1,33 @@
 #!/usr/bin/env bash
 
 case "$1" in
+    matugen)
+        [ "$#" -ne 3 ] && exit 1
+        matugen color hex "$2" -m dark
+
+        XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+        color=$(tr -d '\n' < "$XDG_STATE_HOME/quickshell/user/generated/color.txt")
+
+        case "$3" in
+            content)      sv_num=0 ;;
+            expressive)   sv_num=1 ;;
+            fidelity)     sv_num=2 ;;
+            monochrome)   sv_num=3 ;;
+            neutral)      sv_num=4 ;;
+            tonal-spot)   sv_num=5 ;;
+            vibrant)      sv_num=6 ;;
+            rainbow)      sv_num=7 ;;
+            fruit-salad)  sv_num=8 ;;
+            "")           sv_num=5 ;;
+            *)
+                echo "Unknown scheme variant: $3" >&2
+                exit 1
+                ;;
+        esac
+
+        kde-material-you-colors -d --color "$color" -sv "$sv_num"
+        deactivate
+        ;;
     7z)
         [ "$#" -ne 3 ] && exit 1
         ARCHIVE="$2"

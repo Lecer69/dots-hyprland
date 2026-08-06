@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Quickshell
 import qs.settings.components
 import qs.settings.data
 import qs.settings
@@ -23,6 +24,76 @@ ScrollView {
             ColorPicker {
                 value: SettingsData.s.general.accentColor
                 onSelected: v => SettingsData.s.general.accentColor = v
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: 8
+            Layout.bottomMargin: 8
+            spacing: 8
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                spacing: 2
+
+                Text {
+                    text: "Color Scheme"
+                    font.pixelSize: 13
+                    color: "#eeeeee"
+                }
+                Text {
+                    text: "Material You scheme variant used when applying colors"
+                    font.pixelSize: 11
+                    color: "#777777"
+                }
+            }
+
+            ChipSelector {
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                options: ["content", "expressive", "fidelity", "monochrome", "neutral", "tonal-spot", "vibrant", "rainbow", "fruit-salad"]
+                value: SettingsData.s.general.colorScheme
+                onSelected: v => SettingsData.s.general.colorScheme = v
+            }
+        }
+
+        SettingRow {
+            label: "Apply Colors"
+            description: "Generate and apply the color scheme from your accent color"
+            Rectangle {
+                id: applyButton
+                height: 30
+                width: applyLabel.implicitWidth + 22
+                radius: 8
+                color: applyArea.pressed ? "#40ffffff" : (applyArea.containsMouse ? "#30ffffff" : "#14ffffff")
+                border.color: "#44ffffff"
+                border.width: 1
+
+                Behavior on color { ColorAnimation { duration: 100 } }
+
+                Text {
+                    id: applyLabel
+                    anchors.centerIn: parent
+                    text: "Apply"
+                    font { pixelSize: 12; weight: Font.Medium }
+                    color: "#ffffff"
+                }
+
+                MouseArea {
+                    id: applyArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        const hex = SettingsData.s.general.accentColor.replace("#", "")
+                        const scheme = SettingsData.s.general.colorScheme
+                        Quickshell.execDetached(["lis", "matugen", "#" + hex, scheme])
+                    }
+                }
             }
         }
 

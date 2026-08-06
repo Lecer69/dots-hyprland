@@ -150,7 +150,7 @@ PACMAN_PACKAGES=(
     qt5ct qt6ct qt5-wayland kvantum fuzzel breeze breeze-icons plasma-desktop
     grim wl-clipboard gwenview slurp plasma-nm ddcutil brightnessctl eza glu
     libqalculate cliphist gnome-system-monitor xdg-user-dirs xdotool ufw ark
-    gamemode
+    gamemode matugen
 )
 
 AUR_PACKAGES=(
@@ -514,6 +514,12 @@ install_aur_packages() {
     info "Installing quickshell-git"
     run_with_retry 10 yay -S --needed --rebuild quickshell-git
 
+    info "Installing python-materialyoucolor"
+    run_with_retry 10 yay -S --needed --rebuild python-materialyoucolor
+
+    info "Installing kde-material-you-colors"
+    run_with_retry 10 yay -S --needed --rebuild kde-material-you-colors
+
     info "Installing remaining AUR packages"
     run_with_retry 10 yay -S --needed "${AUR_PACKAGES[@]}"
 }
@@ -521,10 +527,18 @@ install_aur_packages() {
 do_systemctl() {
     step "Enabling services"
 
-    run sudo systemctl enable --now ufw
-    run sudo ufw enable
+    if confirm "Enable ufw (firewall)?"; then
+        run sudo systemctl enable --now ufw
+        run sudo ufw enable
+    else
+        info "Skipping ufw."
+    fi
 
-    run sudo systemctl enable --now power-profiles-daemon.service
+    if confirm "Enable power-profiles-daemon.service?"; then
+        run sudo systemctl enable --now power-profiles-daemon.service
+    else
+        info "Skipping power-profiles-daemon.service."
+    fi
 
     if confirm "Enable systemd-oomd.service?"; then
         run sudo systemctl enable --now systemd-oomd.service
@@ -538,7 +552,11 @@ do_systemctl() {
         info "Skipping bluetooth.service."
     fi
 
-    run sudo systemctl enable sddm
+    if confirm "Enable sddm (display manager)?"; then
+        run sudo systemctl enable sddm
+    else
+        info "Skipping sddm."
+    fi
 }
 
 setup_sddm() {
@@ -621,6 +639,11 @@ install_optional_packages() {
     done
 }
 
+set_theme() {
+    nohup "/home/"$USER"/.local/bin/lis" matugen '#FF0000' rainbow > /dev/null 2>&1 &
+    disown
+}
+
 do_install() {
     echo -e "${C_BOLD}This will replace your existing dotfiles in ~/.config with the ones from this repo.${C_RESET}"
     if ! confirm "Are you sure you want to continue with the installation?"; then
@@ -638,6 +661,7 @@ do_install() {
     run_last_commands
     install_custom_commands
     install_optional_packages
+    set_theme
 
     echo
     success "Installation done!"

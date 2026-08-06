@@ -4,7 +4,7 @@ import qs.settings.data
 import qs.settings.pages
 import qs.settings
 
-Row {
+Flow {
     id: root
 
     property var options: []
