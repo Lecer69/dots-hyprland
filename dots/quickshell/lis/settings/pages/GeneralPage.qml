@@ -91,7 +91,7 @@ ScrollView {
                     onClicked: {
                         const hex = SettingsData.s.general.accentColor.replace("#", "")
                         const scheme = SettingsData.s.general.colorScheme
-                        Quickshell.execDetached(["lis", "matugen", "#" + hex, scheme])
+                        Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.local/bin/lis", "matugen", "#" + hex, scheme])
                     }
                 }
             }
