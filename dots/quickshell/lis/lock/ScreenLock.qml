@@ -14,8 +14,6 @@ QtObject {
     property bool isLocked: false
     signal lockedChanged()
 
-    property var _savedWorkspaces: ({})
-    property bool _lockPending: false
     property var _wallpaperPaths: ({})
     property string _wallpaperFallback: ""
 
@@ -194,19 +192,19 @@ QtObject {
         return root._wallpaperFallback
     }
 
-    property Process _monitorsQuery: Process {
-        command: ["hyprctl", "monitors", "-j"]
-        stdout: StdioCollector { id: monitorsJson }
-        onRunningChanged: {
-            if (!running && root._lockPending) {
-                root._lockPending = false
-                root._applyLock(monitorsJson.text.trim())
+    function _focusFirstHorizontalMonitor() {
+        var screens = Quickshell.screens
+        for (var j = 0; j < screens.length; j++) {
+            var s = screens[j]
+            if (s.width >= s.height) {
+                HyprlandData.dispatchFocusMonitor(s.name)
+                break
             }
         }
     }
 
     function lock() {
-        if (root.isLocked) return
+        if (root.isLocked || _wlLock.locked) return
         root.isLocked = true
 
         if (SettingsData.s.lockScreen.enableBlur) {
@@ -214,60 +212,21 @@ QtObject {
         }
 
         _wlLock.locked = true
-        root._lockPending = true
-        _monitorsQuery.running = true
+        Qt.callLater(root._focusFirstHorizontalMonitor)
 
         root.lockedChanged()
     }
 
-    function _applyLock(json) {
-        var monitors
-        try { monitors = JSON.parse(json) } catch(e) { _wlLock.locked = true; return }
-
-        var saves = {}
-        for (var i = 0; i < monitors.length; i++) {
-            var mon = monitors[i]
-            saves[mon.name] = mon.activeWorkspace.id
-            var emptyWs = 2147483647 - i
-            HyprlandData.dispatchFocusMonitor(mon.name)
-            HyprlandData.dispatchMoveWorkspaceToMonitor(emptyWs, mon.name)
-            HyprlandData.dispatchWorkspace(emptyWs)
-        }
-        root._savedWorkspaces = saves
-
-        var screens = Quickshell.screens
-        for (var j = 0; j < screens.length; j++) {
-            var s = screens[j]
-            if (s.width >= s.height) {
-                HyprlandData.dispatchFocusMonitor(s.name)
-                break
-            }
-        }
+    function refocusLock() {
+        if (!root.isLocked) return
+        Qt.callLater(root._focusFirstHorizontalMonitor)
     }
 
     function _unlock() {
         _wlLock.locked = false
         root.isLocked = false
 
-        var saves = root._savedWorkspaces
-        var names = Object.keys(saves)
-        for (var i = 0; i < names.length; i++) {
-            var name = names[i]
-            var ws = saves[name]
-            HyprlandData.dispatchFocusMonitor(name)
-            HyprlandData.dispatchMoveWorkspaceToMonitor(ws, name)
-            HyprlandData.dispatchWorkspace(ws)
-        }
-        root._savedWorkspaces = {}
-
-        var screens = Quickshell.screens
-        for (var j = 0; j < screens.length; j++) {
-            var s = screens[j]
-            if (s.width >= s.height) {
-                HyprlandData.dispatchFocusMonitor(s.name)
-                break
-            }
-        }
+        Qt.callLater(root._focusFirstHorizontalMonitor)
 
         root.lockedChanged()
     }
@@ -283,6 +242,17 @@ QtObject {
     property WlSessionLock _wlLock: WlSessionLock {
         id: _wlLock
         locked: false
+
+        onLockedChanged: {
+            if (!locked && root.isLocked) {
+                // Compositor tore down the lock out from under us
+                // (e.g. another lock client grabbed it, or a race
+                // with unlock). Keep our flag in sync so lock()
+                // stays callable and doesn't re-enter while stale.
+                root.isLocked = false
+                root.lockedChanged()
+            }
+        }
 
         WlSessionLockSurface {
             id: lockSurfaceRoot
@@ -320,6 +290,6 @@ QtObject {
     property GlobalShortcut _shortcutFocus: GlobalShortcut {
         name: "lockFocus"
         description: "Re-focus lock input after suspend/resume"
-        onPressed: root.lock()
+        onPressed: root.refocusLock()
     }
 }

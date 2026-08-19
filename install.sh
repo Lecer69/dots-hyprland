@@ -150,7 +150,7 @@ PACMAN_PACKAGES=(
     qt5ct qt6ct qt5-wayland kvantum fuzzel breeze breeze-icons plasma-desktop
     grim wl-clipboard gwenview slurp plasma-nm ddcutil brightnessctl eza glu
     libqalculate cliphist gnome-system-monitor xdg-user-dirs xdotool ufw ark
-    gamemode matugen
+    gamemode matugen imagemagick
 )
 
 AUR_PACKAGES=(
@@ -162,7 +162,6 @@ AUR_PACKAGES=(
 
 OPTIONAL_PACKAGES=(
     nwg-displays
-    firefox
     code
 )
 
@@ -714,7 +713,11 @@ do_update() {
         exit 0
     fi
 
+    run killall qs quickshell
     replace_dotfiles "update"
+    run hyprctl reload
+    run qs -c lis
+
     install_custom_commands
 
     echo

@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import Qt5Compat.GraphicalEffects
+import qs.settings.data
 
 Item {
     id: root
@@ -426,10 +427,10 @@ Item {
         anchors {
             right: parent.right
             bottom: parent.bottom
-            rightMargin: 32
-            bottomMargin: 32
+            rightMargin: 42
+            bottomMargin: 42
         }
-        spacing: 12
+        spacing: 18
 
         component PowerButton: Rectangle {
             id: btn
@@ -441,9 +442,9 @@ Item {
             width: 44
             height: 44
             radius: 22
-            color: mouseArea.containsMouse ? "#f01a1a1a" : "#e30f0f0f"
+            color: mouseArea.containsMouse ? "#0A0A0A" : "#0F0F0F"
             border.width: armed ? 1 : 0
-            border.color: root.red
+            border.color: SettingsData.s.general.accentColor
 
             Behavior on color {
                 ColorAnimation {
@@ -470,7 +471,7 @@ Item {
                 width: tipText.implicitWidth + 16
                 height: tipText.implicitHeight + 8
                 radius: 6
-                color: "#cc111118"
+                color: "#121212"
 
                 Text {
                     id: tipText
