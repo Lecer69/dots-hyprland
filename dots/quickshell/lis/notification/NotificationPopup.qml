@@ -29,6 +29,22 @@ PanelWindow {
 
         onNotification: (notif) => {
             console.log("[Notifications] Received:", notif.appName, "|", notif.summary, "|", notif.body)
+
+            const icon = notif.appIcon
+            const iconSource = !icon || icon === "" ? ""
+                : (icon.startsWith("/") || icon.startsWith("file://")) ? icon
+                : "image://icon/" + icon
+
+            NotificationHistory.add({
+                appName: notif.appName,
+                summary: notif.summary,
+                body: notif.body,
+                appIcon: iconSource,
+                image: notif.image ?? "",
+                time: Qt.formatTime(new Date(), "hh:mm"),
+                defaultAction: () => notif.invokeAction("default")
+            })
+
             if (!NotificationState.notificationsEnabled) return
 
             if (SettingsData.s.osu.disableNotifications) {
@@ -49,21 +65,6 @@ PanelWindow {
             if (notifModel.count >= 8) {
                 notifModel.remove(0)
             }
-
-            const icon = notif.appIcon
-            const iconSource = !icon || icon === "" ? ""
-                : (icon.startsWith("/") || icon.startsWith("file://")) ? icon
-                : "image://icon/" + icon
-
-            NotificationHistory.add({
-                appName: notif.appName,
-                summary: notif.summary,
-                body: notif.body,
-                appIcon: iconSource,
-                image: notif.image ?? "",
-                time: Qt.formatTime(new Date(), "hh:mm"),
-                defaultAction: () => notif.invokeAction("default")
-            })
 
             notifModel.append({ notif: notif })
         }

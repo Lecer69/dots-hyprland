@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import qs.settings.components
 import qs.settings.data
 import qs.settings.pages
@@ -36,5 +37,11 @@ PanelWindow {
 
         layer.enabled: true
         layer.effect: null
+    }
+
+    GlobalShortcut {
+        name: "settings"
+        description: "Opens settings"
+        onPressed: settingsWindow.shown = !settingsWindow.shown
     }
 }

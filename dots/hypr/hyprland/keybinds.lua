@@ -9,8 +9,9 @@ local qsIpcCall = "qs -c $qsConfig ipc call"
 hl.bind("SUPER + Tab", hl.dsp.global("quickshell:launcherToggle"), { description = "Shell: Toggle search" })
 hl.bind("SUPER + SHIFT + Tab", hl.dsp.global("quickshell:workspaces"), { description = "Shell: Toggle workspaces overview" })
 
-hl.bind("SUPER + V", hl.dsp.global("quickshell:launcherClipboard"))
-hl.bind("SUPER + Period", hl.dsp.global("quickshell:launcherEmojis"))
+hl.bind("SUPER + ESCAPE", hl.dsp.global("quickshell:settings"), { description = "Shell: Open settings" })
+hl.bind("SUPER + V", hl.dsp.global("quickshell:launcherClipboard"), { description = "Shell: Toggle clipboard" })
+hl.bind("SUPER + Period", hl.dsp.global("quickshell:launcherEmojis"), { description = "Shell: Toggle emojies" })
 hl.bind("SUPER + Slash", hl.dsp.global("quickshell:cheatsheet"), { description = "Shell: Toggle cheatsheet" })
 hl.bind("SUPER + G", hl.dsp.global("quickshell:gamma"), { description = "Shell: Toggle gamma settings" })
 hl.bind("SUPER + N", hl.dsp.global("quickshell:internetusage"), { description = "Shell: Toggle Internet Usage panel" })

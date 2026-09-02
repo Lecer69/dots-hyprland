@@ -9,7 +9,7 @@ Item {
 
     property var screen: null
 
-    readonly property var activePlayer: {
+    readonly property var rawActivePlayer: {
         const players = Mpris.players.values
         let playing = null
         let any = null
@@ -22,6 +22,64 @@ Item {
         }
         return playing ?? any
     }
+
+    readonly property int idleTimeoutMs: 300000
+
+    property var activePlayer: null
+    property string idleKey: ""
+    property real lastPosition: -1
+    property real idleElapsedMs: 0
+
+    function playerKey(p) {
+        if (!p) return ""
+        return (p.trackTitle || "") + "|" + (p.trackArtist || "") + "|" + (p.identity || "")
+    }
+
+    function syncPlayer() {
+        const p = root.rawActivePlayer
+        const key = playerKey(p)
+
+        // Track (or player) changed — reset idle tracking.
+        if (key !== root.idleKey) {
+            root.idleKey = key
+            root.idleElapsedMs = 0
+            root.lastPosition = p ? p.position : -1
+            root.activePlayer = p
+            return
+        }
+
+        if (!p) {
+            root.activePlayer = null
+            return
+        }
+
+        if (p.isPlaying) {
+            root.idleElapsedMs = 0
+        } else if (p.position === root.lastPosition) {
+            root.idleElapsedMs += idleCheckTimer.interval
+        } else {
+            root.idleElapsedMs = 0
+        }
+
+        root.lastPosition = p.position
+
+        root.activePlayer = (root.idleElapsedMs >= root.idleTimeoutMs) ? null : p
+    }
+
+    Timer {
+        id: idleCheckTimer
+        interval: 1000
+        repeat: true
+        running: true
+        onTriggered: root.syncPlayer()
+    }
+
+    Connections {
+        target: Mpris
+        function onPlayersChanged() { root.syncPlayer() }
+    }
+
+    Component.onCompleted: root.syncPlayer()
 
     readonly property bool hasMedia: activePlayer !== null
     property bool panelOpen: false

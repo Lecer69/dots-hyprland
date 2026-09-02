@@ -100,6 +100,7 @@ hl.window_rule({match = {title = "^(Add Non-Steam Game)(.*)$" }, float = true})
 hl.window_rule({match = {title = ".*\\.exe" }, immediate = true})
 hl.window_rule({match = {title = ".*minecraft.*" }, immediate = true})
 hl.window_rule({match = {class = "^(steam_app).*" }, immediate = true})
+hl.window_rule({match = {class = "osu!" }, immediate = true})
 
 -- Special window
 hl.workspace_rule({ workspace = "special:special", gaps_out = 24 })
