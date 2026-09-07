@@ -16,6 +16,7 @@ import qs.polkit
 import qs.settings
 import qs.gamma
 import qs.todo
+import qs.calendar
 import qs.cheatsheet
 import qs.wellbeing
 import qs.battery
@@ -91,6 +92,11 @@ ShellRoot {
     TodoWindow {
         id: todoWindow
         Component.onCompleted: console.log("[shell] TodoWindow completed")
+    }
+
+    CalendarWindow {
+        id: calendarWindow
+        Component.onCompleted: console.log("[shell] CalendarWindow completed")
     }
 
     Process {

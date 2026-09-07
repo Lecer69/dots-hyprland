@@ -42,39 +42,53 @@ Item {
         }
     }
 
-    Row {
-        anchors.centerIn: parent
-        spacing: 8
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: calendarWindow.shown = !calendarWindow.shown
 
-        Text {
-            id: dateText
-            anchors.verticalCenter: parent.verticalCenter
-            font.pixelSize: 12
-            font.weight: Font.Normal
-            color: root.dateColor
-            verticalAlignment: Text.AlignVCenter
-            opacity: 0.8
-            visible: root.showDate
-            width: root.showDate ? implicitWidth : 0
-        }
+        Row {
+            anchors.centerIn: parent
+            spacing: 8
+            opacity: parent.containsMouse ? 0.75 : 1.0
 
-        Rectangle {
-            width: 3
-            height: 3
-            radius: 1.5
-            color: '#ffffff'
-            anchors.verticalCenter: parent.verticalCenter
-            visible: root.showDate
-        }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 100
+                }
+            }
 
-        Text {
-            id: timeText
-            anchors.verticalCenter: parent.verticalCenter
-            font.pixelSize: 14
-            font.weight: Font.Medium
-            color: root.timeColor
-            verticalAlignment: Text.AlignVCenter
-            font.letterSpacing: 0.5
+            Text {
+                id: dateText
+                anchors.verticalCenter: parent.verticalCenter
+                font.pixelSize: 12
+                font.weight: Font.Normal
+                color: root.dateColor
+                verticalAlignment: Text.AlignVCenter
+                opacity: 0.8
+                visible: root.showDate
+                width: root.showDate ? implicitWidth : 0
+            }
+
+            Rectangle {
+                width: 3
+                height: 3
+                radius: 1.5
+                color: '#ffffff'
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.showDate
+            }
+
+            Text {
+                id: timeText
+                anchors.verticalCenter: parent.verticalCenter
+                font.pixelSize: 14
+                font.weight: Font.Medium
+                color: root.timeColor
+                verticalAlignment: Text.AlignVCenter
+                font.letterSpacing: 0.5
+            }
         }
     }
 }
