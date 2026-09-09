@@ -115,13 +115,65 @@ Singleton {
             Hyprland.dispatch("moveworkspacetomonitor " + workspace + " " + monitor)
     }
 
+    readonly property int _refreshWindows: 1
+    readonly property int _refreshWorkspaces: 2
+    readonly property int _refreshMonitors: 4
+
+    property int _pendingRefreshMask: 0
+
+    function _requestRefresh(mask) {
+        root._pendingRefreshMask |= mask;
+        refreshCoalescer.restart();
+    }
+
+    Timer {
+        id: refreshCoalescer
+        interval: 120
+        running: false
+        onTriggered: {
+            if (root._pendingRefreshMask & root._refreshWindows) {
+                getClients.running = true;
+                getActiveWorkspace.running = true;
+            }
+            if (root._pendingRefreshMask & root._refreshWorkspaces) {
+                getWorkspaces.running = true;
+                getActiveWorkspace.running = true;
+            }
+            if (root._pendingRefreshMask & root._refreshMonitors) {
+                getMonitors.running = true;
+            }
+            root._pendingRefreshMask = 0;
+        }
+    }
+
+    // Per-group event names (Hyprland socket2). Deliberately excludes
+    // continuous events like tick / mouse* / *moveloop / screencast.
+    readonly property var _windowEvents: new Set([
+        "openwindow", "closewindow", "movewindow", "movewindowv2", "movewindowortho",
+        "changefloatingmode", "fullscreen", "pin", "alterzorder", "activespecial",
+        "windowtitle", "windowtitlev2", "activewindow", "activewindowv2",
+        "moveintogroup", "moveoutofgroup", "movewindowgroupid"
+    ])
+    readonly property var _workspaceEvents: new Set([
+        "workspace", "workspacev2", "createworkspace", "createworkspacev2",
+        "destroyworkspace", "destroyworkspacev2", "moveworkspace", "moveworkspacev2",
+        "focusedmon", "focusedmonv2"
+    ])
+    readonly property var _monitorEvents: new Set([
+        "monitoradded", "monitoraddedv2", "monitorremoved", "configreloaded"
+    ])
+
     Connections {
         target: Hyprland
 
         function onRawEvent(event) {
-            // console.log("Hyprland raw event:", event.name);
-            if (["openlayer", "closelayer", "screencast"].includes(event.name)) return;
-            updateAll()
+            const name = event.name;
+            if (root._windowEvents.has(name))
+                root._requestRefresh(root._refreshWindows);
+            else if (root._workspaceEvents.has(name))
+                root._requestRefresh(root._refreshWorkspaces);
+            else if (root._monitorEvents.has(name))
+                root._requestRefresh(root._refreshMonitors);
         }
     }
 

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.settings.data
 
 PanelWindow {
     id: root
@@ -9,14 +10,24 @@ PanelWindow {
     property string label: ""
     property bool showing: false
 
-    anchors.top: true
+    readonly property string barPosition: SettingsData.s.bar.position
+
+    anchors.top: barPosition === "top"
+    anchors.bottom: barPosition === "bottom"
+    anchors.left: barPosition === "left"
+    anchors.right: barPosition === "right"
+
+    WlrLayershell.margins.top: barPosition === "top" ? 15 : 0
+    WlrLayershell.margins.bottom: barPosition === "bottom" ? 15 : 0
+    WlrLayershell.margins.left: barPosition === "left" ? 15 : 0
+    WlrLayershell.margins.right: barPosition === "right" ? 15 : 0
+
     implicitWidth: 110
     implicitHeight: 40
     color: "transparent"
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
     visible: showing
-    WlrLayershell.margins.top: 15
 
     Rectangle {
         anchors.centerIn: parent

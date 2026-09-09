@@ -8,8 +8,14 @@ import Quickshell.Services.Pipewire
 import qs.notification
 import qs.settings.data
 
-Row {
+Grid {
     id: root
+    property bool vertical: false
+
+    rows: root.vertical ? 0 : 1
+    columns: root.vertical ? 1 : 0
+    horizontalItemAlignment: root.vertical ? Qt.AlignHCenter : Qt.AlignLeft
+    verticalItemAlignment: root.vertical ? Qt.AlignVCenter : Qt.AlignTop
     spacing: 9
 
     PwObjectTracker {

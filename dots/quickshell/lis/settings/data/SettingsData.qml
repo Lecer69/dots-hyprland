@@ -48,6 +48,7 @@ Singleton {
 
             // Bar
             property JsonObject bar: JsonObject {
+                property string position: "top"
                 property bool showBluetooth: true
                 property bool showGameMode: true
                 property bool showNetwork: true
@@ -56,6 +57,7 @@ Singleton {
                 property bool showColorPicker: true
                 property bool showScreenshot: true
                 property int workspaceNumbers: 10
+                property string workspaceStyle: "numbers"
             }
 
             // Tracking

@@ -4,41 +4,50 @@ import Quickshell
 PopupWindow {
     id: root
 
-    // Anchor to the hovered tray icon item
+    property bool shown: false
+    property string text: ""
+
     anchor.item: null
     anchor.edges: Edges.Bottom | Edges.Left
 
     color: "transparent"
-    visible: false
+    visible: shown || tipBg.opacity > 0.01
 
-    property string text: ""
-
-    implicitWidth: content.implicitWidth + 16
-    implicitHeight: content.implicitHeight + 10
+    implicitWidth: content.implicitWidth + 20
+    implicitHeight: 28
 
     function showFor(anchorItem, newText) {
         root.text = newText
         root.anchor.item = anchorItem
-        root.visible = true
+        root.shown = true
     }
 
     function hide() {
-        root.visible = false
+        root.shown = false
     }
 
     Rectangle {
+        id: tipBg
+
         anchors.fill: parent
-        radius: 6
-        color: "#e2121212"
-        border.color: "#30ffffff"
+        radius: 8
+        color: "#0f0f0f"
+        border.color: "#2a2a2a"
         border.width: 1
+
+        opacity: root.shown ? 1 : 0
+        scale: root.shown ? 1 : 0.95
+
+        Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
         Text {
             id: content
+
             anchors.centerIn: parent
             text: root.text
-            color: "#e3ffffff"
-            font.pixelSize: 12
+            color: "#c8c8c8"
+            font.pixelSize: 11
         }
     }
 }

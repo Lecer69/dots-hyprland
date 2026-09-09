@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Widgets
 import qs.tools
+import qs.settings.data
 
 Item {
     id: root
@@ -12,6 +13,7 @@ Item {
     property int wsIndex: 0
     property bool focused: false
     property bool occupied: false
+    property bool dotsMode: SettingsData.s.bar.workspaceStyle === "dots"
 
     property var monitor: Hyprland.monitorFor(bar.screen)
     property var ws: Hyprland.workspaces.values.find(w => w.id === root.wsIndex)
@@ -61,13 +63,29 @@ Item {
         id: wsNum
         anchors.centerIn: parent
         text: root.wsIndex
-        visible: root.iconSource === ""
+        visible: root.iconSource === "" && !root.dotsMode
         font.pixelSize: 14
         font.weight: Font.Medium
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         color: focused ? "#111111" : '#969696'
         Behavior on color { ColorAnimation { duration: 160 } }
+    }
+
+    // Workspace dot (end-4 style)
+    Rectangle {
+        id: wsDot
+        anchors.centerIn: parent
+        width: focused || focusedOnOtherMonitor ? 6 : 4.5
+        height: width
+        radius: width / 2
+        visible: root.iconSource === "" && root.dotsMode
+        color: (focused || focusedOnOtherMonitor)
+            ? "#111111"
+            : root.occupied ? '#969696' : '#5c5c5c'
+
+        Behavior on color { ColorAnimation { duration: 160 } }
+        Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     }
 
     // App icon

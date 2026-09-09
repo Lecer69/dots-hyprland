@@ -13,14 +13,21 @@ PanelWindow {
     id: bar
     color: "transparent"
 
+    // Only top/bottom docking is supported; stale values fall back to top
+    readonly property string position: SettingsData.s.bar.position === "bottom" ? "bottom" : "top"
+    // Compact layout: a portrait (vertical) screen
+    readonly property bool compact: bar.screen.height > bar.screen.width
+
     anchors {
-        top: true
+        top: position === "top"
+        bottom: position === "bottom"
         left: true
         right: true
     }
 
     implicitHeight: 36
-    exclusiveZone: implicitHeight - 7
+    implicitWidth: 36
+    exclusiveZone: 29
 
     property int pageSize: SettingsData.s.bar.workspaceNumbers
     property var monitor: Hyprland.monitorFor(bar.screen)
@@ -28,7 +35,6 @@ PanelWindow {
     property int startWs: Math.floor((currentWs - 1) / pageSize) * pageSize + 1
 
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
-    readonly property bool vertical: bar.screen.height > bar.screen.width
 
     Item {
         anchors.fill: parent
@@ -37,33 +43,35 @@ PanelWindow {
 
         BarPill {
             horizontalPadding: 8
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
 
-            Row {
+            x: 0
+            y: (parent.height - height) / 2
+
+            Grid {
+                rows: 1
+                columns: 0
+                horizontalItemAlignment: Qt.AlignLeft
+                verticalItemAlignment: Qt.AlignVCenter
                 spacing: 10
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
 
                 Image {
-                    visible: !vertical
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact
                     source: "../icons/arch-symbolic.svg"
                     width: 16
                     height: 16
                     fillMode: Image.PreserveAspectFit
                 }
 
-                CpuPercentage   { visible: vertical }
-                Divider         { visible: vertical }
-                MemoryPercentage { visible: vertical }
+                CpuPercentage   { visible: bar.compact }
+                Divider         { visible: bar.compact }
+                MemoryPercentage { visible: bar.compact }
 
                 Text {
                     id: windowTitle
-                    visible: !vertical
-                    width: Math.min(implicitWidth, vertical ? 250 : 400)
+                    visible: !bar.compact
+                    width: Math.min(implicitWidth, 400)
                     elide: Text.ElideRight
-                    text: ToplevelManager.activeToplevel?.title ?? ("Desktop - Workspace " + (monitor?.activeWorkspace?.id ?? "?"))
+                    text: ToplevelManager.activeToplevel?.title ?? ("Desktop - Workspace " + (bar.monitor?.activeWorkspace?.id ?? "?"))
                     font.pixelSize: 14
                     font.weight: Font.Medium
                     color: "#bdbdbd"
@@ -71,8 +79,7 @@ PanelWindow {
 
                 Text {
                     id: windowAppId
-                    visible: !vertical
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact
                     elide: Text.ElideRight
                     text: ToplevelManager.activeToplevel?.appId ?? ""
                     font.pixelSize: 11
@@ -82,13 +89,14 @@ PanelWindow {
         }
 
         BarPill {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            x: (parent.width - width) / 2
+            y: (parent.height - height) / 2
 
-            Row {
-                id: workspacesRow
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
+            Grid {
+                rows: 1
+                columns: 0
+                horizontalItemAlignment: Qt.AlignLeft
+                verticalItemAlignment: Qt.AlignVCenter
                 spacing: 4
 
                 Repeater {
@@ -96,7 +104,7 @@ PanelWindow {
 
                     WorkspacePill {
                         wsIndex: startWs + index
-                        focused: monitor?.activeWorkspace?.id === (startWs + index)
+                        focused: bar.monitor?.activeWorkspace?.id === (startWs + index)
                         occupied: {
                             const ws = Hyprland.workspaces.values.find(w => w.id === (startWs + index))
                             return ws !== undefined && ws !== null
@@ -108,75 +116,71 @@ PanelWindow {
 
         BarPill {
             horizontalPadding: 7
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
 
-            Row {
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+            x: parent.width - width
+            y: (parent.height - height) / 2
+
+            Grid {
+                rows: 1
+                columns: 0
+                horizontalItemAlignment: Qt.AlignLeft
+                verticalItemAlignment: Qt.AlignVCenter
                 spacing: 10
 
                 BatteryWidget {
                     id: batteryWidget
-                    visible: !vertical
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact
                 }
 
                 Divider {
-                    visible: !vertical && mediaWidget.hasMedia
+                    visible: !bar.compact && mediaWidget.hasMedia
                 }
 
                 MediaWidget {
                     id: mediaWidget
-                    visible: !vertical && hasMedia
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact && hasMedia
                     screen: bar.screen
                 }
 
                 Divider {
-                    visible: !vertical
+                    visible: !bar.compact && sysTray.count > 0
                 }
 
                 SysTrayWidget {
                     id: sysTray
-                    visible: !vertical
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact
+                    screen: bar.screen
                 }
 
-                Divider { visible: !vertical && sysTray.count > 0 }
+                Divider { visible: !bar.compact && sysTray.count > 0 }
 
-                UtilityButtons { anchors.verticalCenter: parent.verticalCenter }
+                UtilityButtons { }
 
                 Divider { visible: SettingsData.s.bar.showClockAndDate }
 
                 ClockWidget {
                     visible: SettingsData.s.bar.showClockAndDate
-                    anchors.verticalCenter: parent.verticalCenter
                 }
 
-                Divider {}
+                Divider { }
 
                 BluetoothWidget {
-                    visible: !vertical && SettingsData.s.bar.showBluetooth
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact && SettingsData.s.bar.showBluetooth
                 }
 
                 WifiWidget {
-                    visible: !vertical && SettingsData.s.bar.showNetwork
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact && SettingsData.s.bar.showNetwork
                 }
 
                 SettingsButton {
                     id: settingsBtn
-                    anchors.verticalCenter: parent.verticalCenter
                     otherMenu: powerBtn.menu
                     screen: bar.screen
                 }
 
                 PowerButton {
                     id: powerBtn
-                    visible: !vertical
-                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !bar.compact
                     otherMenu: settingsBtn.menu
                     screen: bar.screen
                 }

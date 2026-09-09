@@ -10,7 +10,8 @@ PanelWindow {
     property Item anchorItem: null
     signal closeRequested()
 
-    visible: shown
+    // Stay visible while the panel fades out
+    visible: shown || panel.opacity > 0.01
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
@@ -37,23 +38,26 @@ PanelWindow {
     property real lockedX: 0
     property real lockedY: 0
 
-    onShownChanged: {
-        if (shown && anchorItem && root.screen) {
-            const pos = anchorItem.mapToGlobal(0, 0)
-            const screenX = pos.x - root.screen.x
-            const screenY = pos.y - root.screen.y
-            const sw = root.screen.width
-            const sh = root.screen.height
-            const centeredX = screenX + (anchorItem.width / 2) - (340 / 2)
-            lockedX = Math.max(8, Math.min(sw - 340 - 8, centeredX + 12))
-            lockedY = Math.max(8, Math.min(sh - 160 - 8, screenY + anchorItem.height + 12))
-        }
+    function updateAnchor(): void {
+        if (!shown || !anchorItem || !root.screen) return
+        const pos = anchorItem.mapToGlobal(0, 0)
+        const screenX = pos.x - root.screen.x
+        const screenY = pos.y - root.screen.y
+        const sw = root.screen.width
+        const sh = root.screen.height
+        const pw = panel.width
+        const ph = panel.contentHeight
+        const centeredX = screenX + (anchorItem.width / 2) - (pw / 2)
+        lockedX = Math.max(8, Math.min(sw - pw - 8, centeredX + 12))
+        lockedY = Math.max(8, Math.min(sh - ph - 8, screenY + anchorItem.height + 12))
     }
+
+    onShownChanged: updateAnchor()
 
     MediaPanel {
         id: panel
-        width: 340
-        height: 160
+        width: 360
+        height: panel.contentHeight
         player: root.player
         shown: root.shown
 

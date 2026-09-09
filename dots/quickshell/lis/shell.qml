@@ -99,6 +99,11 @@ ShellRoot {
         Component.onCompleted: console.log("[shell] CalendarWindow completed")
     }
 
+    PowerDialog {
+        id: powerDialog
+        Component.onCompleted: console.log("[shell] PowerDialog completed")
+    }
+
     Process {
         command: ["snixembed", "--fork"]
         running: true

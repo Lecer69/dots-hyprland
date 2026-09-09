@@ -5,10 +5,10 @@ import Quickshell.Wayland
 PanelWindow {
     id: root
 
-    property int menuWidth:  130
-    property int barHeight:  36
+    property int menuWidth: 130
     property list<QtObject> items: []
     property var targetScreen: null
+    property Item anchorItem: null
 
     screen: targetScreen ?? Quickshell.screens[0]
 
@@ -18,28 +18,83 @@ PanelWindow {
     readonly property int paddingV:    5
     readonly property int panelHeight: items.length * itemHeight + paddingV * 2 + (items.length - 1) * 2
 
-    visible: true
+    // Stay visible while the panel fades out
+    visible: isOpen || panel.opacity > 0.01
     color: "transparent"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: isOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.exclusiveZone: -1
+    WlrLayershell.namespace: "quickshell:dropdown"
 
-    WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: isOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-
-    anchors.top:    true
-    anchors.bottom: true
-    anchors.left:   true
-    anchors.right:  true
-
-    exclusionMode: ExclusionMode.Ignore
-
-    mask: Region {
-        item: panel.opacity > 0 ? panel : null
+    anchors {
+        top: true
+        bottom: true
+        left: true
+        right: true
     }
 
+    Shortcut {
+        sequences: ["Escape"]
+        onActivated: root.isOpen = false
+    }
+
+    // Click anywhere outside the panel closes the menu
     MouseArea {
         anchors.fill: parent
         z: -1
         enabled: root.isOpen
         onClicked: root.isOpen = false
+    }
+
+    property real lockedX: 0
+    property real lockedY: 0
+
+    function openAt(item): void {
+        if (!items || items.length === 0) return
+        root.anchorItem = item
+        root.isOpen = true
+        updateAnchor()
+    }
+
+    // Place the panel next to the button that opened it, away from the bar.
+    // The button always sits at a screen edge (it lives in the bar), so open
+    // toward the opposite side and clamp on-screen.
+    function updateAnchor(): void {
+        if (!anchorItem || !root.screen) return
+        const pos = anchorItem.mapToGlobal(0, 0)
+        const bx = pos.x - root.screen.x
+        const by = pos.y - root.screen.y
+        const bw = anchorItem.width
+        const bh = anchorItem.height
+        const sw = root.screen.width
+        const sh = root.screen.height
+        const pw = panel.width
+        const ph = root.panelHeight
+
+        const cx = bx + bw / 2
+        const cy = by + bh / 2
+        const distLeft = bx
+        const distTop = by
+        const distRight = sw - (bx + bw)
+        const distBottom = sh - (by + bh)
+
+        let px, py
+        if (distTop <= distLeft && distTop <= distRight && distTop <= distBottom) {
+            py = by + bh + 6
+            px = cx - pw / 2
+        } else if (distBottom <= distLeft && distBottom <= distRight) {
+            py = by - ph - 6
+            px = cx - pw / 2
+        } else if (distLeft <= distRight) {
+            px = bx + bw + 6
+            py = cy - ph / 2
+        } else {
+            px = bx - pw - 6
+            py = cy - ph / 2
+        }
+
+        root.lockedX = Math.max(8, Math.min(sw - pw - 8, px))
+        root.lockedY = Math.max(8, Math.min(sh - ph - 8, py))
     }
 
     Rectangle {
@@ -55,10 +110,8 @@ PanelWindow {
             }
         }
 
-        anchors.top:         parent.top
-        anchors.right:       parent.right
-        anchors.topMargin:   root.barHeight + 4
-        anchors.rightMargin: 8
+        x: root.lockedX
+        y: root.lockedY
 
         width:  root.menuWidth
         height: root.panelHeight

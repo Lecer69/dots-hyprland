@@ -105,7 +105,7 @@ Item {
                 settingsMenu.isOpen = false
             } else {
                 if (root.otherMenu) root.otherMenu.isOpen = false
-                settingsMenu.isOpen = true
+                settingsMenu.openAt(root)
             }
         }
     }

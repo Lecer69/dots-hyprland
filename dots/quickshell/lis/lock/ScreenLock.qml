@@ -14,6 +14,9 @@ QtObject {
     property bool isLocked: false
     signal lockedChanged()
 
+    // Pre-blurred wallpaper disk cache (instant lock, re-blurs on wallpaper update)
+    property WallpaperBlurCache _blurCache: WallpaperBlurCache {}
+
     property var _wallpaperPaths: ({})
     property string _wallpaperFallback: ""
 
@@ -276,6 +279,7 @@ QtObject {
                 blurSize: SettingsData.s.lockScreen.blurSize
                 blurPasses: SettingsData.s.lockScreen.blurPasses
                 brightness: SettingsData.s.lockScreen.brightness
+                blurCache: root._blurCache
                 wallpaperPath: root.wallpaperFor(lockSurfaceRoot.screen ? lockSurfaceRoot.screen.name : "")
             }
         }

@@ -15,6 +15,37 @@ Item {
     property int blurPasses: 2
     property real brightness: 0.8172
     property string wallpaperPath: ""
+    property var blurCache: null
+
+    // Resolved path of the pre-blurred cache image ("" until cached)
+    property string blurredSource: ""
+
+    // Key identifies the wallpaper + blur params; changes when either updates
+    readonly property string _blurKey: (blurCache !== null && enableBlur && wallpaperPath.length > 0)
+        ? blurCache.keyFor(wallpaperPath, blurSize, blurPasses) : ""
+
+    on_BlurKeyChanged: root._refreshBlur()
+
+    function _refreshBlur() {
+        if (blurCache === null || _blurKey.length === 0) {
+            blurredSource = ""
+            return
+        }
+        // Fast path: reuse a blurred image generated previously (instant lock)
+        blurredSource = blurCache.cachedPath(wallpaperPath, blurSize, blurPasses)
+        // Slow path handled by the job: if missing/outdated (mtime/size changed),
+        // it re-blurs and re-caches, then notifies via onReady
+        blurCache.ensureCached(wallpaperPath, blurSize, blurPasses)
+    }
+
+    Connections {
+        target: root.blurCache
+
+        function onReady(key, path) {
+            if (key === root._blurKey)
+                root.blurredSource = path
+        }
+    }
 
     readonly property color text: "#cdd6f4"
     readonly property color subtext0: '#b8c0e1'
@@ -27,58 +58,23 @@ Item {
         color: "transparent"
     }
 
+    // Pre-blurred wallpaper loaded from the disk cache (fast on every lock)
     Image {
         id: wallpaperImage
         anchors.fill: parent
         visible: false
         fillMode: Image.PreserveAspectCrop
-        cache: false
+        cache: true
         asynchronous: true
-        source: (root.enableBlur && root.wallpaperPath.length > 0)
-            ? "file://" + root.wallpaperPath
+        source: (root.enableBlur && root.blurredSource.length > 0)
+            ? "file://" + root.blurredSource
             : ""
     }
-
-    FastBlur {
-        id: bp1; anchors.fill: parent; source: wallpaperImage;
-        radius: root.blurSize; visible: root.blurPasses >= 1
-    }
-    FastBlur {
-        id: bp2; anchors.fill: parent; source: bp1;
-        radius: root.blurSize; visible: root.blurPasses >= 2
-    }
-    FastBlur {
-        id: bp3; anchors.fill: parent; source: bp2;
-        radius: root.blurSize; visible: root.blurPasses >= 3
-    }
-    FastBlur {
-        id: bp4; anchors.fill: parent; source: bp3;
-        radius: root.blurSize; visible: root.blurPasses >= 4
-    }
-    FastBlur {
-        id: bp5; anchors.fill: parent; source: bp4;
-        radius: root.blurSize; visible: root.blurPasses >= 5
-    }
-    FastBlur {
-        id: bp6; anchors.fill: parent; source: bp5;
-        radius: root.blurSize; visible: root.blurPasses >= 6
-    }
-    FastBlur {
-        id: bp7; anchors.fill: parent; source: bp6;
-        radius: root.blurSize; visible: root.blurPasses >= 7
-    }
-    FastBlur {
-        id: bp8; anchors.fill: parent; source: bp7;
-        radius: root.blurSize; visible: root.blurPasses >= 8
-    }
-
-    readonly property var _blurStages: [bp1, bp2, bp3, bp4, bp5, bp6, bp7, bp8]
-    readonly property var _finalBlurStage: _blurStages[Math.max(0, Math.min(root.blurPasses, 8) - 1)]
 
     BrightnessContrast {
         id: backgroundOutput
         anchors.fill: parent
-        source: root._finalBlurStage
+        source: wallpaperImage
         brightness: root.brightness - 1.0
         contrast: 0
         visible: root.enableBlur && wallpaperImage.status === Image.Ready
@@ -400,7 +396,7 @@ Item {
         }
     }
     Timer {
-        interval: 2000; running: true; repeat: true
+        interval: 5000; running: true; repeat: true
         onTriggered: kbProc.running = true
     }
 

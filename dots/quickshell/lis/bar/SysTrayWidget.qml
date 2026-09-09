@@ -5,18 +5,28 @@ import Quickshell.Services.SystemTray
 
 Item {
     id: root
-    implicitWidth: trayRow.implicitWidth
-    implicitHeight: 22
+
+    property var screen: null
+    property bool vertical: false
+
+    implicitWidth: root.vertical ? 22 : trayRow.implicitWidth
+    implicitHeight: root.vertical ? trayRow.implicitHeight : 22
 
     property int count: repeater.count
 
     TrayTooltip { id: tooltip }
 
-    SysTrayMenu { id: contextMenu }
+    SysTrayMenu {
+        id: contextMenu
+        screen: root.screen
+    }
 
-    Row {
+    Grid {
         id: trayRow
         anchors.centerIn: parent
+        rows: root.vertical ? 0 : 1
+        columns: root.vertical ? 1 : 0
+        horizontalItemAlignment: root.vertical ? Qt.AlignHCenter : Qt.AlignLeft
         spacing: 8
 
         Repeater {
@@ -54,7 +64,7 @@ Item {
                     width: 6
                     height: 6
                     radius: 3
-                    color: "#3a5a7a"
+                    color: "#666666"
                     visible: trayIcon.status !== Image.Ready
                 }
 
@@ -77,8 +87,11 @@ Item {
                     }
 
                     onClicked: mouse => {
+                        // Real click position in global coordinates: apps like
+                        // Discord use it to place their tray window correctly
+                        const g = trayItem.mapToGlobal(mouse.x, mouse.y)
                         if (mouse.button === Qt.LeftButton) {
-                            trayItem.modelData.activate(Qt.point(0, 0))
+                            trayItem.modelData.activate(Qt.point(g.x, g.y))
                         }
                         if (mouse.button === Qt.RightButton) {
                             contextMenu.openFor(trayItem.modelData, trayItem)

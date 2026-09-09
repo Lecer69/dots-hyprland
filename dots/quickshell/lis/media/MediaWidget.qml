@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Services.Mpris
 import qs.settings.data
 
@@ -74,15 +73,14 @@ Item {
         onTriggered: root.syncPlayer()
     }
 
-    Connections {
-        target: Mpris
-        function onPlayersChanged() { root.syncPlayer() }
-    }
-
+    // Player changes are picked up by the poll timer (the Mpris singleton
+    // does not expose a playersChanged signal).
     Component.onCompleted: root.syncPlayer()
 
     readonly property bool hasMedia: activePlayer !== null
     property bool panelOpen: false
+
+    onHasMediaChanged: if (!hasMedia) panelOpen = false
 
     visible: hasMedia
     implicitWidth: row.implicitWidth
@@ -125,14 +123,11 @@ Item {
                     y: -0.5
                 }
 
-                RotationAnimation {
-                    target: orbit
-                    property: "rotation"
-                    from: 0
-                    to: 360
-                    duration: 1300
-                    loops: Animation.Infinite
-                    running: spinner.playing
+                Timer {
+                    interval: 42
+                    repeat: true
+                    running: spinner.playing && root.visible
+                    onTriggered: orbit.rotation = (orbit.rotation + 360 * interval / 1300) % 360
                 }
             }
         }

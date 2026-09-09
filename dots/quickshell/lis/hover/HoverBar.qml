@@ -2,17 +2,40 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.settings.data
 
 PanelWindow {
     id: root
-    WlrLayershell.margins.top: -33
-    WlrLayershell.margins.right: 0
+
+    // Which screen side this strip sits on for horizontal bars
+    property bool preferredRight: false
+    // Which end of the bar edge this strip sits on for vertical bars
+    property bool bottomEnd: false
+
+    readonly property string barPosition: SettingsData.s.bar.position
+    readonly property bool verticalBar: barPosition === "left" || barPosition === "right"
+
+    readonly property bool anchorTop: barPosition === "top" || (verticalBar && !bottomEnd)
+    readonly property bool anchorBottom: barPosition === "bottom" || (verticalBar && bottomEnd)
+    readonly property bool anchorLeft: barPosition === "left" || (!verticalBar && !preferredRight)
+    readonly property bool anchorRight: barPosition === "right" || (!verticalBar && preferredRight)
+
     WlrLayershell.layer: WlrLayer.Overlay
-    implicitWidth: 15
-    implicitHeight: 40
+    implicitWidth: verticalBar ? 40 : 15
+    implicitHeight: verticalBar ? 15 : 40
     color: "transparent"
     exclusiveZone: 0
-    anchors.top: true
+
+    // Stick out of the screen edge so only a thin sliver is hoverable
+    WlrLayershell.margins.top: anchorTop && !verticalBar ? -33 : 0
+    WlrLayershell.margins.bottom: anchorBottom && !verticalBar ? -33 : 0
+    WlrLayershell.margins.left: anchorLeft && verticalBar ? -33 : 0
+    WlrLayershell.margins.right: anchorRight && verticalBar ? -33 : 0
+
+    anchors.top: anchorTop
+    anchors.bottom: anchorBottom
+    anchors.left: anchorLeft
+    anchors.right: anchorRight
 
     property real value: 0
     signal scrolled(real delta)
@@ -22,14 +45,19 @@ PanelWindow {
     property bool fullscreen: hyprMonitor?.activeWorkspace?.hasFullscreen ?? false
 
     Rectangle {
-        anchors.top: parent.top
-        anchors.topMargin: 8
-        anchors.right: root.anchors.right ? parent.right : undefined
-        anchors.left: root.anchors.left ? parent.left : undefined
-        anchors.rightMargin: 3.5
-        anchors.leftMargin: 3.5
-        width: 4
-        height: 30
+        id: strip
+
+        width: root.verticalBar ? 30 : 4
+        height: root.verticalBar ? 4 : 30
+
+        // Horizontal bars: hug the top/bottom edge. Vertical bars: hug the left/right edge
+        x: root.verticalBar
+            ? (root.anchorLeft ? 8 : root.width - width - 8)
+            : (root.anchorRight ? root.width - width - 3.5 : 3.5)
+        y: root.verticalBar
+            ? (root.height - height) / 2
+            : (root.anchorTop ? 8 : root.height - height - 8)
+
         radius: 5
         color: "#22ffffff"
         visible: !fullscreen
@@ -38,12 +66,15 @@ PanelWindow {
 
         Behavior on opacity { NumberAnimation { duration: 180 } }
 
+        // Horizontal bars: fill grows bottom-up. Vertical bars: left-to-right
         Rectangle {
-            anchors.bottom: parent.bottom
+            anchors.bottom: root.verticalBar ? undefined : parent.bottom
+            anchors.left: root.verticalBar ? parent.left : undefined
             radius: parent.radius
-            width: parent.width
-            height: parent.height * root.value
+            width: root.verticalBar ? parent.width * root.value : parent.width
+            height: root.verticalBar ? parent.height : parent.height * root.value
             color: '#ffffff'
+            Behavior on width { NumberAnimation { duration: 80 } }
             Behavior on height { NumberAnimation { duration: 80 } }
         }
     }

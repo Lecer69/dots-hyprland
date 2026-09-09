@@ -1,85 +1,57 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
+import Quickshell.Wayland
 import Quickshell.Services.SystemTray
 
-PopupWindow {
+PanelWindow {
     id: root
 
     property var trayItem: null
+    property bool isOpen: false
+    property Item anchorItem: null
 
-    anchor.item: null
-    anchor.edges: Edges.Bottom | Edges.Left
-
+    // Stay visible while the menu animates out
+    visible: isOpen || menuFrame.opacity > 0.01
     color: "transparent"
-    visible: false
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.exclusiveZone: -1
+    WlrLayershell.namespace: "quickshell:traymenu"
 
-    property bool grabReady: false
-    property real grabArmedAt: 0
-    readonly property int grabSettleMs: 100
-
-    HyprlandFocusGrab {
-        id: focusGrab
-        windows: [root]
-        active: root.grabReady
-        onCleared: {
-            if (!root.grabReady) return
-            var age = Date.now() - root.grabArmedAt
-            if (age < root.grabSettleMs) {
-                rearmTimer.restart()
-            } else {
-                root.close()
-            }
-        }
+    anchors {
+        top: true
+        bottom: true
+        left: true
+        right: true
     }
 
-    Timer {
-        id: rearmTimer
-        interval: root.grabSettleMs
-        repeat: false
-        onTriggered: {
-            if (root.visible && root.activeOpener !== null) {
-                root.grabReady = false
-                root.grabArmedAt = Date.now()
-                root.grabReady = true
-            }
-        }
+    Shortcut {
+        sequences: ["Escape"]
+        onActivated: root.close()
     }
-
-    Timer {
-        id: grabTimer
-        interval: 10
-        repeat: false
-        onTriggered: {
-            if (root.activeOpener !== null) {
-                root.grabArmedAt = Date.now()
-                root.grabReady = true
-            }
-        }
-    }
-
-    implicitWidth: 280
-    implicitHeight: menuCol.implicitHeight + 16
 
     property var openerStack: []
     property var activeOpener: null
     property string currentLabel: ""
-    property bool   inSubmenu:    false
+    property bool inSubmenu: false
 
     Component {
         id: openerComponent
         QsMenuOpener { menu: null }
     }
 
-    function openFor(item, anchorItem) {
-        root.grabReady = false
-        grabTimer.stop()
-        rearmTimer.stop()
+    function openFor(item, anchorItem): void {
         _clearStack()
 
-        root.trayItem    = item
-        root.anchor.item = anchorItem
+        // No menu at all: don't open an empty frame
+        if (!item || !item.menu || !root.screen) return
+
+        root.trayItem = item
+        root.anchorItem = anchorItem
+
+        // Open away from the bar edge, clamped on-screen
+        root.reposition()
 
         var op = openerComponent.createObject(root)
         op.menu = item.menu
@@ -89,8 +61,47 @@ PopupWindow {
         root.currentLabel = ""
         root.inSubmenu    = false
 
-        root.visible = true
-        grabTimer.restart()
+        root.isOpen = true
+    }
+
+    // Place the frame next to the tray icon, away from the bar edge — same
+    // approach as DropdownMenu, so it never covers the bar itself.
+    function reposition(): void {
+        if (!anchorItem || !root.screen) return
+        const pos = anchorItem.mapToGlobal(0, 0)
+        const bx = pos.x - root.screen.x
+        const by = pos.y - root.screen.y
+        const bw = anchorItem.width
+        const bh = anchorItem.height
+        const sw = root.screen.width
+        const sh = root.screen.height
+        const fw = menuFrame.width
+        const fh = menuFrame.height
+
+        const cx = bx + bw / 2
+        const cy = by + bh / 2
+        const distLeft = bx
+        const distTop = by
+        const distRight = sw - (bx + bw)
+        const distBottom = sh - (by + bh)
+
+        let px, py
+        if (distTop <= distLeft && distTop <= distRight && distTop <= distBottom) {
+            py = by + bh + 6
+            px = cx - fw / 2
+        } else if (distBottom <= distLeft && distBottom <= distRight) {
+            py = by - fh - 6
+            px = cx - fw / 2
+        } else if (distLeft <= distRight) {
+            px = bx + bw + 6
+            py = cy - fh / 2
+        } else {
+            px = bx - fw - 6
+            py = cy - fh / 2
+        }
+
+        menuFrame.x = Math.max(8, Math.min(sw - fw - 8, px))
+        menuFrame.y = Math.max(8, Math.min(sh - fh - 8, py))
     }
 
     function pushSubmenu(entry) {
@@ -121,11 +132,8 @@ PopupWindow {
     }
 
     function close() {
-        root.grabReady    = false
-        root.visible      = false
+        root.isOpen = false
         root.activeOpener = null
-        grabTimer.stop()
-        rearmTimer.stop()
         _clearStack()
     }
 
@@ -140,49 +148,76 @@ PopupWindow {
         root.inSubmenu    = false
     }
 
-    Rectangle {
+    // Backdrop: click anywhere outside to close. While open the window's input
+    // mask covers the screen so the click reaches this catcher; closed: the
+    // window is fully click-through and never blocks the bar.
+    mask: Region {
+        item: root.isOpen ? backdrop : null
+    }
+
+    MouseArea {
+        id: backdrop
         anchors.fill: parent
-        radius: 12
-        color: "#f0121212"
+        onClicked: root.close()
+    }
+
+    Rectangle {
+        id: menuFrame
+
+        width: 280
+        height: menuCol.implicitHeight + 12
+        radius: 14
+        color: "#0f0f0f"
         border.width: 1
-        border.color: "#25ffffff"
+        border.color: "#2a2a2a"
+
+        // Entries load async — keep the frame placed correctly as it grows
+        onHeightChanged: if (root.isOpen) root.reposition()
+
+        opacity: root.isOpen ? 1 : 0
+        scale: root.isOpen ? 1 : 0.98
+        transformOrigin: Item.Top
+
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+        // Click shield
+        MouseArea {
+            anchors.fill: parent
+            onClicked: mouse.accepted = true
+        }
 
         Column {
             id: menuCol
+
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.topMargin: 6
-            anchors.bottomMargin: 6
-            anchors.leftMargin: 6
-            anchors.rightMargin: 6
-            spacing: 1
-            topPadding: 1
-            bottomPadding: 1
+            anchors.margins: 6
+            spacing: 2
 
+            // Submenu back button
             Item {
                 visible: root.inSubmenu
-                width: parent.width
+                width: menuCol.width
                 height: 32
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.leftMargin: 2
-                    anchors.rightMargin: 2
-                    radius: 6
-                    color: backMouse.containsMouse ? "#20ffffff" : "transparent"
-                    Behavior on color { ColorAnimation { duration: 80 } }
+                    radius: 8
+                    color: backMouse.containsMouse ? "#1c1c1c" : "transparent"
+                    Behavior on color { ColorAnimation { duration: 100 } }
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 6
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
 
                         Text {
                             text: "‹"
-                            font.pixelSize: 13
-                            color: "#88ffffff"
+                            font.pixelSize: 14
+                            color: "#888888"
                             Layout.alignment: Qt.AlignVCenter
                         }
 
@@ -191,8 +226,8 @@ PopupWindow {
                             Layout.alignment: Qt.AlignVCenter
                             text: root.currentLabel
                             font.pixelSize: 12
-                            font.bold: true
-                            color: "#ccffffff"
+                            font.weight: Font.DemiBold
+                            color: "#dddddd"
                             elide: Text.ElideRight
                         }
                     }
@@ -209,40 +244,41 @@ PopupWindow {
 
             Rectangle {
                 visible: root.inSubmenu
-                width: parent.width - 12
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: menuCol.width
                 height: 1
-                color: "#20ffffff"
+                color: "#222222"
             }
 
+            // App name header
             Item {
                 visible: !root.inSubmenu && (root.trayItem?.title ?? "") !== ""
-                width: parent.width
-                height: 28
+                width: menuCol.width
+                height: 30
 
                 Text {
-                    id: headerText
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: 12
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: 12
                     text: root.trayItem?.title ?? ""
-                    color: "#55ffffff"
-                    font.pixelSize: 12
+                    color: "#777777"
+                    font.pixelSize: 11
                     elide: Text.ElideRight
                 }
             }
 
             Rectangle {
                 visible: !root.inSubmenu && (root.trayItem?.title ?? "") !== ""
-                width: parent.width - 12
-                anchors.horizontalCenter: parent.horizontalCenter
+                width: menuCol.width
                 height: 1
-                color: "#20ffffff"
+                color: "#222222"
             }
 
+            // Menu entries
             Repeater {
+                id: menuRepeater
+
                 model: root.activeOpener ? root.activeOpener.children : null
 
                 delegate: Item {
@@ -256,38 +292,37 @@ PopupWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
                         height: 1
-                        color: "#20ffffff"
+                        color: "#222222"
                     }
 
                     Rectangle {
                         visible: !modelData.isSeparator
                         anchors.fill: parent
-                        anchors.leftMargin: 2
-                        anchors.rightMargin: 2
-                        radius: 6
-                        color: itemMouse.containsMouse ? "#20ffffff" : "transparent"
-                        Behavior on color { ColorAnimation { duration: 80 } }
+                        radius: 8
+                        color: itemMouse.containsMouse ? "#1c1c1c" : "transparent"
+                        Behavior on color { ColorAnimation { duration: 100 } }
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 8
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            spacing: 10
 
                             Item {
+                                visible: (modelData.icon ?? "").length > 0
                                 Layout.alignment: Qt.AlignVCenter
-                                Layout.preferredWidth: 14
-                                Layout.preferredHeight: 14
-                                opacity: (modelData.icon ?? "").length > 0 ? 1 : 0
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
 
                                 Image {
                                     anchors.fill: parent
                                     source: modelData.icon ?? ""
                                     fillMode: Image.PreserveAspectFit
-                                    smooth: true; mipmap: true
+                                    smooth: true
+                                    mipmap: true
                                 }
                             }
 
@@ -296,7 +331,7 @@ PopupWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: modelData.text
                                 font.pixelSize: 12
-                                color: modelData.enabled ? '#e8ffffff' : "#40ffffff"
+                                color: modelData.enabled ? "#dddddd" : "#555555"
                                 elide: Text.ElideRight
                             }
 
@@ -304,8 +339,8 @@ PopupWindow {
                                 visible: modelData.hasChildren
                                 Layout.alignment: Qt.AlignVCenter
                                 text: "›"
-                                font.pixelSize: 13
-                                color: "#55ffffff"
+                                font.pixelSize: 14
+                                color: "#888888"
                             }
                         }
 
@@ -325,6 +360,20 @@ PopupWindow {
                             }
                         }
                     }
+                }
+            }
+
+            // Loading state: only while entries haven't arrived yet
+            Item {
+                visible: menuRepeater.count === 0
+                width: menuCol.width
+                height: 30
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Loading…"
+                    color: "#555555"
+                    font.pixelSize: 12
                 }
             }
         }

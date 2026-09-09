@@ -1,8 +1,12 @@
 import QtQuick
 
 Rectangle {
-    width: 1
-    height: 15
-    anchors.verticalCenter: parent.verticalCenter
+    id: divider
+
+    property bool vertical: false
+
+    width: vertical ? 15 : 1
+    height: vertical ? 1 : 15
+    radius: 0.5
     color: "#0c0c0c"
 }

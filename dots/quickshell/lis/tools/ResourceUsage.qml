@@ -31,7 +31,7 @@ Singleton {
     readonly property var _reCpuLine: /^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/
 
     Timer {
-        interval: 500
+        interval: 1000
         running: true
         repeat: true
         onTriggered: root._poll()

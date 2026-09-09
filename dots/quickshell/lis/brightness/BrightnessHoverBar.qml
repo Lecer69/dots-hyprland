@@ -7,7 +7,7 @@ import qs.hover
 HoverBar {
     id: brightnessBar
 
-    anchors.left: true
+    bottomEnd: true
 
     property real brightness: 0.5
     property bool ready: false

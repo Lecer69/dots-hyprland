@@ -6,7 +6,7 @@ import qs.hover
 
 HoverBar {
     id: volumeBar
-    anchors.right: true
+    preferredRight: true
 
     PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
 

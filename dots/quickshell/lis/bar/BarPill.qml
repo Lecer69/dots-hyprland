@@ -3,10 +3,11 @@ import QtQuick
 Rectangle {
     id: barPill
 
-    implicitWidth: contentItem.width + horizontalPadding * 2
-    implicitHeight: 28
+    implicitWidth: vertical ? 28 : contentItem.width + horizontalPadding * 2
+    implicitHeight: vertical ? contentItem.height + horizontalPadding * 2 : 28
 
     property real horizontalPadding: 6
+    property bool vertical: false
 
     radius: 14
     color: '#c30f0f0f'

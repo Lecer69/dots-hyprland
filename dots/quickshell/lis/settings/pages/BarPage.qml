@@ -15,6 +15,19 @@ ScrollView {
         spacing: 0
 
         Item { height: 16 }
+        SectionHeader { title: "Layout" }
+
+        SettingRow {
+            label: "Bar Position"
+            description: "Edge of the screen the bar docks to"
+            ChipSelector {
+                options: ["top", "bottom"]
+                value: SettingsData.s.bar.position
+                onSelected: v => SettingsData.s.bar.position = v
+            }
+        }
+
+        Item { height: 8 }
         SectionHeader { title: "Workspace" }
 
         SettingRow {
@@ -23,6 +36,16 @@ ScrollView {
                 from: 5; to: 30; stepSize: 1
                 value: SettingsData.s.bar.workspaceNumbers
                 onChanged: v => SettingsData.s.bar.workspaceNumbers = v
+            }
+        }
+
+        SettingRow {
+            label: "Workspace Style"
+            description: "Dots or numbers on the bar"
+            ChipSelector {
+                options: ["numbers", "dots"]
+                value: SettingsData.s.bar.workspaceStyle
+                onSelected: v => SettingsData.s.bar.workspaceStyle = v
             }
         }
 
