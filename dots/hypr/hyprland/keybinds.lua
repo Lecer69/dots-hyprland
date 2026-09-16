@@ -252,5 +252,6 @@ hl.bind("SUPER + T", hl.dsp.exec_cmd("teamspeak3"), { description = "App: TeamSp
 hl.bind("SUPER + M", hl.dsp.exec_cmd("spotify-launcher --skip-update"), { description = "App: Spotify" })
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager), { description = "App: File manager" })
 hl.bind("SUPER + W", hl.dsp.exec_cmd(browser), { description = "App: Browser" })
+hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd(secondaryBrowser), { description = "App: Secondary Browser" })
 hl.bind("SUPER + C", hl.dsp.exec_cmd(codeEditor), { description = "App: Code editor" })
 hl.bind("SUPER + X", hl.dsp.exec_cmd(textEditor), { description = "App: Text editor" })

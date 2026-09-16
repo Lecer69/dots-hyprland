@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.SystemTray
+import qs.settings.data
 
 Item {
     id: root
@@ -48,24 +50,43 @@ Item {
                     Behavior on opacity { NumberAnimation { duration: 120 } }
                 }
 
-                Image {
-                    id: trayIcon
+                Item {
+                    id: iconContainer
+
+                    property bool tintOff: !SettingsData.s.bar.trayIconTint
+
                     anchors.centerIn: parent
                     width: 16
                     height: 16
-                    source: trayItem.modelData.icon ?? ""
-                    smooth: true
-                    mipmap: true
-                    visible: status === Image.Ready
-                }
 
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 6
-                    height: 6
-                    radius: 3
-                    color: "#666666"
-                    visible: trayIcon.status !== Image.Ready
+                    Image {
+                        id: trayIcon
+                        anchors.centerIn: parent
+                        width: 16
+                        height: 16
+                        source: trayItem.modelData.icon ?? ""
+                        sourceSize.width: width * 2
+                        sourceSize.height: height * 2
+                        smooth: true
+                        mipmap: true
+                        visible: status === Image.Ready
+                        layer.enabled: !iconContainer.tintOff
+                        layer.smooth: true
+                        layer.mipmap: true
+                        layer.effect: MultiEffect {
+                            colorization: 1.0
+                            colorizationColor: "#e8e8e8"
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 6
+                        height: 6
+                        radius: 3
+                        color: "#666666"
+                        visible: trayIcon.status !== Image.Ready
+                    }
                 }
 
                 MouseArea {

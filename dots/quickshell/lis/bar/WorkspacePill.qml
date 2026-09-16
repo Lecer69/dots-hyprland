@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -89,17 +90,35 @@ Item {
     }
 
     // App icon
-    Image {
+    Item {
+        id: iconContainer
+
         anchors.centerIn: parent
         width: 18
         height: 18
-        source: root.iconSource
-        fillMode: Image.PreserveAspectFit
-        opacity: sameMonitor ? 1.0 : 0.38
         visible: root.iconSource !== ""
-        smooth: true
-        mipmap: true
-        antialiasing: true
+
+        Image {
+            anchors.centerIn: parent
+            width: 18
+            height: 18
+            source: root.iconSource
+            sourceSize.width: width * 2
+            sourceSize.height: height * 2
+            fillMode: Image.PreserveAspectFit
+            opacity: sameMonitor ? 1.0 : 0.38
+            visible: root.iconSource !== ""
+            smooth: true
+            mipmap: true
+            antialiasing: true
+            layer.enabled: SettingsData.s.bar.workspaceIconTint
+            layer.smooth: true
+            layer.mipmap: true
+            layer.effect: MultiEffect {
+                colorization: 1.0
+                colorizationColor: "#e8e8e8"
+            }
+        }
     }
 
     MouseArea {

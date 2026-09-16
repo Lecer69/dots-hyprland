@@ -12,6 +12,7 @@ hl.window_rule({match = {class = ".*" }, no_blur = true })
 -- hl.window_rule({match = {class = "^(org.kde.gwenview|wpsoffice|zen|brave-browser|brave-origin|firefox|chromium|vlc|com.obsproject.Studio|steam|org.gnome.SystemMonitor)$" }, opacity = 1.0 })
 hl.window_rule({match = {fullscreen = true }, opacity = 1.0})
 hl.window_rule({match = {title = ".*\\.exe" }, opacity = 1.0})
+hl.window_rule({match = {title = ".*\\.exe" }, no_follow_mouse = true})
 
 -- Floating
 hl.window_rule({match = {title = "^(Open File)(.*)$" },                       center = true})
@@ -101,6 +102,9 @@ hl.window_rule({match = {title = ".*\\.exe" }, immediate = true})
 hl.window_rule({match = {title = ".*minecraft.*" }, immediate = true})
 hl.window_rule({match = {class = "^(steam_app).*" }, immediate = true})
 hl.window_rule({match = {class = "osu!" }, immediate = true})
+hl.window_rule({match = {class = "^()$", title = "^()$" }, immediate = true })
+hl.window_rule({match = {class = "^()$", title = "^()$" }, no_follow_mouse = true })
+hl.window_rule({match = {title = ".*\\.exe" }, no_follow_mouse = true})
 
 -- Special window
 hl.workspace_rule({ workspace = "special:special", gaps_out = 24 })

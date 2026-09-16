@@ -102,6 +102,26 @@ ScrollView {
             }
         }
 
+        Item { height: 8 }
+        SectionHeader { title: "Tint Color" }
+
+        SettingRow {
+            label: "Tint Tray Icons"
+            description: "Colorize system tray icons with the accent color"
+            ToggleSwitch {
+                checked: SettingsData.s.bar.trayIconTint
+                onToggled: v => SettingsData.s.bar.trayIconTint = v
+            }
+        }
+        SettingRow {
+            label: "Tint Workspace Icons"
+            description: "Colorize workspace app icons with the accent color"
+            ToggleSwitch {
+                checked: SettingsData.s.bar.workspaceIconTint
+                onToggled: v => SettingsData.s.bar.workspaceIconTint = v
+            }
+        }
+
         Item { height: 16 }
     }
 }
