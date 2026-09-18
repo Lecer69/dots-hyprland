@@ -28,6 +28,19 @@ QtObject {
 
     property bool _wallpaperResolvedForBlur: false
 
+    // Pre-warm the blur cache for every resolved wallpaper so the first
+    // lock of a session is instant (the disk cache usually already has
+    // them; this just repopulates the in-memory map after boot).
+    function _warmBlurCache() {
+        if (!SettingsData.s.lockScreen.enableBlur) return
+        const size = SettingsData.s.lockScreen.blurSize
+        const passes = SettingsData.s.lockScreen.blurPasses
+        for (const mon in root._wallpaperPaths)
+            root._blurCache.ensureCached(root._wallpaperPaths[mon], size, passes)
+        if (root._wallpaperFallback.length > 0)
+            root._blurCache.ensureCached(root._wallpaperFallback, size, passes)
+    }
+
     onEnableBlurStateChanged: {
         var enabled = SettingsData.s.lockScreen.enableBlur
         if (enabled && !root._wallpaperResolvedForBlur) {
@@ -64,6 +77,8 @@ QtObject {
 
                 if (!resolvedOk) {
                     _wallpaperConfCat.running = true
+                } else {
+                    root._warmBlurCache()
                 }
             }
         }
@@ -113,6 +128,7 @@ QtObject {
         onRunningChanged: {
             if (!running) {
                 root._parseWallpaperConf(wallpaperConfOutput.text)
+                root._warmBlurCache()
             }
         }
     }

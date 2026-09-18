@@ -3,8 +3,10 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Shapes
 import Qt5Compat.GraphicalEffects
 import qs.settings.data
+import qs.bar
 
 Item {
     id: root
@@ -52,6 +54,9 @@ Item {
     readonly property color overlay0: '#8b90ac'
     readonly property color red: '#ea7496'
     readonly property color yellow: '#f9da98'
+
+    Component.onCompleted: BatteryData.addViewer()
+    Component.onDestruction: BatteryData.removeViewer()
 
     Rectangle {
         anchors.fill: parent
@@ -415,6 +420,103 @@ Item {
         anchors.fill: parent
         z: -1
         onClicked: keyItem.forceActiveFocus()
+    }
+
+    // Battery status (bottom-left)
+    Row {
+        id: battRow
+        anchors {
+            left: parent.left
+            bottom: parent.bottom
+            leftMargin: 42
+            bottomMargin: 42
+        }
+        spacing: 8
+        visible: BatteryData.available
+        opacity: 0.9
+
+        readonly property int sz: 24
+
+        function arcColor() {
+            if (BatteryData.percent == -100) return '#4a4a4a'
+            if (BatteryData.charging) return "#a6e3a1"
+            if (BatteryData.percent <= 10) return "#f38ba8"
+            if (BatteryData.percent <= 30) return "#fab387"
+            return "#89b4fa"
+        }
+
+        Item {
+            id: battRing
+            width: battRow.sz
+            height: battRow.sz
+            anchors.verticalCenter: parent.verticalCenter
+
+            property real animatedSweep: BatteryData.percent * 3.6
+            Behavior on animatedSweep {
+                NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
+            }
+
+            Shape {
+                anchors.fill: parent
+                layer.enabled: true
+                layer.samples: 8
+                layer.smooth: true
+                layer.textureSize: Qt.size(battRow.sz * 2, battRow.sz * 2)
+                vendorExtensionsEnabled: true
+
+                // track
+                ShapePath {
+                    strokeColor: Qt.rgba(1, 1, 1, 0.16)
+                    strokeWidth: 3
+                    fillColor: "transparent"
+                    capStyle: ShapePath.FlatCap
+                    PathAngleArc {
+                        centerX: battRow.sz * 0.5
+                        centerY: battRow.sz * 0.5
+                        radiusX: battRow.sz * 0.5 - 2
+                        radiusY: battRow.sz * 0.5 - 2
+                        startAngle: -90
+                        sweepAngle: 360
+                    }
+                }
+
+                // filled arc
+                ShapePath {
+                    strokeColor: battRow.arcColor()
+                    strokeWidth: 3
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+                    PathAngleArc {
+                        centerX: battRow.sz * 0.5
+                        centerY: battRow.sz * 0.5
+                        radiusX: battRow.sz * 0.5 - 2
+                        radiusY: battRow.sz * 0.5 - 2
+                        startAngle: -90
+                        sweepAngle: battRing.animatedSweep
+                    }
+                }
+            }
+
+            // charging dot
+            Rectangle {
+                visible: BatteryData.charging
+                width: 7
+                height: 7
+                radius: 3.5
+                color: battRow.arcColor()
+                antialiasing: true
+                anchors.centerIn: parent
+            }
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: BatteryData.percent + "%"
+            color: root.subtext0
+            font {
+                pixelSize: 13
+            }
+        }
     }
 
     // Power / reboot controls

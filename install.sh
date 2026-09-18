@@ -150,7 +150,7 @@ PACMAN_PACKAGES=(
     qt5ct qt6ct qt5-wayland kvantum fuzzel breeze breeze-icons plasma-desktop
     grim wl-clipboard gwenview slurp plasma-nm ddcutil brightnessctl eza glu
     libqalculate cliphist gnome-system-monitor xdg-user-dirs xdotool ufw ark
-    gamemode matugen imagemagick
+    gamemode matugen imagemagick reflector
 )
 
 AUR_PACKAGES=(

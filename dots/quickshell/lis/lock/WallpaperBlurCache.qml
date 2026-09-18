@@ -26,11 +26,17 @@ find "$dir" -maxdepth 1 -name "*.jpg" -mtime +30 -delete 2>/dev/null
 mt=$(stat -c '%Y:%s' "$wp" 2>/dev/null); [ -n "$mt" ] || mt="x"
 key=$(printf '%s|v3|%s|%s|%s' "$wp" "$mt" "$bsize" "$bpasses" | sha1sum | cut -d" " -f1)
 out="$dir/$key.jpg"
-if [ -s "$out" ]; then echo "READY $out"; exit 0; fi
+if [ -s "$out" ]; then touch "$out" 2>/dev/null; echo "READY $out"; exit 0; fi
 sig=$(awk -v r="$bsize" -v p="$bpasses" 'BEGIN{
     sig=(r/2.0)*sqrt(p); if (sig<0.3) sig=0.3; printf "%.2f", sig }')
 tmp="$out.$$"
-magick "$wp" -auto-orient -blur "0x$sig" -strip -quality 98 "$tmp" 2>/dev/null \
+# magick = ImageMagick 7, convert = ImageMagick 6 (Debian/Ubuntu/Fedora)
+if command -v magick >/dev/null 2>&1; then
+    blurcmd="magick"
+else
+    blurcmd="convert"
+fi
+"$blurcmd" "$wp" -auto-orient -blur "0x$sig" -strip -quality 98 "$tmp" 2>/dev/null \
     || { rm -f "$tmp"; echo "ERR magick"; exit 0; }
 mv "$tmp" "$out"
 echo "READY $out"
