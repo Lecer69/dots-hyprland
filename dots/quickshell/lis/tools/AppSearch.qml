@@ -145,6 +145,9 @@ Singleton {
         const undescoreToKebabGuess = getUndescoreToKebabAppName(str);
         if (iconExists(undescoreToKebabGuess)) return undescoreToKebabGuess;
 
+        const heuristicEntry = DesktopEntries.heuristicLookup(str);
+        if (heuristicEntry && iconExists(heuristicEntry.icon)) return heuristicEntry.icon;
+
         // Search in desktop entries
         const iconSearchResults = Fuzzy.go(str, preppedIcons, {
             all: true,
@@ -162,10 +165,6 @@ Singleton {
             const guess = nameSearchResults[0].icon
             if (iconExists(guess)) return guess;
         }
-
-        // Quickshell's desktop entry lookup
-        const heuristicEntry = DesktopEntries.heuristicLookup(str);
-        if (heuristicEntry) return heuristicEntry.icon;
 
         // Give up
         return "application-x-executable";

@@ -34,6 +34,55 @@ PanelWindow {
     property int currentWs: monitor?.activeWorkspace?.id ?? 1
     property int startWs: Math.floor((currentWs - 1) / pageSize) * pageSize + 1
 
+    readonly property bool onlyAccessibleWorkspaces: SettingsData.s.bar.onlyAccessibleWorkspaces
+    readonly property string monitorName: bar.monitor?.name ?? ""
+
+    function isSpecialWorkspace(name) {
+        return (name ?? "").startsWith("special:")
+    }
+
+    readonly property var accessibleWorkspaceIds: {
+        const ids = []
+        const seen = ({})
+        const push = id => {
+            if (id === undefined || id === null || isNaN(id) || seen[id]) return
+            seen[id] = true
+            ids.push(id)
+        }
+        if (!bar.onlyAccessibleWorkspaces)
+            return ids
+
+        const byId = HyprlandData.workspaceById ?? ({})
+
+        for (const ws of HyprlandData.workspaces) {
+            if (bar.isSpecialWorkspace(ws.name)) continue
+            if (ws.monitor === bar.monitorName)
+                push(ws.id)
+        }
+
+        // Empty slots of the current page that are not owned by another screen
+        for (let i = 0; i < bar.pageSize; ++i) {
+            const id = bar.startWs + i
+            const info = byId[id]
+            if (!info || info.monitor === bar.monitorName)
+                push(id)
+        }
+
+        if (!bar.isSpecialWorkspace(bar.monitor?.activeWorkspace?.name))
+            push(bar.monitor?.activeWorkspace?.id)
+
+        return ids.sort((a, b) => a - b)
+    }
+
+    readonly property var workspaceModel: {
+        if (bar.onlyAccessibleWorkspaces)
+            return bar.accessibleWorkspaceIds
+        const arr = []
+        for (let i = 0; i < bar.pageSize; ++i)
+            arr.push(bar.startWs + i)
+        return arr
+    }
+
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
 
     Item {
@@ -100,13 +149,13 @@ PanelWindow {
                 spacing: 4
 
                 Repeater {
-                    model: pageSize
+                    model: bar.workspaceModel
 
                     WorkspacePill {
-                        wsIndex: startWs + index
-                        focused: bar.monitor?.activeWorkspace?.id === (startWs + index)
+                        wsIndex: modelData
+                        focused: bar.monitor?.activeWorkspace?.id === modelData
                         occupied: {
-                            const ws = Hyprland.workspaces.values.find(w => w.id === (startWs + index))
+                            const ws = Hyprland.workspaces.values.find(w => w.id === modelData)
                             return ws !== undefined && ws !== null
                         }
                     }

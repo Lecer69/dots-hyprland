@@ -307,7 +307,8 @@ hl.config({
         zoom_rigid = false,
         zoom_disable_aa = true,
         no_hardware_cursors = 0,
-        hotspot_padding = 1
+        hotspot_padding = 1,
+        no_warps = true
     },
 
     ecosystem = {

@@ -28,9 +28,11 @@ PanelWindow {
     }
 
     GammaPanel {
+        id: gammaPanel
+
         anchors.centerIn: parent
-        width: 460
-        height: 400
+        width: gammaPanel.implicitWidth
+        height: Math.min(gammaPanel.implicitHeight, parent.height - 80)
         onCloseRequested: root.shown = false
     }
 

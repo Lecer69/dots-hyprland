@@ -49,6 +49,15 @@ ScrollView {
             }
         }
 
+        SettingRow {
+            label: "Only Accessible Workspaces"
+            description: "Show only this screen's workspaces, hiding ones owned by other screens"
+            ToggleSwitch {
+                checked: SettingsData.s.bar.onlyAccessibleWorkspaces
+                onToggled: v => SettingsData.s.bar.onlyAccessibleWorkspaces = v
+            }
+        }
+
         Item { height: 8 }
         SectionHeader { title: "Modules" }
 

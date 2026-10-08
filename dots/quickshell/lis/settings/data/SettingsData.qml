@@ -58,6 +58,7 @@ Singleton {
                 property bool showScreenshot: true
                 property int workspaceNumbers: 10
                 property string workspaceStyle: "numbers"
+                property bool onlyAccessibleWorkspaces: false
                 property bool trayIconTint: true
                 property bool workspaceIconTint: true
             }

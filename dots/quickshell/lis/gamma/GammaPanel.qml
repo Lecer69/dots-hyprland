@@ -12,8 +12,17 @@ Rectangle {
     border.color: "#2a2a2a"
     border.width: 1
 
+    readonly property int presetColumns: 2
+    readonly property int presetCellHeight: 56
+    readonly property int presetCellSpacing: 8
+    readonly property int presetRows: Math.max(2, Math.min(Math.ceil(gammaState.presets.length / presetColumns), 6))
+    readonly property int presetListHeight: presetRows * (presetCellHeight + presetCellSpacing) - presetCellSpacing
+
+    implicitWidth: 460
+    implicitHeight: header.height + content.implicitHeight + content.anchors.topMargin + content.anchors.bottomMargin
+
     GammaState {
-        id: state
+        id: gammaState
     }
 
     Rectangle {
@@ -70,6 +79,8 @@ Rectangle {
     }
 
     ColumnLayout {
+        id: content
+
         anchors.top: header.bottom
         anchors.left: parent.left
         anchors.right: parent.right
@@ -80,64 +91,229 @@ Rectangle {
 
         GammaSlider {
             label: "Brightness"
-            value: state.brightness
+            value: gammaState.brightness
             accent: "#f9e2af"
             onMoved: function(v) {
-                state.brightness = v;
+                gammaState.brightness = v;
             }
             onReleased: function(v) {
-                state.brightness = v;
-                state.apply();
+                gammaState.brightness = v;
+                gammaState.apply();
             }
         }
 
         GammaSlider {
             label: "Contrast"
-            value: state.contrast
+            value: gammaState.contrast
             accent: "#89b4fa"
             onMoved: function(v) {
-                state.contrast = v;
+                gammaState.contrast = v;
             }
             onReleased: function(v) {
-                state.contrast = v;
-                state.apply();
+                gammaState.contrast = v;
+                gammaState.apply();
             }
         }
 
         GammaSlider {
             label: "Gamma"
-            value: state.gamma
+            value: gammaState.gamma
             accent: "#a6e3a1"
             onMoved: function(v) {
-                state.gamma = v;
+                gammaState.gamma = v;
             }
             onReleased: function(v) {
-                state.gamma = v;
-                state.apply();
+                gammaState.gamma = v;
+                gammaState.apply();
             }
         }
 
         GammaSlider {
             label: "Saturation"
-            value: state.saturation
+            value: gammaState.saturation
             accent: "#cba6f7"
             onMoved: function(v) {
-                state.saturation = v;
+                gammaState.saturation = v;
             }
             onReleased: function(v) {
-                state.saturation = v;
-                state.apply();
+                gammaState.saturation = v;
+                gammaState.apply();
             }
         }
 
-        Item {
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.topMargin: -4
+            Layout.preferredHeight: 1
+            color: "#222222"
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
             Layout.fillHeight: true
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "Presets"
+                    color: "#aaaaaa"
+                    font.pixelSize: 13
+                }
+
+                Text {
+                    text: gammaState.presets.length > 0 ? gammaState.presets.length : ""
+                    color: "#666666"
+                    font.pixelSize: 12
+                }
+
+            }
+
+            // Save preset input
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 40
+                radius: 8
+                color: "#1a1a1a"
+                border.color: input.activeFocus ? "#444444" : "#2a2a2a"
+                border.width: 1
+
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 100
+                    }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 8
+                    spacing: 8
+
+                    TextInput {
+                        id: input
+
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        color: "#dddddd"
+                        font.pixelSize: 13
+                        clip: true
+                        selectByMouse: true
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Save current as preset…"
+                            color: "#555555"
+                            font.pixelSize: 13
+                            visible: input.text.length === 0
+                        }
+
+                        Keys.onReturnPressed: {
+                            gammaState.addPreset(input.text);
+                            input.text = "";
+                        }
+                        Keys.onEnterPressed: {
+                            gammaState.addPreset(input.text);
+                            input.text = "";
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: 26
+                        Layout.preferredHeight: 26
+                        radius: 13
+                        color: addHover.containsMouse ? "#252525" : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "+"
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "#a6e3a1"
+                        }
+
+                        MouseArea {
+                            id: addHover
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                gammaState.addPreset(input.text);
+                                input.text = "";
+                            }
+                        }
+                    }
+
+                }
+
+            }
+
+            // Preset list
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                implicitHeight: root.presetListHeight
+
+                Flickable {
+                    id: flick
+
+                    anchors.fill: parent
+                    contentWidth: width
+                    contentHeight: presetGrid.height
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    flickableDirection: Flickable.VerticalFlick
+
+                    Grid {
+                        id: presetGrid
+
+                        width: flick.width
+                        columns: root.presetColumns
+                        spacing: root.presetCellSpacing
+
+                        Repeater {
+                            model: gammaState.presets
+
+                            delegate: GammaPresetItem {
+                                required property var modelData
+
+                                width: (presetGrid.width - presetGrid.spacing * (presetGrid.columns - 1)) / presetGrid.columns
+                                height: root.presetCellHeight
+                                presetId: modelData.id
+                                name: modelData.name
+                                gamma: modelData.gamma
+                                brightness: modelData.brightness
+                                contrast: modelData.contrast
+                                saturation: modelData.saturation
+                                onApplyRequested: gammaState.applyPreset(presetId)
+                                onRemoveRequested: gammaState.removePreset(presetId)
+                            }
+                        }
+
+                    }
+
+                }
+
+                // Empty state
+                Text {
+                    anchors.centerIn: parent
+                    visible: gammaState.presets.length === 0
+                    text: "No presets yet"
+                    color: "#444444"
+                    font.pixelSize: 13
+                }
+
+            }
+
         }
 
         Rectangle {
             Layout.fillWidth: true
             Layout.topMargin: -12
-            height: 38
+            Layout.preferredHeight: 38
             radius: 8
             color: resetHover.containsMouse ? "#252525" : "#1a1a1a"
             border.color: "#2a2a2a"
@@ -156,7 +332,7 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: state.reset()
+                onClicked: gammaState.reset()
             }
 
             Behavior on color {
