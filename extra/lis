@@ -84,6 +84,61 @@ case "$1" in
 
         systemctl reboot
         ;;
+    mirrors)
+        if ! command -v reflector >/dev/null 2>&1; then
+            echo "lis mirrors: reflector is not installed" >&2
+            exit 1
+        fi
+
+        # Configuration (environment):
+        #   LIS_MIRROR_COUNTRY   one or more countries/codes, separated by comma,
+        #                        space or semicolon (e.g. "us,de" / "France Germany").
+        #                        Alias: LIS_MIRROR_COUNTRIES
+        #   LIS_MIRROR_AMOUNT    number of mirrors to keep, default 20.
+        #                        Alias: LIS_MIRROR_COUNT
+        country="${LIS_MIRROR_COUNTRY:-${LIS_MIRROR_COUNTRIES:-}}"
+        amount="${LIS_MIRROR_AMOUNT:-${LIS_MIRROR_COUNT:-20}}"
+
+        # Normalise multiple countries into reflector's comma-separated form.
+        country=$(printf '%s' "$country" | tr ' ;' ',,' | sed 's/,,*/,/g; s/^,//; s/,$//')
+
+        if ! [[ "$amount" =~ ^[1-9][0-9]*$ ]]; then
+            echo "lis mirrors: invalid LIS_MIRROR_AMOUNT: $amount" >&2
+            exit 1
+        fi
+
+        echo "lis mirrors: countries='${country:-all}' amount=$amount"
+
+        tmp=$(mktemp) || exit 1
+        args=(--protocol https --latest "$amount" --sort rate --verbose --save "$tmp")
+        [ -n "$country" ] && args=(--country "$country" "${args[@]}")
+        echo "lis mirrors: running reflector ${args[*]}"
+
+        sudo -n cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak 2>/dev/null \
+            || sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak \
+            || { echo "lis mirrors: failed to back up /etc/pacman.d/mirrorlist" >&2; rm -f "$tmp"; exit 1; }
+
+        if ! reflector "${args[@]}"; then
+            echo "lis mirrors: reflector failed" >&2
+            rm -f "$tmp"
+            exit 1
+        fi
+
+        selected=$(grep -c '^Server' "$tmp" || true)
+        echo "lis mirrors: selected ${selected:-0} mirror(s):"
+        grep '^Server' "$tmp" | sed 's/^/    /'
+
+        sudo -n install -m 644 -o root -g root "$tmp" /etc/pacman.d/mirrorlist 2>/dev/null \
+            || sudo install -m 644 -o root -g root "$tmp" /etc/pacman.d/mirrorlist \
+            || { echo "lis mirrors: failed to install /etc/pacman.d/mirrorlist" >&2; rm -f "$tmp"; exit 1; }
+        rm -f "$tmp"
+
+        sudo -n env https_proxy="$https_proxy" http_proxy="$http_proxy" pacman -Syy --noconfirm 2>/dev/null \
+            || sudo env https_proxy="$https_proxy" http_proxy="$http_proxy" pacman -Syy \
+            || { echo "lis mirrors: pacman -Syy failed" >&2; exit 1; }
+
+        echo "lis mirrors: done (${selected:-0} mirror(s), backup at /etc/pacman.d/mirrorlist.bak)"
+        ;;
     *)
         echo "Usage:"
         echo "  lis 7z <archive> <folder_or_file> ==> Compress folders or files"
@@ -91,5 +146,7 @@ case "$1" in
         echo "  lis compress <input.mp4> <output.mp4> [size, def:23] ==> Compress a video"
         echo "  lis shutdown ==> Safely shuts down"
         echo "  lis reboot ==> Safely reboots"
+        echo "  lis mirrors ==> Update pacman mirrorlist with reflector"
+        echo "      env: LIS_MIRROR_COUNTRY='us,de' LIS_MIRROR_AMOUNT=20"
         ;;
 esac
