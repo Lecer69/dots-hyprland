@@ -7,7 +7,7 @@ end
 local qsIpcCall = "qs -c $qsConfig ipc call"
 
 hl.bind("SUPER + Tab", hl.dsp.global("quickshell:launcherToggle"), { description = "Shell: Toggle search" })
-hl.bind("SUPER + SHIFT + Tab", hl.dsp.global("quickshell:workspaces"), { description = "Shell: Toggle workspaces overview" })
+hl.bind("ALT + Tab", hl.dsp.global("quickshell:workspaces"), { description = "Shell: Toggle workspaces overview" })
 
 hl.bind("SUPER + ESCAPE", hl.dsp.global("quickshell:settings"), { description = "Shell: Open settings" })
 hl.bind("SUPER + V", hl.dsp.global("quickshell:launcherClipboard"), { description = "Shell: Toggle clipboard" })

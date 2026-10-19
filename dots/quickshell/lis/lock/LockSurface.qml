@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import QtQuick.Shapes
-import Qt5Compat.GraphicalEffects
 import qs.settings.data
 import qs.bar
 
@@ -19,34 +18,21 @@ Item {
     property string wallpaperPath: ""
     property var blurCache: null
 
-    // Resolved path of the pre-blurred cache image ("" until cached)
-    property string blurredSource: ""
+    // Cache entry for this wallpaper + blur params ("" when blur is off)
+    readonly property string _blurName: (blurCache !== null && enableBlur && wallpaperPath.length > 0)
+        ? blurCache.nameFor(wallpaperPath, blurSize, blurPasses) : ""
 
-    // Key identifies the wallpaper + blur params; changes when either updates
-    readonly property string _blurKey: (blurCache !== null && enableBlur && wallpaperPath.length > 0)
-        ? blurCache.keyFor(wallpaperPath, blurSize, blurPasses) : ""
+    // Usually primed by ScreenLock before the lock even starts, so the
+    // first frame already has it; "" until a blurred image exists
+    readonly property string blurredSource: _blurName.length > 0 ? (blurCache.urls[_blurName] ?? "") : ""
 
-    on_BlurKeyChanged: root._refreshBlur()
+    // Coalesced: settings can change several params in one go
+    on_BlurNameChanged: Qt.callLater(root._requestBlur)
 
-    function _refreshBlur() {
-        if (blurCache === null || _blurKey.length === 0) {
-            blurredSource = ""
-            return
-        }
-        // Fast path: reuse a blurred image generated previously (instant lock)
-        blurredSource = blurCache.cachedPath(wallpaperPath, blurSize, blurPasses)
-        // Slow path handled by the job: if missing/outdated (mtime/size changed),
-        // it re-blurs and re-caches, then notifies via onReady
+    function _requestBlur() {
+        if (_blurName.length === 0) return
+        blurCache.prime(wallpaperPath, blurSize, blurPasses)
         blurCache.ensureCached(wallpaperPath, blurSize, blurPasses)
-    }
-
-    Connections {
-        target: root.blurCache
-
-        function onReady(key, path) {
-            if (key === root._blurKey)
-                root.blurredSource = path
-        }
     }
 
     readonly property color text: "#cdd6f4"
@@ -55,56 +41,53 @@ Item {
     readonly property color red: '#ea7496'
     readonly property color yellow: '#f9da98'
 
-    Component.onCompleted: BatteryData.addViewer()
+    // Fade only if the blur shows up after the surface appeared; when it's
+    // ready at creation (the normal case) it's there in the first frame
+    property bool _fadeEnabled: false
+
+    Component.onCompleted: {
+        BatteryData.addViewer()
+        root._requestBlur()
+        Qt.callLater(() => root._fadeEnabled = true)
+    }
     Component.onDestruction: BatteryData.removeViewer()
 
-    Rectangle {
+    Item {
+        id: background
         anchors.fill: parent
-        color: "transparent"
-    }
-
-    // Pre-blurred wallpaper loaded from the disk cache (fast on every lock)
-    Image {
-        id: wallpaperImage
-        anchors.fill: parent
-        visible: false
-        fillMode: Image.PreserveAspectCrop
-        cache: true
-        asynchronous: true
-        source: (root.enableBlur && root.blurredSource.length > 0)
-            ? "file://" + root.blurredSource
-            : ""
-    }
-
-    BrightnessContrast {
-        id: backgroundOutput
-        anchors.fill: parent
-        source: wallpaperImage
-        brightness: root.brightness - 1.0
-        contrast: 0
-        visible: root.enableBlur && wallpaperImage.status === Image.Ready
-        opacity: 0
+        visible: root.enableBlur
+        opacity: wallpaperImage.status === Image.Ready ? 1 : 0
         Behavior on opacity {
+            enabled: root._fadeEnabled
             NumberAnimation {
                 duration: 250; easing.type: Easing.OutCubic
             }
         }
-    }
 
-    Connections {
-        target: wallpaperImage
+        // The cached blur is stored downscaled, so decoding is ~1ms:
+        // load synchronously instead of showing an empty first frame
+        Image {
+            id: wallpaperImage
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: false
+            cache: true
+            source: root.blurredSource
+        }
 
-        function onStatusChanged() {
-            if (wallpaperImage.status === Image.Ready && root.enableBlur) {
-                backgroundOutput.opacity = 1
-            }
+        // Same result as BrightnessContrast with contrast 0 (it mixes toward
+        // black/white by |brightness - 1|), without an extra shader pass
+        Rectangle {
+            anchors.fill: parent
+            color: root.brightness < 1 ? "black" : "white"
+            opacity: Math.min(1, Math.abs(root.brightness - 1))
         }
     }
 
     Rectangle {
         anchors.fill: parent
         color: "#1e1e2e"
-        opacity: root.enableBlur ? (1 - backgroundOutput.opacity) * 0.6 : 0
+        opacity: (1 - background.opacity) * 0.6
         visible: root.enableBlur
     }
 
@@ -134,12 +117,7 @@ Item {
                     letterSpacing: -2
                 }
                 opacity: 0.92
-
-                function formatted() {
-                    return Qt.formatTime(new Date(), "hh:mm")
-                }
-
-                text: formatted()
+                text: Qt.formatTime(clock.date, "hh:mm")
             }
         }
 
@@ -160,25 +138,16 @@ Item {
                 }
                 opacity: 0.75
 
-                function formatted() {
-                    var d = new Date()
-                    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-                    return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
-                }
+                readonly property var days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                readonly property var months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-                text: formatted().toUpperCase()
+                text: (days[clock.date.getDay()] + ", " + months[clock.date.getMonth()] + " " + clock.date.getDate()).toUpperCase()
             }
         }
 
-        Timer {
-            interval: 1000
-            running: true
-            repeat: true
-            onTriggered: {
-                timeText.text = timeText.formatted()
-                dateText.text = dateText.formatted().toUpperCase()
-            }
+        SystemClock {
+            id: clock
+            precision: SystemClock.Minutes
         }
     }
 
@@ -274,7 +243,7 @@ Item {
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: userCollect.text.trim().length > 0 ? userCollect.text.trim() : "user"
+                    text: root.context.userName
                     color: root.subtext0
                     font {
                         pixelSize: 13
@@ -303,7 +272,7 @@ Item {
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: kbCollect.text.trim().length > 0 ? kbCollect.text.trim() : "en"
+                    text: root.context.keyboardLayout
                     color: root.subtext0
                     font {
                         pixelSize: 13
@@ -358,62 +327,7 @@ Item {
         anchors.fill: parent
         focus: true
 
-        Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                root.context.submit()
-                event.accepted = true
-            } else if (event.key === Qt.Key_Backspace) {
-                root.context.backspace()
-                event.accepted = true
-            } else if (event.key === Qt.Key_Escape) {
-                root.context.clearPassword()
-                event.accepted = true
-            } else if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
-                root.context.selectAllClear()
-                event.accepted = true
-            } else if (event.key === Qt.Key_CapsLock) {
-                root.context.capsLockOn = !root.context.capsLockOn
-                event.accepted = false
-            } else if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) {
-                event.accepted = true
-            } else if (event.text.length > 0 && !event.isAutoRepeat) {
-                root.context.appendChar(event.text)
-                event.accepted = true
-            }
-        }
-    }
-
-    Process {
-        id: userProc
-        command: ["id", "-un"]
-        running: true
-        stdout: StdioCollector {
-            id: userCollect
-        }
-    }
-
-    Process {
-        id: kbProc
-        command: ["bash", "-c", "hyprctl devices -j | jq -r '[.keyboards[]|select(.main)][0].active_keymap // \"en\"'"]
-        running: true
-        stdout: StdioCollector {
-            id: kbCollect
-        }
-    }
-    Timer {
-        interval: 5000; running: true; repeat: true
-        onTriggered: kbProc.running = true
-    }
-
-    // Read initial caps lock state
-    Process {
-        id: capsProc
-        command: ["bash", "-c", "cat /sys/class/leds/*capslock*/brightness 2>/dev/null | head -1"]
-        running: true
-        stdout: StdioCollector {
-            id: capsCollect
-            onTextChanged: root.context.capsLockOn = capsCollect.text.trim() === "1"
-        }
+        Keys.onPressed: (event) => root.context.handleKey(event)
     }
 
     MouseArea {

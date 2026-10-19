@@ -22,6 +22,19 @@ Rectangle {
     property date selectedDate: today
 
     readonly property string monthLabel: monthNames[viewMonth] + " " + viewYear
+    readonly property var selectedNotes: calendarState.notesFor(selectedDate)
+
+    property bool newNoteYearly: false
+
+    CalendarState {
+        id: calendarState
+    }
+
+    function addNote(): void {
+        calendarState.addNote(selectedDate, noteInput.text, newNoteYearly)
+        noteInput.text = ""
+        newNoteYearly = false
+    }
 
     readonly property var cells: {
         const first = new Date(viewYear, viewMonth, 1)
@@ -317,6 +330,20 @@ Rectangle {
                             : cell.modelData.inMonth ? "#cfcfcf" : "#3f3f3f"
                     }
 
+                    // Has-notes marker
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 6
+                        width: 4
+                        height: 4
+                        radius: 2
+                        visible: calendarState.hasNotes(cell.modelData.date)
+                        color: cell.modelData.isToday
+                            ? "#111111"
+                            : cell.modelData.inMonth ? "#ffc900" : "#5a4a10"
+                    }
+
                     MouseArea {
                         id: cellHover
 
@@ -329,27 +356,259 @@ Rectangle {
             }
         }
 
+        // Selected date + note count
         Item {
-            Layout.fillHeight: true
-        }
-
-        // Selected date footer
-        Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 36
-            radius: 8
-            color: "#141414"
-            border.color: "#222222"
-            border.width: 1
+            Layout.preferredHeight: 18
 
             Text {
-                anchors.centerIn: parent
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 text: root.dayNamesFull[root.selectedDate.getDay()] + ", "
                     + root.selectedDate.getDate() + " "
                     + root.monthNames[root.selectedDate.getMonth()] + " "
                     + root.selectedDate.getFullYear()
-                color: "#777777"
+                color: "#aaaaaa"
                 font.pixelSize: 12
+                font.weight: Font.DemiBold
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.selectedNotes.length > 0
+                    ? root.selectedNotes.length + (root.selectedNotes.length === 1 ? " note" : " notes")
+                    : ""
+                color: "#666666"
+                font.pixelSize: 12
+            }
+        }
+
+        // Notes for the selected date
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            Flickable {
+                anchors.fill: parent
+                contentWidth: width
+                contentHeight: notesColumn.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
+
+                Column {
+                    id: notesColumn
+
+                    width: parent.width
+                    spacing: 4
+
+                    Repeater {
+                        model: root.selectedNotes
+
+                        Rectangle {
+                            id: noteRow
+
+                            required property var modelData
+
+                            width: notesColumn.width
+                            height: Math.max(36, noteText.implicitHeight + 16)
+                            radius: 8
+                            color: noteHover.hovered ? "#161616" : "transparent"
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 100
+                                }
+                            }
+
+                            HoverHandler {
+                                id: noteHover
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 6
+                                spacing: 10
+
+                                Rectangle {
+                                    Layout.preferredWidth: 6
+                                    Layout.preferredHeight: 6
+                                    radius: 3
+                                    color: "#ffc900"
+                                }
+
+                                Text {
+                                    id: noteText
+
+                                    Layout.fillWidth: true
+                                    text: noteRow.modelData.text
+                                    color: "#dddddd"
+                                    font.pixelSize: 13
+                                    wrapMode: Text.Wrap
+                                }
+
+                                // Yearly toggle, shown when set or on hover
+                                Rectangle {
+                                    Layout.preferredWidth: yearlyLabel.implicitWidth + 14
+                                    Layout.preferredHeight: 22
+                                    radius: 11
+                                    opacity: noteRow.modelData.yearly || noteHover.hovered ? 1 : 0
+                                    color: noteRow.modelData.yearly ? "#1e2a3d" : (yearlyHover.containsMouse ? "#252525" : "transparent")
+                                    border.color: noteRow.modelData.yearly ? "#3b5375" : "#333333"
+                                    border.width: 1
+
+                                    Text {
+                                        id: yearlyLabel
+
+                                        anchors.centerIn: parent
+                                        text: "Yearly"
+                                        font.pixelSize: 11
+                                        color: noteRow.modelData.yearly ? "#89b4fa" : "#777777"
+                                    }
+
+                                    MouseArea {
+                                        id: yearlyHover
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: calendarState.toggleYearly(noteRow.modelData.id)
+                                    }
+                                }
+
+                                // Delete
+                                Rectangle {
+                                    Layout.preferredWidth: 26
+                                    Layout.preferredHeight: 26
+                                    radius: 13
+                                    color: delHover.containsMouse ? "#4e1919" : "transparent"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "✕"
+                                        font.pixelSize: 11
+                                        color: delHover.containsMouse ? "#f38ba8" : "#666666"
+                                    }
+
+                                    MouseArea {
+                                        id: delHover
+
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: calendarState.removeNote(noteRow.modelData.id)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: root.selectedNotes.length === 0
+                text: "No notes for this day"
+                color: "#444444"
+                font.pixelSize: 13
+            }
+        }
+
+        // Add note input
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
+            radius: 8
+            color: "#1a1a1a"
+            border.color: noteInput.activeFocus ? "#444444" : "#2a2a2a"
+            border.width: 1
+
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 100
+                }
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 8
+                spacing: 8
+
+                TextInput {
+                    id: noteInput
+
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    color: "#dddddd"
+                    font.pixelSize: 13
+                    clip: true
+                    selectByMouse: true
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Add a note…"
+                        color: "#555555"
+                        font.pixelSize: 13
+                        visible: noteInput.text.length === 0
+                    }
+
+                    Keys.onReturnPressed: root.addNote()
+                    Keys.onEnterPressed: root.addNote()
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: newYearlyLabel.implicitWidth + 14
+                    Layout.preferredHeight: 22
+                    radius: 11
+                    color: root.newNoteYearly ? "#1e2a3d" : (newYearlyHover.containsMouse ? "#252525" : "transparent")
+                    border.color: root.newNoteYearly ? "#3b5375" : "#333333"
+                    border.width: 1
+
+                    Text {
+                        id: newYearlyLabel
+
+                        anchors.centerIn: parent
+                        text: "Yearly"
+                        font.pixelSize: 11
+                        color: root.newNoteYearly ? "#89b4fa" : "#777777"
+                    }
+
+                    MouseArea {
+                        id: newYearlyHover
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.newNoteYearly = !root.newNoteYearly
+                    }
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 26
+                    Layout.preferredHeight: 26
+                    radius: 13
+                    color: addHover.containsMouse ? "#252525" : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "+"
+                        font.pixelSize: 16
+                        font.bold: true
+                        color: "#a6e3a1"
+                    }
+
+                    MouseArea {
+                        id: addHover
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.addNote()
+                    }
+                }
             }
         }
 

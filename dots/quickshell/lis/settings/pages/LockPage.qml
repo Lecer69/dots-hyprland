@@ -70,5 +70,20 @@ ScrollView {
                 onToggled: v => SettingsData.s.lockScreen.blockVerticalScreens = v
             }
         }
+
+        Item {
+            height: 16
+        }
+        SectionHeader {
+            title: "Privacy"
+        }
+
+        SettingRow {
+            label: "Mute microphone while locked"
+            ToggleSwitch {
+                checked: SettingsData.s.lockScreen.muteMicOnLock
+                onToggled: v => SettingsData.s.lockScreen.muteMicOnLock = v
+            }
+        }
     }
 }

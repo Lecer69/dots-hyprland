@@ -28,11 +28,23 @@ Singleton {
                 writeAdapter()
         }
 
-        Component.onCompleted: {
-            Quickshell.execDetached(["mkdir", "-p", homeDir + "/.config/lis"])
-            reload()
-            initTimer.start()
+        onLoaded: root._ready = true
+
+        // Only seed when there is no file; writing on any other failure (or
+        // on a timer, as before) could overwrite the user's settings.
+        // Writing creates ~/.config/lis if needed.
+        onLoadFailed: error => {
+            if (error !== FileViewError.FileNotFound)
+                return
+            console.log("[SettingsData] seeding defaults")
+            root._ready = true
+            writeAdapter()
         }
+
+        // Block until settings.json is parsed so everything created at
+        // startup (e.g. the boot lock screen) sees the real values instead
+        // of defaults that change a moment later
+        Component.onCompleted: waitForJob()
 
         JsonAdapter {
             id: adapter
@@ -86,6 +98,7 @@ Singleton {
                 property int blurPasses: 5
                 property real brightness: 0.8
                 property bool blockVerticalScreens: false
+                property bool muteMicOnLock: true
            }
 
             // osu!
@@ -94,31 +107,6 @@ Singleton {
                 property bool backdropOtherMonitors: false
                 property real backdropOpacity: 0.6
                 property string backdropColor: "#000000"
-            }
-        }
-    }
-
-    Timer {
-        id: initTimer
-        interval: 100
-        repeat: false
-        onTriggered: {
-            if (!root._ready) {
-                console.log("[SettingsData] seeding defaults")
-                root._ready = true
-                fileView.writeAdapter()
-            } else {
-                console.log("[SettingsData] loaded from disk")
-            }
-        }
-    }
-
-    Connections {
-        target: fileView
-        function onAdapterUpdated() {
-            if (!root._ready) {
-                console.log("[SettingsData] adapter populated from disk")
-                root._ready = true
             }
         }
     }

@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Services.Pipewire
 import QtQuick
 import qs.tools
 import qs.settings.data
@@ -17,198 +18,179 @@ QtObject {
     // Pre-blurred wallpaper disk cache (instant lock, re-blurs on wallpaper update)
     property WallpaperBlurCache _blurCache: WallpaperBlurCache {}
 
-    property var _wallpaperPaths: ({})
-    property string _wallpaperFallback: ""
+    // monitor -> wallpaper. hyprpaper.conf is read synchronously, since at
+    // boot the lock shows before hyprpaper is even running; hyprpaper's
+    // live state takes precedence once it answers (runtime changes).
+    property var _confWallpapers: ({})
+    property string _confFallback: ""
+    property var _liveWallpapers: ({})
 
-    Component.onCompleted: {
-        if (SettingsData.s.lockScreen.enableBlur) {
-            _hyprctlActiveQuery.running = true
+    function wallpaperFor(monitorName) {
+        if (monitorName) {
+            if (root._liveWallpapers[monitorName]) return root._liveWallpapers[monitorName]
+            if (root._confWallpapers[monitorName]) return root._confWallpapers[monitorName]
         }
+        return root._confFallback
     }
 
-    property bool _wallpaperResolvedForBlur: false
+    property bool _initialized: false
 
-    // Pre-warm the blur cache for every resolved wallpaper so the first
-    // lock of a session is instant (the disk cache usually already has
-    // them; this just repopulates the in-memory map after boot).
+    // Everything the first lock needs, without spawning a process: settings
+    // (loaded synchronously by SettingsData), wallpapers (conf file) and
+    // the cached blur (stamp files). Called from lock() too, since the boot
+    // lock can run before this object's onCompleted.
+    function _init() {
+        if (root._initialized) return
+        root._initialized = true
+        root._parseHyprpaperConf()
+        root._hyprpaperQuery.running = true
+    }
+
+    Component.onCompleted: root._init()
+
+    // Primes (sync) and validates (background) the blur for every screen
+    // that will show a lock surface, so the next lock is instant
     function _warmBlurCache() {
-        if (!SettingsData.s.lockScreen.enableBlur) return
-        const size = SettingsData.s.lockScreen.blurSize
-        const passes = SettingsData.s.lockScreen.blurPasses
-        for (const mon in root._wallpaperPaths)
-            root._blurCache.ensureCached(root._wallpaperPaths[mon], size, passes)
-        if (root._wallpaperFallback.length > 0)
-            root._blurCache.ensureCached(root._wallpaperFallback, size, passes)
-    }
-
-    onEnableBlurStateChanged: {
-        var enabled = SettingsData.s.lockScreen.enableBlur
-        if (enabled && !root._wallpaperResolvedForBlur) {
-            root._wallpaperResolvedForBlur = true
-            _hyprctlActiveQuery.running = true
-        } else if (!enabled) {
-            root._wallpaperResolvedForBlur = false
+        const ls = SettingsData.s.lockScreen
+        if (!ls.enableBlur) return
+        const seen = {}
+        const screens = Quickshell.screens
+        for (let i = 0; i < screens.length; i++) {
+            const s = screens[i]
+            if (ls.blockVerticalScreens && s.height > s.width) continue
+            const wp = root.wallpaperFor(s.name)
+            if (!wp || seen[wp]) continue
+            seen[wp] = true
+            root._blurCache.prime(wp, ls.blurSize, ls.blurPasses)
+            root._blurCache.ensureCached(wp, ls.blurSize, ls.blurPasses)
         }
     }
 
-    signal enableBlurStateChanged()
-
-    property Connections _enableBlurWatcher: Connections {
-        target: SettingsData.s ? SettingsData.s.lockScreen : null
-        function onEnableBlurChanged() {
-            root.enableBlurStateChanged()
-        }
+    // Re-warm after settings/screen changes settle (sliders fire per step)
+    property Timer _warmDebounce: Timer {
+        interval: 1500
+        onTriggered: root._warmBlurCache()
     }
 
-    property Process _hyprctlActiveQuery: Process {
-        id: hyprctlActiveQuery
-        command: ["hyprctl", "hyprpaper", "listactive"]
-        stdout: StdioCollector { id: hyprctlActiveOutput }
-        stderr: StdioCollector { id: hyprctlActiveError }
-        onRunningChanged: {
-            if (!running) {
-                var resolvedOk = false
-                if (hyprctlActiveQuery.exitCode === 0) {
-                    var out = hyprctlActiveOutput.text.trim()
-                    if (out.length > 0) {
-                        resolvedOk = root._parseHyprctlActive(out)
-                    }
-                }
+    property Connections _lockSettingsWatcher: Connections {
+        target: SettingsData.s.lockScreen
+        function onEnableBlurChanged() { root._warmDebounce.restart() }
+        function onBlurSizeChanged() { root._warmDebounce.restart() }
+        function onBlurPassesChanged() { root._warmDebounce.restart() }
+        function onBlockVerticalScreensChanged() { root._warmDebounce.restart() }
+    }
 
-                if (!resolvedOk) {
-                    _wallpaperConfCat.running = true
-                } else {
-                    root._warmBlurCache()
-                }
+    property Connections _screensWatcher: Connections {
+        target: Quickshell
+        function onScreensChanged() { root._warmDebounce.restart() }
+    }
+
+    property FileView _hyprpaperConf: FileView {
+        path: Quickshell.env("HOME") + "/.config/hypr/hyprpaper.conf"
+        blockLoading: true
+        printErrors: false
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root._parseHyprpaperConf()
+    }
+
+    // Reads `source = ...` includes of hyprpaper.conf
+    property FileView _includeReader: FileView {
+        blockAllReads: true
+        printErrors: false
+    }
+
+    function _expandPath(p) {
+        return p.replace(/^~(?=\/|$)/, Quickshell.env("HOME") ?? "")
+            .replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (m, name) => Quickshell.env(name) ?? "")
+    }
+
+    function _confText() {
+        let out = ""
+        const lines = root._hyprpaperConf.text().split("\n")
+        for (let i = 0; i < lines.length; i++) {
+            const src = lines[i].trim().match(/^source\s*=\s*(.+)$/)
+            if (!src) {
+                out += lines[i] + "\n"
+                continue
             }
+            root._includeReader.path = root._expandPath(src[1].trim())
+            out += root._includeReader.text() + "\n"
         }
+        return out
     }
 
-    function _parseHyprctlActive(text) {
-        var map = {}
-        var lines = text.split("\n")
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i].trim()
-            if (line.length === 0) continue
-            var eq = line.indexOf("=")
-            if (eq < 0) continue
-            var mon = line.slice(0, eq).trim()
-            var path = line.slice(eq + 1).trim()
-            if (mon.length === 0 || path.length === 0) continue
-            map[mon] = path
-        }
-        var merged = Object.assign({}, root._wallpaperPaths, map)
-        root._wallpaperPaths = merged
-        root._hpHyprctlMonitors = Object.keys(map)
-        return Object.keys(map).length > 0
-    }
+    function _parseHyprpaperConf() {
+        const map = {}
+        let fallback = ""
+        let inBlock = false
+        let curMonitor = ""
+        let curPath = ""
 
-    property var _hpHyprctlMonitors: []
-
-    property Process _wallpaperConfCat: Process {
-        id: wallpaperConfCat
-        command: ["bash", "-c",
-            "conf=\"$HOME/.config/hypr/hyprpaper.conf\"; " +
-            "if [ ! -f \"$conf\" ]; then echo \"HYPRPAPER_CONF_MISSING:$conf\" >&2; exit 0; fi; " +
-            "while IFS= read -r line; do " +
-            "  trimmed=$(echo \"$line\" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'); " +
-            "  case \"$trimmed\" in " +
-            "    source\\ =*|source=*) " +
-            "      src=$(echo \"$trimmed\" | sed -e 's/^source[[:space:]]*=[[:space:]]*//'); " +
-            "      src=$(eval echo \"$src\"); " +
-            "      for f in $src; do " +
-            "        if [ -f \"$f\" ]; then cat \"$f\"; else echo \"HYPRPAPER_SOURCE_MISSING:$f\" >&2; fi; " +
-            "      done ;; " +
-            "    *) echo \"$line\" ;; " +
-            "  esac; " +
-            "done < \"$conf\""
-        ]
-        stdout: StdioCollector { id: wallpaperConfOutput }
-        stderr: StdioCollector { id: wallpaperConfError }
-        onRunningChanged: {
-            if (!running) {
-                root._parseWallpaperConf(wallpaperConfOutput.text)
-                root._warmBlurCache()
-            }
-        }
-    }
-
-    function _parseWallpaperConf(text) {
-        var map = {}
-        var fallback = ""
-        var lines = text.split("\n")
-
-        var inBlock = false
-        var curMonitor = null
-        var curPath = null
-
-        function flush() {
-            if (curPath === null) return
-            var path = root._expandPath(curPath)
-            if (curMonitor && curMonitor.length > 0) {
-                map[curMonitor] = path
-            } else {
-                fallback = path
-            }
+        function assign(monitor, path) {
+            if (path.length === 0) return
+            if (monitor.length > 0) map[monitor] = root._expandPath(path)
+            else fallback = root._expandPath(path)
         }
 
-        for (var i = 0; i < lines.length; i++) {
-            var raw = lines[i]
-            var line = raw.trim()
+        const lines = root._confText().split("\n")
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim()
             if (line.length === 0 || line.startsWith("#")) continue
 
             if (line.startsWith("wallpaper") && line.indexOf("{") >= 0) {
                 inBlock = true
-                curMonitor = null
-                curPath = null
+                curMonitor = ""
+                curPath = ""
                 continue
             }
             if (inBlock && line === "}") {
-                flush()
+                assign(curMonitor, curPath)
                 inBlock = false
                 continue
             }
-            if (!inBlock) continue
 
-            var eq = line.indexOf("=")
+            const eq = line.indexOf("=")
             if (eq < 0) continue
-            var key = line.slice(0, eq).trim()
-            var val = line.slice(eq + 1).trim()
+            const key = line.slice(0, eq).trim()
+            const val = line.slice(eq + 1).trim()
 
-            if (key === "monitor") {
-                curMonitor = val
-            } else if (key === "path") {
-                curPath = val
+            if (inBlock) {
+                if (key === "monitor") curMonitor = val
+                else if (key === "path") curPath = val
+            } else if (key === "wallpaper") {
+                // Pre-0.8 syntax: wallpaper = MONITOR,PATH
+                const comma = val.indexOf(",")
+                if (comma >= 0) assign(val.slice(0, comma).trim(), val.slice(comma + 1).trim())
             }
         }
 
-        var hyprctlMonitors = root._hpHyprctlMonitors || []
-        for (var k = 0; k < hyprctlMonitors.length; k++) {
-            var name = hyprctlMonitors[k]
-            if (map.hasOwnProperty(name)) {
-                delete map[name]
-            }
-        }
+        root._confWallpapers = map
+        root._confFallback = fallback
+        root._warmBlurCache()
+    }
 
-        root._wallpaperPaths = Object.assign({}, root._wallpaperPaths, map)
-        if (fallback.length > 0 || root._wallpaperFallback.length === 0) {
-            root._wallpaperFallback = fallback
+    property Process _hyprpaperQuery: Process {
+        command: ["hyprctl", "hyprpaper", "listactive"]
+        stdout: StdioCollector {
+            id: hyprpaperOut
+            onStreamFinished: root._parseLiveWallpapers(hyprpaperOut.text)
         }
     }
 
-    function _expandPath(p) {
-        if (p.startsWith("~/") || p === "~") {
-            var home = Quickshell.env("HOME") ?? ""
-            return home + p.slice(1)
+    function _parseLiveWallpapers(text) {
+        const map = {}
+        const lines = (text || "").split("\n")
+        for (let i = 0; i < lines.length; i++) {
+            // "MONITOR: /path" (current hyprpaper) or "MONITOR = /path" (older)
+            const m = lines[i].trim().match(/^([^\s=:]+)\s*[:=]\s*(\/.*)$/)
+            if (m) map[m[1]] = m[2].trim()
         }
-        return p
-    }
-
-    function wallpaperFor(monitorName) {
-        if (monitorName && root._wallpaperPaths[monitorName]) {
-            return root._wallpaperPaths[monitorName]
-        }
-        return root._wallpaperFallback
+        // Not running yet (boot) or nothing active: keep using the conf
+        if (Object.keys(map).length === 0) return
+        if (JSON.stringify(map) === JSON.stringify(root._liveWallpapers)) return
+        root._liveWallpapers = map
+        root._warmBlurCache()
     }
 
     function _focusFirstHorizontalMonitor() {
@@ -222,12 +204,53 @@ QtObject {
         }
     }
 
+    // Mic is muted while locked; only restored on unlock if we were
+    // the ones who muted it (a mic muted before locking stays muted).
+    property bool _micMutedByLock: false
+
+    property PwObjectTracker _micTracker: PwObjectTracker {
+        objects: [Pipewire.defaultAudioSource]
+    }
+
+    // Re-mute whenever the mic comes back unmuted while locked: covers
+    // the startup lock (Pipewire not bound yet, and the node's initial
+    // param sync overwrites a mute written right as it becomes ready)
+    // and a source that appears or changes while locked.
+    property bool _micReady: Pipewire.defaultAudioSource?.ready ?? false
+    on_MicReadyChanged: root._muteMic()
+
+    property Connections _micWatcher: Connections {
+        target: Pipewire.defaultAudioSource?.audio ?? null
+        function onMutedChanged() {
+            root._muteMic()
+        }
+    }
+
+    function _muteMic() {
+        const audio = Pipewire.defaultAudioSource?.audio
+        if (!root.isLocked || !SettingsData.s.lockScreen.muteMicOnLock
+                || !root._micReady || !audio || audio.muted) return
+        audio.muted = true
+        root._micMutedByLock = true
+    }
+
+    function _restoreMic() {
+        if (!root._micMutedByLock) return
+        root._micMutedByLock = false
+        const audio = Pipewire.defaultAudioSource?.audio
+        if (audio) audio.muted = false
+    }
+
     function lock() {
         if (root.isLocked || _wlLock.locked) return
+        root._init()
         root.isLocked = true
+        root._muteMic()
 
+        // Picks up wallpapers changed at runtime (hyprctl hyprpaper ...);
+        // the surfaces show the known blur meanwhile and swap if it differs
         if (SettingsData.s.lockScreen.enableBlur) {
-            _hyprctlActiveQuery.running = true
+            _hyprpaperQuery.running = true
         }
 
         _wlLock.locked = true
@@ -244,6 +267,7 @@ QtObject {
     function _unlock() {
         _wlLock.locked = false
         root.isLocked = false
+        root._restoreMic()
 
         Qt.callLater(root._focusFirstHorizontalMonitor)
 
@@ -252,6 +276,7 @@ QtObject {
 
     property LockContext _ctx: LockContext {
         id: lockCtx
+        active: root.isLocked
         onUnlocked: root._unlock()
         onUnlockedWithPassword: (pw) => {
             Quickshell.execDetached(["sh", "-c", "echo -n \"" + pw + "\" | gnome-keyring-daemon --replace --unlock --components=secrets"])
@@ -269,6 +294,7 @@ QtObject {
                 // with unlock). Keep our flag in sync so lock()
                 // stays callable and doesn't re-enter while stale.
                 root.isLocked = false
+                root._restoreMic()
                 root.lockedChanged()
             }
         }
@@ -281,22 +307,37 @@ QtObject {
             readonly property bool blockThisScreen: SettingsData.s.lockScreen.blockVerticalScreens && isVertical
 
             Rectangle {
+                id: blockedCover
                 anchors.fill: parent
                 visible: lockSurfaceRoot.blockThisScreen
                 color: "black"
+
+                // Typing still works if this screen holds keyboard focus
+                focus: visible
+                Keys.onPressed: (event) => lockCtx.handleKey(event)
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: blockedCover.forceActiveFocus()
+                }
             }
 
-            LockSurface {
-                id: lockSurfaceItem
+            // Blocked screens get no lock surface at all (it used to be
+            // created hidden: image load, timers, battery polling)
+            Loader {
                 anchors.fill: parent
-                context: lockCtx
-                visible: !lockSurfaceRoot.blockThisScreen
-                enableBlur: SettingsData.s.lockScreen.enableBlur
-                blurSize: SettingsData.s.lockScreen.blurSize
-                blurPasses: SettingsData.s.lockScreen.blurPasses
-                brightness: SettingsData.s.lockScreen.brightness
-                blurCache: root._blurCache
-                wallpaperPath: root.wallpaperFor(lockSurfaceRoot.screen ? lockSurfaceRoot.screen.name : "")
+                active: !lockSurfaceRoot.blockThisScreen
+                focus: active
+
+                sourceComponent: LockSurface {
+                    context: lockCtx
+                    enableBlur: SettingsData.s.lockScreen.enableBlur
+                    blurSize: SettingsData.s.lockScreen.blurSize
+                    blurPasses: SettingsData.s.lockScreen.blurPasses
+                    brightness: SettingsData.s.lockScreen.brightness
+                    blurCache: root._blurCache
+                    wallpaperPath: root.wallpaperFor(lockSurfaceRoot.screen ? lockSurfaceRoot.screen.name : "")
+                }
             }
         }
     }

@@ -21,9 +21,19 @@ Singleton {
     property var monitors: []
     property var layers: ({})
 
-    property bool isLuaConfig: {
-        const result = checkLua.exitCode === 0
-        return result
+    // Checked synchronously (tiny file read) so dispatches made during
+    // startup, like the boot lock focusing a monitor, use the right syntax
+    property bool isLuaConfig: false
+
+    FileView {
+        id: luaConfig
+        path: Quickshell.env("HOME") + "/.config/hypr/hyprland.lua"
+        blockLoading: true
+        printErrors: false
+        Component.onCompleted: {
+            text()
+            root.isLuaConfig = loaded
+        }
     }
 
     function toplevelsForWorkspace(workspace) {
@@ -79,16 +89,6 @@ Singleton {
         }, null);
     }
 
-    Process {
-        id: checkLua
-        command: ["bash", "-c", "test -f ~/.config/hypr/hyprland.lua && echo yes || echo no"]
-        running: true
-        stdout: SplitParser {
-            onRead: data => {
-                root.isLuaConfig = (data.trim() === "yes")
-            }
-        }
-    }
 
     Component.onCompleted: {
         updateAll();

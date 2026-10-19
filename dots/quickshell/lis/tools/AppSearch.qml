@@ -107,6 +107,13 @@ Singleton {
         if (str?.toLowerCase().includes("osu"))
             return DesktopEntries.byId("osu-lazer").icon
 
+        if (str === "AppRun") {
+            for (const id of ["Navicat.Premium.18", "Navicat.Premium.16"]) {
+                const appImageEntry = DesktopEntries.byId(id)
+                if (appImageEntry && iconExists(appImageEntry.icon)) return appImageEntry.icon
+            }
+        }
+
         // Quickshell's desktop entry lookup
         const entry = DesktopEntries.byId(str);
         if (entry) return entry.icon;

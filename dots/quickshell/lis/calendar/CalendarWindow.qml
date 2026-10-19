@@ -35,7 +35,7 @@ PanelWindow {
     CalendarPanel {
         anchors.centerIn: parent
         width: 460
-        height: 520
+        height: 720
         onCloseRequested: root.shown = false
     }
 
