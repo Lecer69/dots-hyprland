@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
 QtObject {
@@ -8,86 +9,35 @@ QtObject {
     property var notes: []
     property bool _loaded: false
 
-    property string _configPath: ""
-    property Process _resolveHome
+    // Atomic writes (temp file + rename), done before setText returns
+    property FileView _store: FileView {
+        path: Quickshell.env("HOME") + "/.config/lis/calendar.json"
+        blockWrites: true
+        printErrors: false
 
-    _resolveHome: Process {
-        id: resolveHome
-
-        command: ["bash", "-c", "echo -n $HOME/.config/lis/calendar.json"]
-        running: true
-        onExited: function() {
-            mkdirProc.running = true;
-        }
-
-        stdout: SplitParser {
-            onRead: function(line) {
-                root._configPath = line;
-            }
+        onLoaded: root._load(text())
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound) root._load("[]")
+            else console.warn("[calendar] can't read calendar.json:", FileViewError.toString(error))
         }
     }
 
-    property Process _mkdirProc
-
-    _mkdirProc: Process {
-        id: mkdirProc
-
-        running: false
-        command: ["bash", "-c", "mkdir -p $HOME/.config/lis"]
-        onExited: function() {
-            loadProc.running = true;
+    function _load(text) {
+        try {
+            var parsed = JSON.parse(text);
+            root.notes = Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            root.notes = [];
         }
-    }
-
-    property Process _loadProc
-
-    _loadProc: Process {
-        id: loadProc
-
-        property string _buf: ""
-
-        running: false
-        command: ["bash", "-c", "cat \"$HOME/.config/lis/calendar.json\" 2>/dev/null || echo '[]'"]
-        onRunningChanged: {
-            if (running)
-                _buf = "";
-        }
-
-        onExited: function() {
-            try {
-                var parsed = JSON.parse(loadProc._buf.trim());
-                root.notes = Array.isArray(parsed) ? parsed : [];
-            } catch (e) {
-                root.notes = [];
-            }
-            root._loaded = true;
-        }
-
-        stdout: SplitParser {
-            onRead: function(line) {
-                loadProc._buf += line + "\n";
-            }
-        }
-    }
-
-    property Process _writeProc
-
-    _writeProc: Process {
-        id: writeProc
-
-        running: false
-        command: []
+        root._loaded = true;
     }
 
     function save(): void {
-        if (_configPath === "" || !_loaded)
+        // Never overwrite a file that hasn't been read
+        if (!root._loaded)
             return ;
 
-        var json = JSON.stringify(root.notes);
-        var escaped = json.replace(/'/g, "'\\''");
-        writeProc.command = ["bash", "-c", "printf '%s' '" + escaped + "' > \"" + root._configPath + "\""];
-        writeProc.running = false;
-        writeProc.running = true;
+        root._store.setText(JSON.stringify(root.notes));
     }
 
     function _pad(n: int): string {

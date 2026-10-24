@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
 QtObject {
@@ -12,8 +13,6 @@ QtObject {
     // { id: real, name: string, gamma: real, brightness: real, contrast: real, saturation: real }
     property var presets: []
     property bool _loaded: false
-
-    property string _configPath: ""
 
     function apply(): void {
         applyProc.command = [
@@ -68,14 +67,11 @@ QtObject {
     }
 
     function savePresets(): void {
-        if (_configPath === "" || !_loaded)
+        // Never overwrite a file that hasn't been read
+        if (!_loaded)
             return;
 
-        const json = JSON.stringify(root.presets);
-        const escaped = json.replace(/'/g, "'\\''");
-        writeProc.command = ["bash", "-c", "printf '%s' '" + escaped + "' > \"" + root._configPath + "\""];
-        writeProc.running = false;
-        writeProc.running = true;
+        root._store.setText(JSON.stringify(root.presets));
     }
 
     property Process applyProc: Process {
@@ -83,65 +79,26 @@ QtObject {
         command: []
     }
 
-    property Process _resolveHome: Process {
-        id: resolveHome
+    // Atomic writes (temp file + rename), done before setText returns
+    property FileView _store: FileView {
+        path: Quickshell.env("HOME") + "/.config/lis/gamma-presets.json"
+        blockWrites: true
+        printErrors: false
 
-        command: ["bash", "-c", "echo -n $HOME/.config/lis/gamma-presets.json"]
-        running: true
-        onExited: function() {
-            mkdirProc.running = true;
-        }
-
-        stdout: SplitParser {
-            onRead: function(line) {
-                root._configPath = line;
-            }
+        onLoaded: root._load(text())
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound) root._load("[]")
+            else console.warn("[gamma] can't read gamma-presets.json:", FileViewError.toString(error))
         }
     }
 
-    property Process _mkdirProc: Process {
-        id: mkdirProc
-
-        running: false
-        command: ["bash", "-c", "mkdir -p $HOME/.config/lis"]
-        onExited: function() {
-            loadProc.running = true;
+    function _load(text) {
+        try {
+            var parsed = JSON.parse(text);
+            root.presets = Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            root.presets = [];
         }
-    }
-
-    property Process _loadProc: Process {
-        id: loadProc
-
-        property string _buf: ""
-
-        running: false
-        command: ["bash", "-c", "cat \"$HOME/.config/lis/gamma-presets.json\" 2>/dev/null || echo '[]'"]
-        onRunningChanged: {
-            if (running)
-                _buf = "";
-        }
-
-        onExited: function() {
-            try {
-                var parsed = JSON.parse(loadProc._buf.trim());
-                root.presets = Array.isArray(parsed) ? parsed : [];
-            } catch (e) {
-                root.presets = [];
-            }
-            root._loaded = true;
-        }
-
-        stdout: SplitParser {
-            onRead: function(line) {
-                loadProc._buf += line + "\n";
-            }
-        }
-    }
-
-    property Process _writeProc: Process {
-        id: writeProc
-
-        running: false
-        command: []
+        root._loaded = true;
     }
 }

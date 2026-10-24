@@ -46,11 +46,9 @@ Item {
     property bool _fadeEnabled: false
 
     Component.onCompleted: {
-        BatteryData.addViewer()
         root._requestBlur()
         Qt.callLater(() => root._fadeEnabled = true)
     }
-    Component.onDestruction: BatteryData.removeViewer()
 
     Item {
         id: background

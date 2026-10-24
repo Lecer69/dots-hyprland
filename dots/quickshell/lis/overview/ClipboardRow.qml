@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Io
 
 Item {
     id: row
@@ -10,129 +9,34 @@ Item {
     property bool isClipboard: false
     property bool isEmoji: false
     property bool isMath: false
-    property bool isImage: false
     property bool highlighted: false
 
     signal entered()
     signal chosen()
 
-    height: isImage ? imageThumb.visible ? 72 : 36 : 36
+    // Clipboard entries are cliphist lines: "<id>\t<preview>" (the type
+    // check covers a mode switch, before the old rows are replaced)
+    readonly property string clipLine: isClipboard && typeof entry === "string" ? entry : ""
+    readonly property var imageInfo: clipLine !== "" ? ClipboardHistory.imageInfo(clipLine) : null
+    readonly property bool isImage: imageInfo !== null
+    readonly property string thumbUrl: isImage ? (ClipboardHistory.thumbs[ClipboardHistory.idOf(clipLine)] ?? "") : ""
 
-    Behavior on height { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-    // Decode image to a temp file and load it as a source
-    property string _thumbPath: ""
-    property bool   _thumbLoading: false
-
-    Process {
-        id: decodeProc
-        property string entryId: ""
-        command: ["sh", "-c",
-            "cliphist decode " + JSON.stringify(decodeProc.entryId) +
-            " > /tmp/qs-clip-thumb-" + JSON.stringify(decodeProc.entryId).replace(/\W/g,"") + ".png" +
-            " && echo /tmp/qs-clip-thumb-" + JSON.stringify(decodeProc.entryId).replace(/\W/g,"") + ".png"]
-        running: false
-        stdout: StdioCollector {
-            id: decodeOut
-            onTextChanged: {
-                const p = decodeOut.text.trim()
-                if (p !== "") {
-                    row._thumbPath = "file://" + p
-                    row._thumbLoading = false
-                }
-            }
-        }
-    }
-
-    onIsImageChanged: {
-        if (isImage && row._thumbPath === "" && !row._thumbLoading) {
-            row._thumbLoading = true
-            decodeProc.entryId = (row.entry ?? "").split("\t")[0]
-            decodeProc.running = true
-        }
-    }
-
-    Component.onCompleted: {
-        if (isImage && row._thumbPath === "" && !row._thumbLoading) {
-            row._thumbLoading = true
-            decodeProc.entryId = (row.entry ?? "").split("\t")[0]
-            decodeProc.running = true
-        }
-    }
+    // Fixed per kind, so rows never resize under the list while it scrolls
+    height: isImage ? 72 : 36
 
     Rectangle {
         anchors.fill: parent
-        radius: height / 2
+        radius: Math.min(height / 2, 18)
         color: row.highlighted ? "#28ffffff" : hov.containsMouse ? "#14ffffff" : "transparent"
     }
 
-    // Image thumbnail
     RowLayout {
-        id: imageLayout
-        visible: row.isImage
-        anchors {
-            fill: parent
-            leftMargin: 10
-            rightMargin: 10
-            topMargin: 6
-            bottomMargin: 6
-        }
-        spacing: 10
-
-        Rectangle {
-            id: imageThumb
-            visible: row._thumbPath !== ""
-            width:  visible ? 96 : 0
-            height: 60
-            radius: 6
-            color: "#1affffff"
-            clip: true
-            Layout.alignment: Qt.AlignVCenter
-
-            Image {
-                anchors.fill: parent
-                source: row._thumbPath
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                asynchronous: true
-            }
-        }
-
-        // Spinner while decoding
-        Rectangle {
-            visible: row._thumbLoading && row._thumbPath === ""
-            width: 96; height: 60
-            radius: 6
-            color: "#1affffff"
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                anchors.centerIn: parent
-                text: "…"
-                color: "#606060"
-                font.pixelSize: 18
-            }
-        }
-
-        Text {
-            Layout.fillWidth: true
-            text: "Image"
-            color: "#a0a0a0"
-            font.pixelSize: 12
-            font.italic: true
-            verticalAlignment: Text.AlignVCenter
-        }
-    }
-
-    // Normal
-    RowLayout {
-        visible: !row.isImage
         anchors {
             fill: parent
             leftMargin: 10
             rightMargin: 10
         }
-        spacing: 8
+        spacing: row.isImage ? 10 : 8
 
         Text {
             visible: row.isMath
@@ -155,11 +59,42 @@ Item {
         }
 
         Text {
-            visible: row.isClipboard
+            visible: row.isClipboard && !row.isImage
             text: "·"
             color: '#818181'
             font.pixelSize: 18
             Layout.alignment: Qt.AlignVCenter
+        }
+
+        // Thumbnails are pre-made at 2x this size (ClipboardHistory)
+        Rectangle {
+            visible: row.isImage
+            Layout.preferredWidth: 96
+            Layout.preferredHeight: 60
+            Layout.alignment: Qt.AlignVCenter
+            radius: 6
+            color: "#1affffff"
+            clip: true
+
+            Image {
+                anchors.fill: parent
+                source: row.thumbUrl
+                sourceSize.width: 192
+                sourceSize.height: 120
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+                opacity: status === Image.Ready ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 120 } }
+            }
+
+            // Thumbnail not made yet
+            Text {
+                anchors.centerIn: parent
+                visible: row.thumbUrl === ""
+                text: "…"
+                color: "#606060"
+                font.pixelSize: 18
+            }
         }
 
         Text {
@@ -169,28 +104,31 @@ Item {
                 if (row.isMath) return row.entry.result
                 if (row.isEmoji) return row.entry ?? ""
                 if (!row.isClipboard) return row.entry?.name ?? ""
-                return (row.entry ?? "").replace(/^\S+\t/, "").slice(0, 120)
+                if (row.isImage) return "Image"
+                return ClipboardHistory.textOf(row.clipLine).slice(0, 120)
             }
 
-            color: row.isMath ? '#e7e7e7' : "#dddddd"
-            font.pixelSize: row.isMath ? 15 : 13
+            // Clipboard text may look like markup; never render it as such
+            textFormat: Text.PlainText
+            color: row.isMath ? '#e7e7e7' : row.isImage ? "#a0a0a0" : "#dddddd"
+            font.pixelSize: row.isMath ? 15 : row.isImage ? 12 : 13
             font.bold: row.isMath
+            font.italic: row.isImage
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
 
         Text {
-            visible: row.isMath
-            text: "Click to Copy"
-            color: "#b5b5b5"
-            font.pixelSize: 11
-            Layout.alignment: Qt.AlignVCenter
-        }
+            readonly property string info: {
+                if (row.isMath) return "Click to Copy"
+                if (row.isImage) return row.imageInfo.width + "×" + row.imageInfo.height + " · " + row.imageInfo.size
+                if (!row.isClipboard && !row.isEmoji) return row.entry?.genericName ?? ""
+                return ""
+            }
 
-        Text {
-            visible: !row.isClipboard && !row.isMath && (row.entry?.genericName ?? "") !== ""
-            text: row.entry?.genericName ?? ""
-            color: '#b5b5b5'
+            visible: info !== ""
+            text: info
+            color: "#b5b5b5"
             font.pixelSize: 11
             Layout.alignment: Qt.AlignVCenter
         }

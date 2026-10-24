@@ -62,75 +62,28 @@ QtObject {
         }
     }
 
-    property string _configPath: ""
-    property Process _resolveHome
+    // Atomic writes (temp file + rename), done before setText returns, so
+    // the flush on shutdown or reload completes too
+    property FileView _store: FileView {
+        path: Quickshell.env("HOME") + "/.config/lis/wellbeing.json"
+        blockWrites: true
+        printErrors: false
 
-    _resolveHome: Process {
-        id: resolveHome
-
-        command: ["bash", "-c", "echo -n $HOME/.config/lis/wellbeing.json"]
-        running: true
-        onExited: function() {
-            mkdirProc.running = true;
-        }
-
-        stdout: SplitParser {
-            onRead: function(line) {
-                root._configPath = line;
-            }
+        onLoaded: root._load(text())
+        onLoadFailed: error => {
+            if (error === FileViewError.FileNotFound) root._load("{}")
+            else console.warn("[wellbeing] can't read wellbeing.json:", FileViewError.toString(error))
         }
     }
 
-    property Process _mkdirProc
-
-    _mkdirProc: Process {
-        id: mkdirProc
-
-        running: false
-        command: ["bash", "-c", "mkdir -p $HOME/.config/lis"]
-        onExited: function() {
-            loadProc.running = true;
+    function _load(text) {
+        try {
+            root.history = JSON.parse(text);
+        } catch (e) {
+            root.history = {
+            };
         }
-    }
-
-    property Process _loadProc
-
-    _loadProc: Process {
-        id: loadProc
-
-        property string _buf: ""
-
-        running: false
-        command: ["bash", "-c", "cat \"$HOME/.config/lis/wellbeing.json\" 2>/dev/null || echo '{}'"]
-        onRunningChanged: {
-            if (running)
-                _buf = "";
-        }
-
-        onExited: function() {
-            try {
-                root.history = JSON.parse(loadProc._buf.trim());
-            } catch (e) {
-                root.history = {
-                };
-            }
-            root._loaded = true;
-        }
-
-        stdout: SplitParser {
-            onRead: function(line) {
-                loadProc._buf += line + "\n";
-            }
-        }
-    }
-
-    property Process _writeProc
-
-    _writeProc: Process {
-        id: writeProc
-
-        running: false
-        command: []
+        root._loaded = true;
     }
 
     function todayTotals() {
@@ -230,7 +183,8 @@ QtObject {
     }
 
     function _flush() {
-        if (_configPath === "")
+        // Never overwrite a file that hasn't been read
+        if (!_loaded)
             return ;
 
         var snap = root.history;
@@ -247,11 +201,7 @@ QtObject {
                 delete snap[k];
 
         }
-        var json = JSON.stringify(snap);
-        var escaped = json.replace(/'/g, "'\\''");
-        writeProc.command = ["bash", "-c", "printf '%s' '" + escaped + "' > \"" + root._configPath + "\""];
-        writeProc.running = false;
-        writeProc.running = true;
+        root._store.setText(JSON.stringify(snap));
         root.history = snap;
         root.sessionTotals = {};
         root.todayKey = Qt.formatDate(new Date(), "yyyy-MM-dd");

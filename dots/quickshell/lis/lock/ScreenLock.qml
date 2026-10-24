@@ -279,8 +279,26 @@ QtObject {
         active: root.isLocked
         onUnlocked: root._unlock()
         onUnlockedWithPassword: (pw) => {
-            Quickshell.execDetached(["sh", "-c", "echo -n \"" + pw + "\" | gnome-keyring-daemon --replace --unlock --components=secrets"])
+            if (root._keyringUnlock.running) return
+            root._keyringUnlock.password = pw
+            root._keyringUnlock.running = true
         }
+    }
+
+    // The password goes through stdin: on a command line any local user
+    // could read it, and a shell would mangle quotes, $ or backticks
+    property Process _keyringUnlock: Process {
+        property string password: ""
+
+        command: ["gnome-keyring-daemon", "--replace", "--unlock", "--components=secrets"]
+        stdinEnabled: true
+
+        onStarted: {
+            write(password)
+            password = ""
+            stdinEnabled = false // EOF: the daemon reads up to it
+        }
+        onExited: stdinEnabled = true
     }
 
     property WlSessionLock _wlLock: WlSessionLock {

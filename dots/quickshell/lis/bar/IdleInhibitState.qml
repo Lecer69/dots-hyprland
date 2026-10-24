@@ -1,46 +1,56 @@
 pragma Singleton
 import Quickshell
-import Quickshell.Io
+import Quickshell.Wayland
 import QtQuick
 import qs.settings.data
 
+// Blocks idle actions (lock, screen off, suspend) through the Wayland
+// idle-inhibit protocol, which hypridle honors. hypridle itself keeps
+// running, so its before_sleep_cmd still locks the screen on suspend.
 Singleton {
     id: root
 
     property bool idleInhibited: SettingsData.s.general.enableIdleInhibitedByDefault
 
-    Process {
-        id: hypridleStart
-        command: ["hypridle"]
+    function toggle() {
+        root.idleInhibited = !root.idleInhibited
     }
 
-    Process {
-        id: hypridleStop
-        command: ["sh", "-c", "pkill -KILL hypridle"]
-    }
+    // Nothing else starts hypridle (inhibiting used to kill it)
+    Component.onCompleted: Quickshell.execDetached(["sh", "-c", "pgrep -x hypridle >/dev/null || exec hypridle"])
 
-    Timer {
-        id: initTimer
-        interval: 200
-        repeat: false
-        onTriggered: {
-            if (root.idleInhibited) {
-                hypridleStop.running = true
-            } else {
-                Quickshell.execDetached(["sh", "-c", "pkill hypridle; hypridle"])
+    // Hyprland only counts an inhibitor whose surface already shows when the
+    // inhibitor is created (it rechecks on inhibitor changes only), so the
+    // inhibitor is made a moment after its window shows, and again if the
+    // window is shown anew
+    property bool _surfaceReady: false
+
+    IdleInhibitor {
+        enabled: root.idleInhibited && root._surfaceReady
+        // An inhibitor needs a surface: an empty one that takes no input
+        window: PanelWindow {
+            id: inhibitorWindow
+            implicitWidth: 0
+            implicitHeight: 0
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            anchors {
+                right: true
+                bottom: true
+            }
+            mask: Region {}
+
+            onBackingWindowVisibleChanged: {
+                root._surfaceReady = false
+                if (backingWindowVisible) surfaceTimer.restart()
             }
         }
     }
 
-    Component.onCompleted: initTimer.start()
-
-    function toggle() {
-        if (idleInhibited) {
-            hypridleStart.running = true
-            idleInhibited = false
-        } else {
-            hypridleStop.running = true
-            idleInhibited = true
-        }
+    Timer {
+        id: surfaceTimer
+        interval: 1000
+        running: true
+        onTriggered: root._surfaceReady = inhibitorWindow.backingWindowVisible
     }
 }

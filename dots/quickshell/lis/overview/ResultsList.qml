@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell.Io
+import Quickshell
 
 Item {
     id: root
@@ -22,55 +22,27 @@ Item {
     function moveUp() { if (listView.currentIndex > 0) listView.currentIndex-- }
     function moveDown() { if (listView.currentIndex < root.results.length - 1) listView.currentIndex++ }
 
-    property var activeCopyProc: null
-
-    Component {
-        id: copyProc
-        Process {
-            property var args: []
-            command: args
-            running: true
-        }
+    // On a new query. Not on every results change: a history update while
+    // open keeps the selection (the view shifts it along with its row).
+    function resetSelection() {
+        listView.currentIndex = 0
+        listView.positionViewAtBeginning()
     }
 
+    // wl-copy forks and keeps serving the clipboard, so copies outlive the
+    // launcher (and shell reloads)
     function _doActivate(entry) {
         if (entry?.isMath) {
-            root.activeCopyProc = copyProc.createObject(root, {
-                args: ["wl-copy", "--foreground", "--", entry.result]
-            })
+            Quickshell.execDetached(["wl-copy", "--", entry.result])
         } else if (root.isEmoji) {
             const emoji = (entry ?? "").split(" ")[0]
-            root.activeCopyProc = copyProc.createObject(root, {
-                args: ["wl-copy", "--foreground", "--", emoji]
-            })
+            Quickshell.execDetached(["wl-copy", "--", emoji])
         } else if (root.isClipboard) {
-            const line = entry ?? ""
-            const id = line.split("\t")[0]
-
-            if (root.isImageEntry(line)) {
-                root.activeCopyProc = copyProc.createObject(root, {
-                    args: ["sh", "-c", "cliphist decode " + JSON.stringify(id) + " | wl-copy --foreground"]
-                })
-            } else {
-                const content = line.replace(/^\S+\t/, "")
-                if (content.startsWith("file://")) {
-                    root.activeCopyProc = copyProc.createObject(root, {
-                        args: ["sh", "-c", "printf '%s' " + JSON.stringify(content) + " | wl-copy --foreground --type text/uri-list"]
-                    })
-                } else {
-                    root.activeCopyProc = copyProc.createObject(root, {
-                        args: ["sh", "-c", "cliphist decode " + JSON.stringify(id) + " | wl-copy --foreground"]
-                    })
-                }
-            }
+            ClipboardHistory.copy(entry ?? "")
         } else {
             entry?.execute()
         }
         root.activated()
-    }
-
-    function isImageEntry(line) {
-        return /\[\[ binary data/.test(line ?? "")
     }
 
     readonly property int maxHeight: 480
@@ -81,13 +53,19 @@ Item {
     ListView {
         id: listView
         anchors.fill: parent
-        model: root.results
+        // Diffs each new result list against the current one, so rows that
+        // stay (filtering, history updates) are kept instead of rebuilt
+        model: ScriptModel {
+            values: root.results
+        }
         spacing: 2
         clip: true
         currentIndex: 0
         highlightMoveDuration: 60
-        cacheBuffer: 0
-        onModelChanged: currentIndex = 0
+        // Rows are recycled while scrolling, and a few past the edges are
+        // made ahead of time
+        reuseItems: true
+        cacheBuffer: 200
 
         flickDeceleration: 3000
         maximumFlickVelocity: 2000
@@ -107,7 +85,6 @@ Item {
             isClipboard: root.isClipboard
             isEmoji: root.isEmoji
             isMath: modelData?.isMath ?? false
-            isImage: root.isClipboard && root.isImageEntry(modelData)
             entry: modelData
             highlighted: listView.currentIndex === index
 

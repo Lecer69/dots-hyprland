@@ -54,6 +54,7 @@ Singleton {
                 property bool notificationsEnabled: true
                 property bool enableIdleInhibitedByDefault: false
                 property int notificationTimeout: 5
+                property bool notificationsMainMonitorOnly: true
                 property string accentColor: '#822828'
                 property string colorScheme: 'expressive'
             }

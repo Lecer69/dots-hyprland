@@ -15,7 +15,8 @@ PanelWindow {
     visible: WorkspaceOverviewState.overviewOpen && focusedScreen !== null
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    // Only mapped while open; takes the keyboard so Escape reaches it
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.exclusiveZone: -1
 
     anchors {
@@ -27,11 +28,13 @@ PanelWindow {
 
     color: "transparent"
 
-    Keys.onEscapePressed: WorkspaceOverviewState.overviewOpen = false
-
     MouseArea {
         anchors.fill: parent
         onClicked: WorkspaceOverviewState.overviewOpen = false
+
+        // Keys only attach to items, not windows
+        focus: true
+        Keys.onEscapePressed: WorkspaceOverviewState.overviewOpen = false
 
         Loader {
             anchors.centerIn: parent

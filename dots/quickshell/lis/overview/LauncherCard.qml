@@ -28,9 +28,11 @@ Rectangle {
             searchBar.setQuery(initialQuery)
         } else {
             query = ""
-            clipLines = []
         }
     }
+
+    // After the results have updated
+    onQueryChanged: Qt.callLater(resultsList.resetSelection)
 
     onInitialQueryChanged: {
         if (isOpen) {
@@ -39,23 +41,13 @@ Rectangle {
         }
     }
 
-    property var clipLines: []
-
-    Process {
-        id: clipProc
-        command: ["cliphist", "list"]
-        running: false
-        stdout: SplitParser {
-            onRead: line => {
-                if (line.trim() !== "")
-                    card.clipLines = [...card.clipLines, line]
-            }
-        }
-    }
+    // Loaded at startup and kept current, so the clipboard view opens with
+    // the history already there
+    Component.onCompleted: ClipboardHistory.refresh()
 
     onIsClipboardChanged: {
-        if (isClipboard && clipLines.length === 0)
-            clipProc.running = true
+        if (isClipboard)
+            ClipboardHistory.refresh()
     }
 
     property var emojiList: []
@@ -143,11 +135,10 @@ Rectangle {
             .slice(0, 30)
     }
 
+    // The whole history: the list only creates rows for what's on screen
     property var clipResults: {
         if (!isClipboard) return []
-        const q = cleanQuery.toLowerCase()
-        if (q === "") return clipLines.slice(0, 50)
-        return clipLines.filter(l => l.toLowerCase().includes(q)).slice(0, 50)
+        return ClipboardHistory.filter(cleanQuery)
     }
 
     property var emojiResults: {

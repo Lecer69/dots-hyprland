@@ -18,17 +18,25 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.exclusiveZone: notifModel.count > 0 ? 0 : -1
 
+    // Main monitor: the first landscape screen (portrait ones are side
+    // monitors), else the first one
+    readonly property var mainScreen: Quickshell.screens.find(s => s.width >= s.height) ?? Quickshell.screens[0]
     property var focusedScreen: null
-    screen: focusedScreen ?? Quickshell.screens[0]
+    screen: SettingsData.s.general.notificationsMainMonitorOnly
+        ? root.mainScreen
+        : (focusedScreen ?? Quickshell.screens[0])
 
     NotificationServer {
         id: server
         keepOnReload: true
+        // Lets apps send buttons (the card shows them)
+        actionsSupported: true
 
         Component.onCompleted: console.log("[Notifications] Server registered on D-Bus")
 
         onNotification: (notif) => {
-            console.log("[Notifications] Received:", notif.appName, "|", notif.summary, "|", notif.body)
+            // No summary or body: the log would keep message contents
+            console.log("[Notifications] Received from", notif.appName)
 
             const icon = notif.appIcon
             const iconSource = !icon || icon === "" ? ""
@@ -63,9 +71,15 @@ PanelWindow {
             }
 
             if (notifModel.count >= 8) {
-                notifModel.remove(0)
+                // Its card removes itself once the notification closes
+                const oldest = notifModel.get(0).notif
+                if (oldest) oldest.expire()
+                else notifModel.remove(0)
             }
 
+            // Kept while its card shows (untracked ones are dropped as soon
+            // as this handler returns, and their app is told "dismissed")
+            notif.tracked = true
             notifModel.append({ notif: notif })
         }
     }
@@ -91,7 +105,7 @@ PanelWindow {
             model: notifModel
             delegate: NotificationCard {
                 notification: model.notif
-                onDismissed: notifModel.remove(index)
+                onDismissed: if (index >= 0) notifModel.remove(index)
             }
         }
     }

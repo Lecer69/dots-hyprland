@@ -115,6 +115,14 @@ ScrollView {
             }
         }
         SettingRow {
+            label: "Main Monitor Only"
+            description: "Show popups on the main (first landscape) monitor instead of the focused one"
+            ToggleSwitch {
+                checked: SettingsData.s.general.notificationsMainMonitorOnly
+                onToggled: v => SettingsData.s.general.notificationsMainMonitorOnly = v
+            }
+        }
+        SettingRow {
             label: "Notification Timeout"
             description: "Auto-dismiss after N seconds (10)"
             IntSlider {

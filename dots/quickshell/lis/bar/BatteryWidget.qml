@@ -25,14 +25,6 @@ Item {
         return "#89b4fa"
     }
 
-    onVisibleChanged: {
-        if (visible) BatteryData.addViewer()
-        else BatteryData.removeViewer()
-    }
-
-    Component.onCompleted: { if (visible) BatteryData.addViewer() }
-    Component.onDestruction: { if (visible) BatteryData.removeViewer() }
-
     property real animatedSweep: percent * 3.6
     Behavior on animatedSweep {
         NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }

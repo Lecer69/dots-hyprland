@@ -147,11 +147,12 @@ Singleton {
     }
 
     // Per-group event names (Hyprland socket2). Deliberately excludes
-    // continuous events like tick / mouse* / *moveloop / screencast.
+    // continuous events like tick / mouse* / *moveloop / screencast, and
+    // title changes, which are applied from the event itself.
     readonly property var _windowEvents: new Set([
         "openwindow", "closewindow", "movewindow", "movewindowv2", "movewindowortho",
         "changefloatingmode", "fullscreen", "pin", "alterzorder", "activespecial",
-        "windowtitle", "windowtitlev2", "activewindow", "activewindowv2",
+        "activewindow", "activewindowv2",
         "moveintogroup", "moveoutofgroup", "movewindowgroupid"
     ])
     readonly property var _workspaceEvents: new Set([
@@ -168,12 +169,42 @@ Singleton {
 
         function onRawEvent(event) {
             const name = event.name;
-            if (root._windowEvents.has(name))
+            if (name === "windowtitlev2")
+                root._setTitle(event.data);
+            else if (root._windowEvents.has(name))
                 root._requestRefresh(root._refreshWindows);
             else if (root._workspaceEvents.has(name))
                 root._requestRefresh(root._refreshWorkspaces);
             else if (root._monitorEvents.has(name))
                 root._requestRefresh(root._refreshMonitors);
+        }
+    }
+
+    // windowtitlev2>>ADDRESS,TITLE (address without 0x). Titles can change
+    // many times a second (terminals, players), too often for hyprctl.
+    function _setTitle(data) {
+        const comma = data.indexOf(",");
+        if (comma < 0) return;
+        const address = "0x" + data.slice(0, comma);
+        const win = root.windowByAddress[address];
+        const title = data.slice(comma + 1);
+        if (!win || win.title === title) return;
+
+        const updated = Object.assign({}, win, { title: title });
+        root.windowList = root.windowList.map(w => w.address === address ? updated : w);
+        const byAddress = Object.assign({}, root.windowByAddress);
+        byAddress[address] = updated;
+        root.windowByAddress = byAddress;
+    }
+
+    // hyprctl prints an error instead of JSON when it can't reach Hyprland
+    // (e.g. mid-reload); the last good data is kept then
+    function _parse(text, what) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.warn("[HyprlandData] unreadable hyprctl " + what + " output:", e);
+            return null;
         }
     }
 
@@ -183,7 +214,9 @@ Singleton {
         stdout: StdioCollector {
             id: clientsCollector
             onStreamFinished: {
-                root.windowList = JSON.parse(clientsCollector.text)
+                const list = root._parse(clientsCollector.text, "clients");
+                if (!Array.isArray(list)) return;
+                root.windowList = list;
                 let tempWinByAddress = {};
                 for (var i = 0; i < root.windowList.length; ++i) {
                     var win = root.windowList[i];
@@ -201,7 +234,8 @@ Singleton {
         stdout: StdioCollector {
             id: monitorsCollector
             onStreamFinished: {
-                root.monitors = JSON.parse(monitorsCollector.text);
+                const list = root._parse(monitorsCollector.text, "monitors");
+                if (Array.isArray(list)) root.monitors = list;
             }
         }
     }
@@ -212,7 +246,8 @@ Singleton {
         stdout: StdioCollector {
             id: layersCollector
             onStreamFinished: {
-                root.layers = JSON.parse(layersCollector.text);
+                const layers = root._parse(layersCollector.text, "layers");
+                if (layers) root.layers = layers;
             }
         }
     }
@@ -223,7 +258,9 @@ Singleton {
         stdout: StdioCollector {
             id: workspacesCollector
             onStreamFinished: {
-                root.workspaces = JSON.parse(workspacesCollector.text);
+                const list = root._parse(workspacesCollector.text, "workspaces");
+                if (!Array.isArray(list)) return;
+                root.workspaces = list;
                 let tempWorkspaceById = {};
                 for (var i = 0; i < root.workspaces.length; ++i) {
                     var ws = root.workspaces[i];
@@ -241,7 +278,8 @@ Singleton {
         stdout: StdioCollector {
             id: activeWorkspaceCollector
             onStreamFinished: {
-                root.activeWorkspace = JSON.parse(activeWorkspaceCollector.text);
+                const ws = root._parse(activeWorkspaceCollector.text, "activeworkspace");
+                if (ws) root.activeWorkspace = ws;
             }
         }
     }
