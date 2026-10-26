@@ -23,6 +23,7 @@ import qs.battery
 import qs.workspaces
 import qs.internet
 import qs.osu
+import qs.hypridle
 
 ShellRoot {
     id: root
@@ -47,6 +48,10 @@ ShellRoot {
 
     property ScreenLock screenLock: ScreenLock {
         Component.onCompleted: console.log("[shell] ScreenLock completed")
+    }
+
+    HypridleService {
+        Component.onCompleted: console.log("[shell] HypridleService completed")
     }
 
     WorkspaceOverviewLayer {

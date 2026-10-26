@@ -7,6 +7,7 @@ import qs.settings.data
 // Blocks idle actions (lock, screen off, suspend) through the Wayland
 // idle-inhibit protocol, which hypridle honors. hypridle itself keeps
 // running, so its before_sleep_cmd still locks the screen on suspend.
+// hypridle/HypridleService.qml starts it.
 Singleton {
     id: root
 
@@ -15,9 +16,6 @@ Singleton {
     function toggle() {
         root.idleInhibited = !root.idleInhibited
     }
-
-    // Nothing else starts hypridle (inhibiting used to kill it)
-    Component.onCompleted: Quickshell.execDetached(["sh", "-c", "pgrep -x hypridle >/dev/null || exec hypridle"])
 
     // Hyprland only counts an inhibitor whose surface already shows when the
     // inhibitor is created (it rechecks on inhibitor changes only), so the

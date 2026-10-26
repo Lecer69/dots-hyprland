@@ -102,6 +102,14 @@ Singleton {
                 property bool muteMicOnLock: true
            }
 
+            // Hypridle timers in minutes (hypridle/HypridleService.qml turns
+            // these into its config)
+            property JsonObject hypridle: JsonObject {
+                property int lockTimeout: 5
+                property int screenOffTimeout: 10
+                property int suspendTimeout: 15
+            }
+
             // osu!
             property JsonObject osu: JsonObject {
                 property bool disableNotifications: true

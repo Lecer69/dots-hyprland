@@ -108,13 +108,6 @@ ScrollView {
             }
         }
         SettingRow {
-            label: "Enable Idle Inhibit State by Default"
-            ToggleSwitch {
-                checked: SettingsData.s.general.enableIdleInhibitedByDefault
-                onToggled: v => SettingsData.s.general.enableIdleInhibitedByDefault = v
-            }
-        }
-        SettingRow {
             label: "Main Monitor Only"
             description: "Show popups on the main (first landscape) monitor instead of the focused one"
             ToggleSwitch {

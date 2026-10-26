@@ -94,9 +94,10 @@ HoverBar {
             onRead: data => {
                 if (brightnessBar.brightnessDevice !== "") return   // already picked one
                 const parts = data.trim().split(",")
-                if (parts.length >= 4 && parts[1] === "backlight") {
+                // device,class,current,percent,max
+                if (parts.length >= 5 && parts[1] === "backlight") {
                     brightnessBar.brightnessDevice = parts[0]
-                    brightnessBar.brightnessMax    = parseInt(parts[3]) || 100
+                    brightnessBar.brightnessMax    = parseInt(parts[4]) || 100
                     const current                  = parseInt(parts[2]) || 0
                     brightnessBar.brightness       = current / brightnessBar.brightnessMax
                     brightnessBar.ready            = true

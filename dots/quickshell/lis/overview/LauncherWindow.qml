@@ -40,7 +40,7 @@ PanelWindow {
         function onRawEvent(event) {
             if (!win.isOpen) return
 
-            if (event.name === "workspace" || event.name === "activewindow" || event.name === "focusedmon" || event.name === "activespecial")
+            if (event.name === "workspace" || event.name === "activewindow" || event.name === "activespecial")
                 win.closeRequested()
         }
     }

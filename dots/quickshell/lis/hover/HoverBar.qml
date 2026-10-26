@@ -41,6 +41,8 @@ PanelWindow {
     signal scrolled(real delta)
 
     property bool hovered: false
+    // Wheel travel not yet turned into a step (120 = one mouse notch)
+    property int wheelAccum: 0
     property var hyprMonitor: Hyprland.monitorFor(root.screen)
     property bool fullscreen: hyprMonitor?.activeWorkspace?.hasFullscreen ?? false
 
@@ -86,8 +88,17 @@ PanelWindow {
         onExited: root.hovered = false
         onWheel: wh => {
             if (root.fullscreen) return
-            const delta = wh.angleDelta.y > 0 ? 0.02 : -0.02
-            root.scrolled(delta)
+            // Touchpads send many tiny deltas, wrapped in zero-delta ScrollBegin/End
+            // events, so step per notch's worth of travel rather than per event
+            if (wh.phase === Qt.ScrollEnd) {
+                root.wheelAccum = 0
+                return
+            }
+            root.wheelAccum += wh.angleDelta.y
+            const steps = Math.trunc(root.wheelAccum / 120)
+            if (steps === 0) return
+            root.wheelAccum -= steps * 120
+            root.scrolled(steps * 0.02)
         }
     }
 }
