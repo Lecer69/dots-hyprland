@@ -135,6 +135,14 @@ Singleton {
                 // Ticked items, by cleanup.sh's item names
                 property var selected: ["pacman", "coredumps", "yay", "thumbnails", "crashes"]
             }
+
+            // Dots Updater page (scripts/dots-update.sh)
+            property JsonObject dotsUpdater: JsonObject {
+                // Zip hypr and quickshell into ~/.dots-hyprland-backups first
+                property bool backup: true
+                // Replace ~/.config/quickshell and restart the shell
+                property bool updateShell: true
+            }
         }
     }
 }

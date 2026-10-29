@@ -63,7 +63,7 @@ Rectangle {
             }
 
             Repeater {
-                model: ["General", "Bar", "Lock", "Idle", "osu!", "Cleanup"]
+                model: ["General", "Bar", "Lock", "Idle", "osu!", "Cleanup", "Dots Updater"]
 
                 NavItem {
                     required property string modelData
@@ -98,6 +98,7 @@ Rectangle {
             IdlePage {}
             OsuPage {}
             CleanupPage {}
+            DotsUpdaterPage {}
         }
     }
 

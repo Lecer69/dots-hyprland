@@ -2,7 +2,7 @@
 
 My personal Hyprland dotfiles using quickshell. (fast and lightweight)
 
-> ## 🔴 THIS ONLY WORKS ON ARCH LINUX 🔴
+> ## 🔴 THIS ONLY WORKS ON ARCH BASED DISTROS 🔴
 > ### This setup is built exclusively for **Arch Linux AND Arch-based distros** and will **NOT** work on any other distribution.
 
 > ## ⚠️ Not beginner-friendly
@@ -25,9 +25,11 @@ cd dots-hyprland
 git stash && git pull && bash install.sh
 ```
 
-Choose the **update** option from the menu.
+Choose the **update** option from the menu, or you can try the updater in the settings.
 
 ## Screenshots
+
+The screenshots are a little bit outdated.
 
 <p align="center">
   <img src="screenshots/1.png" width="45%" />
