@@ -44,7 +44,7 @@ Item {
         source: "../icons/memory.svg"
         fillMode: Image.PreserveAspectFit
         smooth: true
-        mipmap: true
+        sourceSize: Qt.size(16, 16)
         antialiasing: true
     }
 
@@ -120,6 +120,7 @@ Item {
             source: "../icons/memory.svg"
             width: 16
             height: 16
+            sourceSize: Qt.size(16, 16)
             fillMode: Image.PreserveAspectFit
             anchors.verticalCenter: parent.verticalCenter
         }

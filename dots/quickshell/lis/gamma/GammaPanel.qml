@@ -6,10 +6,10 @@ Rectangle {
 
     signal closeRequested()
 
-    radius: 14
+    radius: 12
     color: "#0f0f0f"
     clip: true
-    border.color: "#2a2a2a"
+    border.color: "#1f1f1f"
     border.width: 1
 
     readonly property int presetColumns: 2
@@ -25,12 +25,11 @@ Rectangle {
         id: gammaState
     }
 
-    Rectangle {
+    Item {
         id: header
 
         width: parent.width
-        height: 52
-        color: "transparent"
+        height: 56
 
         Text {
             anchors.left: parent.left
@@ -39,43 +38,28 @@ Rectangle {
             text: "Display"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#dddddd"
+            color: "#ffffff"
         }
 
-        Rectangle {
+        Text {
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: 24
             anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
-            radius: 14
-            color: closeHover.containsMouse ? "#252525" : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 12
-                color: "#888888"
-            }
+            text: "✕"
+            font.pixelSize: 12
+            color: closeHover.containsMouse ? "#dddddd" : "#666666"
 
             MouseArea {
                 id: closeHover
 
                 anchors.fill: parent
+                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.closeRequested()
             }
-
         }
 
-    }
-
-    Rectangle {
-        anchors.top: header.bottom
-        width: parent.width
-        height: 1
-        color: "#222222"
     }
 
     ColumnLayout {
@@ -85,14 +69,13 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 28
-        anchors.topMargin: 28
+        anchors.margins: 24
+        anchors.topMargin: 8
         spacing: 20
 
         GammaSlider {
             label: "Brightness"
             value: gammaState.brightness
-            accent: "#f9e2af"
             onMoved: function(v) {
                 gammaState.brightness = v;
             }
@@ -105,7 +88,6 @@ Rectangle {
         GammaSlider {
             label: "Contrast"
             value: gammaState.contrast
-            accent: "#89b4fa"
             onMoved: function(v) {
                 gammaState.contrast = v;
             }
@@ -118,7 +100,6 @@ Rectangle {
         GammaSlider {
             label: "Gamma"
             value: gammaState.gamma
-            accent: "#a6e3a1"
             onMoved: function(v) {
                 gammaState.gamma = v;
             }
@@ -131,7 +112,6 @@ Rectangle {
         GammaSlider {
             label: "Saturation"
             value: gammaState.saturation
-            accent: "#cba6f7"
             onMoved: function(v) {
                 gammaState.saturation = v;
             }
@@ -141,16 +121,10 @@ Rectangle {
             }
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.topMargin: -4
-            Layout.preferredHeight: 1
-            color: "#222222"
-        }
-
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.topMargin: 8
             spacing: 10
 
             RowLayout {
@@ -159,13 +133,14 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: "Presets"
-                    color: "#aaaaaa"
-                    font.pixelSize: 13
+                    color: "#6b6b6b"
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
                 }
 
                 Text {
                     text: gammaState.presets.length > 0 ? gammaState.presets.length : ""
-                    color: "#666666"
+                    color: "#6b6b6b"
                     font.pixelSize: 12
                 }
 
@@ -174,22 +149,14 @@ Rectangle {
             // Save preset input
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 40
+                Layout.preferredHeight: 36
                 radius: 8
-                color: "#1a1a1a"
-                border.color: input.activeFocus ? "#444444" : "#2a2a2a"
-                border.width: 1
-
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: 100
-                    }
-                }
+                color: "#161616"
 
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 12
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: 12
                     spacing: 8
 
                     TextInput {
@@ -197,7 +164,7 @@ Rectangle {
 
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
-                        color: "#dddddd"
+                        color: "#e6e6e6"
                         font.pixelSize: 13
                         clip: true
                         selectByMouse: true
@@ -205,7 +172,7 @@ Rectangle {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Save current as preset…"
-                            color: "#555555"
+                            color: "#6b6b6b"
                             font.pixelSize: 13
                             visible: input.text.length === 0
                         }
@@ -220,24 +187,16 @@ Rectangle {
                         }
                     }
 
-                    Rectangle {
-                        Layout.preferredWidth: 26
-                        Layout.preferredHeight: 26
-                        radius: 13
-                        color: addHover.containsMouse ? "#252525" : "transparent"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "+"
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: "#a6e3a1"
-                        }
+                    Text {
+                        text: "+"
+                        font.pixelSize: 16
+                        color: addHover.containsMouse ? "#ffffff" : "#808080"
 
                         MouseArea {
                             id: addHover
 
                             anchors.fill: parent
+                            anchors.margins: -6
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
@@ -302,7 +261,7 @@ Rectangle {
                     anchors.centerIn: parent
                     visible: gammaState.presets.length === 0
                     text: "No presets yet"
-                    color: "#444444"
+                    color: "#6b6b6b"
                     font.pixelSize: 13
                 }
 
@@ -311,19 +270,21 @@ Rectangle {
         }
 
         Rectangle {
-            Layout.fillWidth: true
-            Layout.topMargin: -12
-            Layout.preferredHeight: 38
-            radius: 8
-            color: resetHover.containsMouse ? "#252525" : "#1a1a1a"
-            border.color: "#2a2a2a"
-            border.width: 1
+            Layout.alignment: Qt.AlignRight
+            Layout.topMargin: -8
+            Layout.preferredHeight: 28
+            Layout.preferredWidth: resetLabel.implicitWidth + 24
+            radius: 6
+            color: resetHover.pressed ? "#333333" : resetHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
 
             Text {
+                id: resetLabel
+
                 anchors.centerIn: parent
                 text: "Reset to defaults"
-                color: "#888888"
-                font.pixelSize: 13
+                color: "#e6e6e6"
+                font.pixelSize: 12
+                font.weight: Font.Medium
             }
 
             MouseArea {
@@ -333,13 +294,6 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: gammaState.reset()
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 100
-                }
-
             }
 
         }

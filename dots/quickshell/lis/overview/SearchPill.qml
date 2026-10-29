@@ -8,8 +8,8 @@ Rectangle {
     
     property real horizontalPadding: 6
     
-    radius: implicitHeight / 2
-    color: '#de0f0f0f'
+    radius: 8
+    color: "#161616"
     
     default property alias content: contentItem.data
     

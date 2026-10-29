@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Effects
-import qs.settings.data
 
 Item {
     id: root
@@ -29,20 +28,9 @@ Item {
         anchors.fill: parent
         radius: width / 2
         color: root.accent
-            ? SettingsData.s.general.accentColor
-            : (mouse.containsMouse && root.enabled ? "#1c1c1c" : "transparent")
-
-        Behavior on color { ColorAnimation { duration: 100 } }
-    }
-
-    // Hover/press tint for the accent button
-    Rectangle {
-        anchors.fill: bg
-        radius: bg.radius
-        visible: root.accent
-        color: mouse.pressed ? "#4d000000" : (mouse.containsMouse && root.enabled ? "#14ffffff" : "transparent")
-
-        Behavior on color { ColorAnimation { duration: 100 } }
+            ? (mouse.pressed ? "#cccccc" : mouse.containsMouse && root.enabled ? "#ffffff" : "#e6e6e6")
+            : root.active ? "#1f1f1f"
+            : (mouse.containsMouse && root.enabled ? "#161616" : "transparent")
     }
 
     Item {
@@ -58,8 +46,8 @@ Item {
             width: root.iconSize
             height: root.iconSize
             source: "../icons/media-" + root.icon + "-symbolic.svg"
-            sourceSize.width: width * 2
-            sourceSize.height: height * 2
+            sourceSize.width: width
+            sourceSize.height: height
             smooth: true
             visible: false
             layer.enabled: true
@@ -69,9 +57,7 @@ Item {
             anchors.fill: iconPrimary
             source: iconPrimary
             colorization: 1.0
-            colorizationColor: root.accent
-                ? "#f5f5f5"
-                : (root.active ? SettingsData.s.general.accentColor : "#dddddd")
+            colorizationColor: root.accent ? "#0f0f0f" : root.active ? "#ffffff" : "#bbbbbb"
             opacity: root.showPrimary ? 1 : 0
 
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
@@ -85,8 +71,8 @@ Item {
             width: root.iconSize
             height: root.iconSize
             source: root.iconAlt !== "" ? "../icons/media-" + root.iconAlt + "-symbolic.svg" : ""
-            sourceSize.width: width * 2
-            sourceSize.height: height * 2
+            sourceSize.width: width
+            sourceSize.height: height
             smooth: true
             visible: false
             layer.enabled: true
@@ -96,9 +82,7 @@ Item {
             anchors.fill: iconSecondary
             source: iconSecondary
             colorization: 1.0
-            colorizationColor: root.accent
-                ? "#f5f5f5"
-                : (root.active ? SettingsData.s.general.accentColor : "#dddddd")
+            colorizationColor: root.accent ? "#0f0f0f" : root.active ? "#ffffff" : "#bbbbbb"
             opacity: root.showPrimary ? 0 : 1
 
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }

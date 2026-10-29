@@ -42,18 +42,18 @@ ScrollView {
                 Text {
                     text: "Color Scheme"
                     font.pixelSize: 13
-                    color: "#eeeeee"
+                    color: "#e6e6e6"
                 }
                 Text {
                     text: "Material You scheme variant used when applying colors"
-                    font.pixelSize: 11
-                    color: "#777777"
+                    font.pixelSize: 12
+                    color: "#6b6b6b"
                 }
             }
 
             ChipSelector {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
+                Layout.leftMargin: 6
                 Layout.rightMargin: 16
                 options: ["content", "expressive", "fidelity", "monochrome", "neutral", "tonal-spot", "vibrant", "rainbow", "fruit-salad"]
                 value: SettingsData.s.general.colorScheme
@@ -66,21 +66,17 @@ ScrollView {
             description: "Generate and apply the color scheme from your accent color"
             Rectangle {
                 id: applyButton
-                height: 30
-                width: applyLabel.implicitWidth + 22
-                radius: 8
-                color: applyArea.pressed ? "#40ffffff" : (applyArea.containsMouse ? "#30ffffff" : "#14ffffff")
-                border.color: "#44ffffff"
-                border.width: 1
-
-                Behavior on color { ColorAnimation { duration: 100 } }
+                height: 28
+                width: applyLabel.implicitWidth + 24
+                radius: 6
+                color: applyArea.pressed ? "#333333" : (applyArea.containsMouse ? "#2a2a2a" : "#1f1f1f")
 
                 Text {
                     id: applyLabel
                     anchors.centerIn: parent
                     text: "Apply"
                     font { pixelSize: 12; weight: Font.Medium }
-                    color: "#ffffff"
+                    color: "#e6e6e6"
                 }
 
                 MouseArea {

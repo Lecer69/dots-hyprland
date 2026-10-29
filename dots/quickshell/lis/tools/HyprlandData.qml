@@ -48,6 +48,12 @@ Singleton {
         return root.windowList.filter(win => win.workspace.id === workspace);
     }
 
+    // Whether a window on the workspace is fullscreen, not just maximized.
+    // A window's fullscreen field holds flags: 1 is maximized, 2 fullscreen.
+    function hasFullscreen(workspace) {
+        return root.windowList.some(win => win.workspace.id === workspace && (win.fullscreen & 2) !== 0);
+    }
+
     function clientForToplevel(toplevel) {
         if (!toplevel || !toplevel.HyprlandToplevel) {
             return null;

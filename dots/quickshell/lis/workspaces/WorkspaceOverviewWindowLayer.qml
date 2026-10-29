@@ -59,8 +59,23 @@ Item {
 
             property bool atInitPosition: (initX == x && initY == y)
 
-            property int workspaceColIndex: root.getWsColumn(windowData?.workspace?.id ?? 1)
-            property int workspaceRowIndex: root.getWsRow(windowData?.workspace?.id ?? 1)
+            // The workspace a window was dropped on, until Hyprland's window
+            // list says it's there (refreshed ~150 ms after the move). Placed
+            // from the list alone, the tile first slid back to its old
+            // workspace and only then to the new one
+            property int pendingWorkspace: -1
+            readonly property int shownWorkspace: pendingWorkspace !== -1 ? pendingWorkspace : (windowData?.workspace?.id ?? 1)
+            onWindowDataChanged: if (windowData?.workspace?.id === pendingWorkspace) pendingWorkspace = -1
+
+            // In case the move never shows up
+            Timer {
+                id: pendingTimeout
+                interval: 1500
+                onTriggered: window.pendingWorkspace = -1
+            }
+
+            property int workspaceColIndex: root.getWsColumn(shownWorkspace)
+            property int workspaceRowIndex: root.getWsRow(shownWorkspace)
             xOffset: (root.workspaceImplicitWidth + root.workspaceSpacing) * workspaceColIndex
             yOffset: (root.workspaceImplicitHeight + root.workspaceSpacing) * workspaceRowIndex
             property real xWithinWorkspaceWidget: Math.max((windowData?.at[0] - (monitor?.x ?? 0) - monitorData?.reserved[0]) * root.scale, 0)
@@ -88,17 +103,6 @@ Item {
             bottomLeftRadius: Math.max((workspaceAtBottomLeft ? root.largeWorkspaceRadius : root.smallWorkspaceRadius) - distanceFromBottomLeftCorner, minRadius)
             bottomRightRadius: Math.max((workspaceAtBottomRight ? root.largeWorkspaceRadius : root.smallWorkspaceRadius) - distanceFromBottomRightCorner, minRadius)
 
-            Timer {
-                id: updateWindowPosition
-                interval: WorkspaceOverviewSettings.arbitraryRaceConditionDelay
-                repeat: false
-                running: false
-                onTriggered: {
-                    window.x = Math.round(xWithinWorkspaceWidget + xOffset)
-                    window.y = Math.round(yWithinWorkspaceWidget + yOffset)
-                }
-            }
-
             z: Drag.active ? root.windowDraggingZ : (root.windowZ + windowData?.floating)
             Drag.hotSpot.x: width / 2
             Drag.hotSpot.y: height / 2
@@ -125,11 +129,16 @@ Item {
                     root.draggingFromWorkspace = -1
                     if (targetWorkspace !== -1 && targetWorkspace !== windowData?.workspace.id) {
                         Hyprland.dispatch(`hl.dsp.window.move({ workspace = "${targetWorkspace}", window = "address:${window.windowData?.address}", follow = false })`)
-                        updateWindowPosition.restart()
+                        // Slides straight to the workspace it was dropped on
+                        window.pendingWorkspace = targetWorkspace
+                        pendingTimeout.restart()
+                        window.settle()
                     }
                     else {
+                        // Tiled: back to its place. Floating: stays where
+                        // it's dropped, which the move below makes its place
                         if (!window.windowData.floating) {
-                            updateWindowPosition.restart()
+                            window.settle()
                             return
                         }
                         const percentageX = Math.round((window.x - xOffset) / root.workspaceImplicitWidth * 100)

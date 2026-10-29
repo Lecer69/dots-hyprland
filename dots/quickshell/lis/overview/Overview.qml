@@ -27,7 +27,7 @@ Scope {
         const wsId = HyprlandData.activeWorkspace?.id
         if (wsId === undefined || wsId === null) return false
 
-        return HyprlandData.windowList.some(w => w.workspace.id === wsId && w.fullscreen > 0)
+        return HyprlandData.hasFullscreen(wsId)
     }
 
     GlobalShortcut {

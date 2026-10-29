@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
-Column {
+Row {
     id: root
 
     required property string categoryName
@@ -13,15 +13,13 @@ Column {
     property real columnSpacing: 20
     property real titleSpacing: 8
 
-    property color accentColor: "#f38ba8"
-    property color textColor: "#dddddd"
-    property color dimTextColor: "#888888"
-    property color keyBgColor: "#1a1a1a"
-    property color keyBorderColor: "#2a2a2a"
+    property color textColor: "#e6e6e6"
+    property color dimTextColor: "#999999"
+    property color keyBgColor: "#1f1f1f"
 
     property int keyFontSize: 10
     property int descFontSize: 11
-    property int titleFontSize: 13
+    property int titleFontSize: 12
     property real maxDescWidth: 260
 
     property var keyBlacklist: ["SUPER_L", "SUPER_R"]
@@ -145,46 +143,46 @@ Column {
     }
 
     visible: repeater.model.length > 0
-    spacing: titleSpacing
+    spacing: 12
 
-    Row {
-        spacing: 8
-
-        Rectangle {
-            width: 4
-            height: titleText.implicitHeight
-            radius: 2
-            color: root.accentColor
-        }
-
-        Text {
-            id: titleText
-            text: root.isCategorized ? root.categoryName : "Uncategorized"
-            font.pixelSize: root.titleFontSize
-            font.weight: Font.DemiBold
-            color: root.textColor
-        }
+    // Line down the side of the section
+    Rectangle {
+        width: 1
+        height: section.height
+        color: "#262626"
     }
 
     Column {
-        spacing: 4
-        Repeater {
-            id: repeater
-            model: {
-                const all = Array.from(CheatsheetService.keybinds)
-                const filtered = all.filter(bind => {
-                    if (!root.hasDescription(bind)) return false
-                    if (root.isCategorized)
-                        return root.isCategory(bind, root.categoryName)
-                    else
-                        return root.isUncategorized(bind)
-                })
-                return root.dedupe(filtered)
-            }
-            delegate: BindRow {
-                required property var modelData
-                keyData: modelData
-                categoryName: root.categoryName
+        id: section
+        spacing: root.titleSpacing
+
+        Text {
+            text: root.isCategorized ? root.categoryName : "Uncategorized"
+            font.pixelSize: root.titleFontSize
+            font.weight: Font.Medium
+            color: "#6b6b6b"
+        }
+
+        Column {
+            spacing: 4
+            Repeater {
+                id: repeater
+                model: {
+                    const all = Array.from(CheatsheetService.keybinds)
+                    const filtered = all.filter(bind => {
+                        if (!root.hasDescription(bind)) return false
+                        if (root.isCategorized)
+                            return root.isCategory(bind, root.categoryName)
+                        else
+                            return root.isUncategorized(bind)
+                    })
+                    return root.dedupe(filtered)
+                }
+                delegate: BindRow {
+                    required property var modelData
+                    keyData: modelData
+                    categoryName: root.categoryName
+                }
             }
         }
     }
@@ -195,8 +193,6 @@ Column {
         property string label: ""
         radius: 6
         color: root.keyBgColor
-        border.width: 1
-        border.color: root.keyBorderColor
         implicitWidth: Math.max(18, keyLabel.implicitWidth + 8)
         implicitHeight: keyLabel.implicitHeight + 5
 
@@ -234,8 +230,6 @@ Column {
                 height: implicitHeight
                 radius: 6
                 color: root.keyBgColor
-                border.width: 1
-                border.color: root.keyBorderColor
 
                 Row {
                     id: innerRow
@@ -256,6 +250,7 @@ Column {
                                 visible: modelData === "Super"
                                 width: 11
                                 height: 11
+                                sourceSize: Qt.size(11, 11)
                                 smooth: true
                             }
 

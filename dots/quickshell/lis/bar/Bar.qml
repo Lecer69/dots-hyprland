@@ -12,10 +12,9 @@ import qs.media
 PanelWindow {
     id: bar
     color: "transparent"
+    WlrLayershell.namespace: "quickshell:bar"
 
-    // Only top/bottom docking is supported; stale values fall back to top
     readonly property string position: SettingsData.s.bar.position === "bottom" ? "bottom" : "top"
-    // Compact layout: a portrait (vertical) screen
     readonly property bool compact: bar.screen.height > bar.screen.width
 
     anchors {
@@ -29,7 +28,7 @@ PanelWindow {
     implicitWidth: 36
     exclusiveZone: 29
 
-    property int pageSize: SettingsData.s.bar.workspaceNumbers
+    property int pageSize: SettingsData.s.bar.workspaceNumbersPerMonitor[bar.screen?.name] ?? SettingsData.s.bar.workspaceNumbers
     property var monitor: Hyprland.monitorFor(bar.screen)
     property int currentWs: monitor?.activeWorkspace?.id ?? 1
     property int startWs: Math.floor((currentWs - 1) / pageSize) * pageSize + 1
@@ -41,36 +40,52 @@ PanelWindow {
         return (name ?? "").startsWith("special:")
     }
 
-    readonly property var accessibleWorkspaceIds: {
+    property int pageStart: 1
+
+    function rowFrom(start, asFree) {
+        const taken = ({})
+        for (const ws of Hyprland.workspaces.values) {
+            // Ids below 1 are special or named workspaces. A new workspace has
+            // no monitor until it's activated an event later, so it stays free
+            if (ws.id >= 1 && ws.id !== asFree && ws.monitor && ws.monitor !== bar.monitor)
+                taken[ws.id] = true
+        }
         const ids = []
-        const seen = ({})
-        const push = id => {
-            if (id === undefined || id === null || isNaN(id) || seen[id]) return
-            seen[id] = true
-            ids.push(id)
+        for (let id = start; ids.length < bar.pageSize && id < start + 1000; ++id) {
+            if (!taken[id])
+                ids.push(id)
         }
+        return ids
+    }
+
+    function updatePageStart() {
+        const ws = bar.currentWs
+        if (ws >= bar.pageStart && bar.rowFrom(bar.pageStart, ws).includes(ws))
+            return
+
+        let start = 1
+        for (let i = 0; i < 1000; ++i) {
+            const row = bar.rowFrom(start, ws)
+            if (row.length === 0 || row.includes(ws))
+                break
+            start = row[row.length - 1] + 1
+        }
+        bar.pageStart = start
+    }
+
+    onCurrentWsChanged: updatePageStart()
+    onPageSizeChanged: updatePageStart()
+    onAccessibleWorkspaceIdsChanged: updatePageStart()
+    Component.onCompleted: updatePageStart()
+
+    readonly property var accessibleWorkspaceIds: {
         if (!bar.onlyAccessibleWorkspaces)
-            return ids
+            return []
 
-        const byId = HyprlandData.workspaceById ?? ({})
-
-        for (const ws of HyprlandData.workspaces) {
-            if (bar.isSpecialWorkspace(ws.name)) continue
-            if (ws.monitor === bar.monitorName)
-                push(ws.id)
-        }
-
-        // Empty slots of the current page that are not owned by another screen
-        for (let i = 0; i < bar.pageSize; ++i) {
-            const id = bar.startWs + i
-            const info = byId[id]
-            if (!info || info.monitor === bar.monitorName)
-                push(id)
-        }
-
-        if (!bar.isSpecialWorkspace(bar.monitor?.activeWorkspace?.name))
-            push(bar.monitor?.activeWorkspace?.id)
-
+        const ids = bar.rowFrom(bar.pageStart, -1)
+        const active = bar.monitor?.activeWorkspace
+        if (active && active.id >= 1 && !bar.isSpecialWorkspace(active.name) && !ids.includes(active.id))
+            ids.push(active.id)
         return ids.sort((a, b) => a - b)
     }
 
@@ -84,6 +99,10 @@ PanelWindow {
     }
 
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
+    readonly property bool activeMaximized: ((HyprlandData.clientForToplevel(activeWindow)?.fullscreen ?? 0) & 1) !== 0
+
+    property bool sidebarOpen: false
+    signal sidebarRequested()
 
     Item {
         anchors.fill: parent
@@ -108,6 +127,7 @@ PanelWindow {
                     source: "../icons/arch-symbolic.svg"
                     width: 16
                     height: 16
+                    sourceSize: Qt.size(16, 16)
                     fillMode: Image.PreserveAspectFit
                 }
 
@@ -115,15 +135,43 @@ PanelWindow {
                 Divider         { visible: bar.compact }
                 MemoryPercentage { visible: bar.compact }
 
-                Text {
-                    id: windowTitle
+                Row {
                     visible: !bar.compact
-                    width: Math.min(implicitWidth, 400)
-                    elide: Text.ElideRight
-                    text: ToplevelManager.activeToplevel?.title ?? ("Desktop - Workspace " + (bar.monitor?.activeWorkspace?.id ?? "?"))
-                    font.pixelSize: 14
-                    font.weight: Font.Medium
-                    color: "#bdbdbd"
+
+                    Item {
+                        id: maximizedMark
+
+                        readonly property bool shown: bar.activeMaximized
+
+                        // The icon and the gap after it
+                        width: shown ? 20 : 0
+                        height: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                        Image {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 14
+                            height: 14
+                            source: "../icons/maximized.svg"
+                            sourceSize: Qt.size(14, 14)
+                            opacity: maximizedMark.shown ? 0.85 : 0
+                            scale: maximizedMark.shown ? 1 : 0.4
+                            Behavior on opacity { NumberAnimation { duration: 160 } }
+                            Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
+                        }
+                    }
+
+                    Text {
+                        id: windowTitle
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, 400)
+                        elide: Text.ElideRight
+                        text: ToplevelManager.activeToplevel?.title ?? ("Desktop - Workspace " + (bar.monitor?.activeWorkspace?.id ?? "?"))
+                        font.pixelSize: 14
+                        font.weight: Font.Medium
+                        color: "#bdbdbd"
+                    }
                 }
 
                 Text {
@@ -149,7 +197,10 @@ PanelWindow {
                 spacing: 4
 
                 Repeater {
-                    model: bar.workspaceModel
+                    // Keeps the pills, so they fade between states
+                    model: ScriptModel {
+                        values: bar.workspaceModel
+                    }
 
                     WorkspacePill {
                         wsIndex: modelData
@@ -169,69 +220,100 @@ PanelWindow {
             x: parent.width - width
             y: (parent.height - height) / 2
 
-            Grid {
-                rows: 1
-                columns: 0
-                horizontalItemAlignment: Qt.AlignLeft
-                verticalItemAlignment: Qt.AlignVCenter
-                spacing: 10
+            Row {
+                Grid {
+                    anchors.verticalCenter: parent.verticalCenter
+                    rows: 1
+                    columns: 0
+                    horizontalItemAlignment: Qt.AlignLeft
+                    verticalItemAlignment: Qt.AlignVCenter
+                    spacing: 10
 
-                BatteryWidget {
-                    id: batteryWidget
-                    visible: !bar.compact
+                    BatteryWidget {
+                        id: batteryWidget
+                        visible: !bar.compact
+                    }
+
+                    Divider {
+                        visible: !bar.compact && mediaWidget.hasMedia
+                    }
+
+                    MediaWidget {
+                        id: mediaWidget
+                        visible: !bar.compact && hasMedia
+                        screen: bar.screen
+                    }
+
+                    Divider {
+                        visible: !bar.compact && sysTray.count > 0
+                    }
+
+                    SysTrayWidget {
+                        id: sysTray
+                        visible: !bar.compact
+                        screen: bar.screen
+                    }
+
+                    Divider { visible: !bar.compact && sysTray.count > 0 }
+
+                    UtilityButtons { }
+
+                    Divider { visible: SettingsData.s.bar.showClockAndDate }
+
+                    ClockWidget {
+                        visible: SettingsData.s.bar.showClockAndDate
+                    }
+
+                    Divider {
+                        visible: !bar.compact && (SettingsData.s.bar.showBluetooth || SettingsData.s.bar.showNetwork)
+                    }
+
+                    BluetoothWidget {
+                        visible: !bar.compact && SettingsData.s.bar.showBluetooth
+                    }
+
+                    WifiWidget {
+                        visible: !bar.compact && SettingsData.s.bar.showNetwork
+                    }
                 }
 
-                Divider {
-                    visible: !bar.compact && mediaWidget.hasMedia
-                }
+                Item {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: settingsButton.width
+                    height: settingsButton.height
 
-                MediaWidget {
-                    id: mediaWidget
-                    visible: !bar.compact && hasMedia
-                    screen: bar.screen
-                }
+                    Row {
+                        id: settingsButton
 
-                Divider {
-                    visible: !bar.compact && sysTray.count > 0
-                }
+                        leftPadding: 10
+                        spacing: 8
 
-                SysTrayWidget {
-                    id: sysTray
-                    visible: !bar.compact
-                    screen: bar.screen
-                }
+                        Divider {
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
 
-                Divider { visible: !bar.compact && sysTray.count > 0 }
+                        Image {
+                            id: settingsIcon
 
-                UtilityButtons { }
+                            width: 16
+                            height: 16
+                            source: "../icons/settings.svg"
+                            sourceSize: Qt.size(32, 32)
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                            mipmap: true
+                            opacity: settingsArea.containsMouse || bar.sidebarOpen ? 1 : 0.75
+                        }
+                    }
 
-                Divider { visible: SettingsData.s.bar.showClockAndDate }
+                    MouseArea {
+                        id: settingsArea
 
-                ClockWidget {
-                    visible: SettingsData.s.bar.showClockAndDate
-                }
-
-                Divider { }
-
-                BluetoothWidget {
-                    visible: !bar.compact && SettingsData.s.bar.showBluetooth
-                }
-
-                WifiWidget {
-                    visible: !bar.compact && SettingsData.s.bar.showNetwork
-                }
-
-                SettingsButton {
-                    id: settingsBtn
-                    otherMenu: powerBtn.menu
-                    screen: bar.screen
-                }
-
-                PowerButton {
-                    id: powerBtn
-                    visible: !bar.compact
-                    otherMenu: settingsBtn.menu
-                    screen: bar.screen
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: bar.sidebarRequested()
+                    }
                 }
             }
         }

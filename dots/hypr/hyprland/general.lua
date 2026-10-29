@@ -81,14 +81,16 @@ hl.config({
             -- input_methods = true,
             -- input_methods_ignorealpha = 0.8
         },
+
         shadow = {
             enabled = true,
             range = 12,
             offset = {0, 2},
-            render_power = 5,
+            render_power = 4,
             color = "rgba(10, 10, 10, 0.5)"
 
         },
+
         -- Dim
         dim_inactive = true,
         dim_strength = 0.08,
@@ -308,6 +310,7 @@ hl.config({
         zoom_disable_aa = true,
         no_hardware_cursors = 0,
         hotspot_padding = 1,
+        warp_on_monitor_change = 2,
         no_warps = true
     },
 

@@ -65,14 +65,12 @@ Item {
                         width: 16
                         height: 16
                         source: trayItem.modelData.icon ?? ""
-                        sourceSize.width: width * 2
-                        sourceSize.height: height * 2
+                        sourceSize.width: width
+                        sourceSize.height: height
                         smooth: true
-                        mipmap: true
                         visible: status === Image.Ready
                         layer.enabled: !iconContainer.tintOff
                         layer.smooth: true
-                        layer.mipmap: true
                         layer.effect: MultiEffect {
                             colorization: 1.0
                             colorizationColor: "#e8e8e8"

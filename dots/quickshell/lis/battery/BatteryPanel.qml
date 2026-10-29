@@ -6,12 +6,12 @@ Rectangle {
 
     signal closeRequested()
 
-    readonly property real contentHeight: header.height + 1 + 24 + content.implicitHeight + 28
+    readonly property real contentHeight: header.height + 8 + content.implicitHeight + 24
 
-    radius: 14
+    radius: 12
     color: "#0f0f0f"
     clip: true
-    border.color: "#2a2a2a"
+    border.color: "#1f1f1f"
     border.width: 1
 
     BatteryState {
@@ -23,12 +23,11 @@ Rectangle {
         if (root.visible) state.refresh()
     }
 
-    Rectangle {
+    Item {
         id: header
 
         width: parent.width
-        height: 52
-        color: "transparent"
+        height: 56
 
         Text {
             anchors.left: parent.left
@@ -37,29 +36,22 @@ Rectangle {
             text: state.available ? "Battery" : "Power"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#dddddd"
+            color: "#ffffff"
         }
 
-        Rectangle {
+        Text {
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: 24
             anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
-            radius: 14
-            color: closeHover.containsMouse ? "#252525" : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 12
-                color: "#888888"
-            }
+            text: "✕"
+            font.pixelSize: 12
+            color: closeHover.containsMouse ? "#dddddd" : "#666666"
 
             MouseArea {
                 id: closeHover
 
                 anchors.fill: parent
+                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.closeRequested()
@@ -67,21 +59,14 @@ Rectangle {
         }
     }
 
-    Rectangle {
-        anchors.top: header.bottom
-        width: parent.width
-        height: 1
-        color: "#222222"
-    }
-
     ColumnLayout {
         id: content
         anchors.top: header.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 28
-        anchors.topMargin: 24
-        spacing: 18
+        anchors.margins: 24
+        anchors.topMargin: 8
+        spacing: 16
 
         // Ring
         RowLayout {
@@ -104,14 +89,13 @@ Rectangle {
                     spacing: 2
                     Text {
                         text: "Status"
-                        color: "#777777"
-                        font.pixelSize: 11
+                        color: "#6b6b6b"
+                        font.pixelSize: 12
                     }
                     Text {
                         text: state.statusText
-                        color: "#dddddd"
-                        font.pixelSize: 14
-                        font.weight: Font.DemiBold
+                        color: "#e6e6e6"
+                        font.pixelSize: 13
                     }
                 }
 
@@ -119,37 +103,30 @@ Rectangle {
                     spacing: 2
                     Text {
                         text: "Health"
-                        color: "#777777"
-                        font.pixelSize: 11
+                        color: "#6b6b6b"
+                        font.pixelSize: 12
                     }
                     Text {
                         text: state.healthAvailable ? state.health + "% of design capacity" : "Unavailable"
-                        color: "#dddddd"
-                        font.pixelSize: 14
-                        font.weight: Font.DemiBold
+                        color: "#e6e6e6"
+                        font.pixelSize: 13
                     }
                 }
             }
         }
 
-        Rectangle {
-            visible: state.available
-            Layout.fillWidth: true
-            Layout.preferredHeight: visible ? 1 : 0
-            color: "#1c1c1c"
-        }
-
         Text {
             text: "Power profile"
-            color: "#aaaaaa"
-            font.pixelSize: 13
-            Layout.bottomMargin: -4
+            color: "#6b6b6b"
+            font.pixelSize: 12
+            font.weight: Font.Medium
+            Layout.topMargin: state.available ? 8 : 0
+            Layout.bottomMargin: -8
         }
 
         PowerProfileOption {
             label: "Performance"
             description: "Maximum clocks, no throttling"
-            accent: "#f38ba8"
             visible: state.hasPerformance
             Layout.preferredHeight: visible ? 52 : 0
             selected: state.profile === "performance"
@@ -159,7 +136,6 @@ Rectangle {
         PowerProfileOption {
             label: "Balanced"
             description: "Balanced clocks, balanced power usage"
-            accent: "#89b4fa"
             selected: state.profile === "balanced"
             onClicked: state.setProfile("balanced")
         }
@@ -167,7 +143,6 @@ Rectangle {
         PowerProfileOption {
             label: "Power Saver"
             description: "Lower clocks, lower power usage"
-            accent: "#a6e3a1"
             selected: state.profile === "power-saver"
             onClicked: state.setProfile("power-saver")
         }
@@ -175,7 +150,7 @@ Rectangle {
         Text {
             visible: !state.profileAvailable
             text: "power-profiles-daemon not detected"
-            color: "#555555"
+            color: "#6b6b6b"
             font.pixelSize: 11
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 8

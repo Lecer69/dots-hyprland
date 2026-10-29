@@ -19,9 +19,11 @@ Variants {
         required property var modelData
         readonly property string focusedMonitorName: Hyprland.focusedMonitor?.name ?? ""
         readonly property bool isFocusedScreen: modelData.name === focusedMonitorName
+        readonly property bool shown: root.enabled && !isFocusedScreen
 
         screen: modelData
-        visible: root.enabled && !isFocusedScreen
+        // Stays mapped until it has faded out
+        visible: shown || dim.opacity > 0
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.exclusiveZone: -1
@@ -39,12 +41,17 @@ Variants {
         }
 
         Rectangle {
+            id: dim
+
             anchors.fill: parent
             color: SettingsData.s.osu.backdropColor
-            opacity: SettingsData.s.osu.backdropOpacity
+            opacity: backdropWindow.shown ? SettingsData.s.osu.backdropOpacity : 0
 
             Behavior on opacity {
-                NumberAnimation { duration: 1000 }
+                NumberAnimation {
+                    duration: SettingsData.s.osu.backdropFadeDuration
+                    easing.type: Easing.InOutQuad
+                }
             }
         }
     }

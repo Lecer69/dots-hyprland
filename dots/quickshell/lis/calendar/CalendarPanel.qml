@@ -6,10 +6,10 @@ Rectangle {
 
     signal closeRequested()
 
-    radius: 14
+    radius: 12
     color: "#0f0f0f"
     clip: true
-    border.color: "#2a2a2a"
+    border.color: "#1f1f1f"
     border.width: 1
 
     readonly property var monthNames: ["January","February","March","April","May","June","July","August","September","October","November","December"]
@@ -98,12 +98,11 @@ Rectangle {
         onClicked: mouse.accepted = true
     }
 
-    Rectangle {
+    Item {
         id: header
 
         width: parent.width
-        height: 52
-        color: "transparent"
+        height: 56
 
         Text {
             anchors.left: parent.left
@@ -112,29 +111,22 @@ Rectangle {
             text: "Calendar"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#dddddd"
+            color: "#ffffff"
         }
 
-        Rectangle {
+        Text {
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: 24
             anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
-            radius: 14
-            color: closeHover.containsMouse ? "#252525" : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 12
-                color: "#888888"
-            }
+            text: "✕"
+            font.pixelSize: 12
+            color: closeHover.containsMouse ? "#dddddd" : "#666666"
 
             MouseArea {
                 id: closeHover
 
                 anchors.fill: parent
+                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.closeRequested()
@@ -144,20 +136,13 @@ Rectangle {
 
     }
 
-    Rectangle {
-        anchors.top: header.bottom
-        width: parent.width
-        height: 1
-        color: "#222222"
-    }
-
     ColumnLayout {
         anchors.top: header.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 24
-        anchors.topMargin: 20
+        anchors.topMargin: 8
         spacing: 14
 
         // Month navigation
@@ -165,19 +150,17 @@ Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 28
 
-            Rectangle {
+            Item {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: 28
                 height: 28
-                radius: 14
-                color: prevHover.containsMouse ? "#252525" : "transparent"
 
                 Text {
                     anchors.centerIn: parent
                     text: "‹"
                     font.pixelSize: 18
-                    color: "#888888"
+                    color: prevHover.containsMouse ? "#ffffff" : "#808080"
                 }
 
                 MouseArea {
@@ -196,7 +179,7 @@ Rectangle {
                 text: root.monthLabel
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
-                color: "#dddddd"
+                color: "#e6e6e6"
             }
 
             Rectangle {
@@ -205,18 +188,17 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: todayLabel.implicitWidth + 20
                 height: 28
-                radius: 8
-                color: todayHover.containsMouse ? "#252525" : "#1a1a1a"
-                border.color: "#2a2a2a"
-                border.width: 1
+                radius: 6
+                color: todayHover.pressed ? "#333333" : todayHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
 
                 Text {
                     id: todayLabel
 
                     anchors.centerIn: parent
                     text: "Today"
-                    color: "#888888"
+                    color: "#e6e6e6"
                     font.pixelSize: 12
+                    font.weight: Font.Medium
                 }
 
                 MouseArea {
@@ -227,29 +209,21 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.goToday()
                 }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 100
-                    }
-                }
             }
 
-            Rectangle {
+            Item {
                 id: nextBtn
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 width: 28
                 height: 28
-                radius: 14
-                color: nextHover.containsMouse ? "#252525" : "transparent"
 
                 Text {
                     anchors.centerIn: parent
                     text: "›"
                     font.pixelSize: 18
-                    color: "#888888"
+                    color: nextHover.containsMouse ? "#ffffff" : "#808080"
                 }
 
                 MouseArea {
@@ -281,8 +255,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: parent.modelData
                         font.pixelSize: 11
-                        color: "#666666"
-                        font.letterSpacing: 0.5
+                        color: "#6b6b6b"
                     }
                 }
             }
@@ -307,18 +280,10 @@ Rectangle {
 
                     width: (dayGrid.width - 6 * dayGrid.columnSpacing) / 7
                     height: 44
-                    radius: 12
-                    border.width: 1
-                    border.color: modelData.isSelected && !modelData.isToday ? "#555555" : "transparent"
-                    color: modelData.isToday
-                        ? "#beffffff"
-                        : cellHover.containsMouse ? "#1c1c1c" : "transparent"
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 100
-                        }
-                    }
+                    radius: 8
+                    color: modelData.isToday ? "#e6e6e6"
+                        : modelData.isSelected ? "#1f1f1f"
+                        : cellHover.containsMouse ? "#161616" : "transparent"
 
                     Text {
                         anchors.centerIn: parent
@@ -326,8 +291,8 @@ Rectangle {
                         font.pixelSize: 13
                         font.weight: cell.modelData.isToday ? Font.DemiBold : Font.Normal
                         color: cell.modelData.isToday
-                            ? "#111111"
-                            : cell.modelData.inMonth ? "#cfcfcf" : "#3f3f3f"
+                            ? "#0f0f0f"
+                            : cell.modelData.inMonth ? "#e6e6e6" : "#4a4a4a"
                     }
 
                     // Has-notes marker
@@ -340,8 +305,8 @@ Rectangle {
                         radius: 2
                         visible: calendarState.hasNotes(cell.modelData.date)
                         color: cell.modelData.isToday
-                            ? "#111111"
-                            : cell.modelData.inMonth ? "#ffc900" : "#5a4a10"
+                            ? "#0f0f0f"
+                            : cell.modelData.inMonth ? "#808080" : "#3a3a3a"
                     }
 
                     MouseArea {
@@ -368,9 +333,9 @@ Rectangle {
                     + root.selectedDate.getDate() + " "
                     + root.monthNames[root.selectedDate.getMonth()] + " "
                     + root.selectedDate.getFullYear()
-                color: "#aaaaaa"
+                color: "#6b6b6b"
                 font.pixelSize: 12
-                font.weight: Font.DemiBold
+                font.weight: Font.Medium
             }
 
             Text {
@@ -379,7 +344,7 @@ Rectangle {
                 text: root.selectedNotes.length > 0
                     ? root.selectedNotes.length + (root.selectedNotes.length === 1 ? " note" : " notes")
                     : ""
-                color: "#666666"
+                color: "#6b6b6b"
                 font.pixelSize: 12
             }
         }
@@ -416,12 +381,6 @@ Rectangle {
                             radius: 8
                             color: noteHover.hovered ? "#161616" : "transparent"
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 100
-                                }
-                            }
-
                             HoverHandler {
                                 id: noteHover
                             }
@@ -436,7 +395,7 @@ Rectangle {
                                     Layout.preferredWidth: 6
                                     Layout.preferredHeight: 6
                                     radius: 3
-                                    color: "#ffc900"
+                                    color: "#808080"
                                 }
 
                                 Text {
@@ -444,20 +403,18 @@ Rectangle {
 
                                     Layout.fillWidth: true
                                     text: noteRow.modelData.text
-                                    color: "#dddddd"
+                                    color: "#e6e6e6"
                                     font.pixelSize: 13
                                     wrapMode: Text.Wrap
                                 }
 
                                 // Yearly toggle, shown when set or on hover
                                 Rectangle {
-                                    Layout.preferredWidth: yearlyLabel.implicitWidth + 14
+                                    Layout.preferredWidth: yearlyLabel.implicitWidth + 16
                                     Layout.preferredHeight: 22
-                                    radius: 11
+                                    radius: 6
                                     opacity: noteRow.modelData.yearly || noteHover.hovered ? 1 : 0
-                                    color: noteRow.modelData.yearly ? "#1e2a3d" : (yearlyHover.containsMouse ? "#252525" : "transparent")
-                                    border.color: noteRow.modelData.yearly ? "#3b5375" : "#333333"
-                                    border.width: 1
+                                    color: noteRow.modelData.yearly ? "#262626" : "transparent"
 
                                     Text {
                                         id: yearlyLabel
@@ -465,7 +422,8 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: "Yearly"
                                         font.pixelSize: 11
-                                        color: noteRow.modelData.yearly ? "#89b4fa" : "#777777"
+                                        color: noteRow.modelData.yearly ? "#ffffff"
+                                             : yearlyHover.containsMouse ? "#cccccc" : "#808080"
                                     }
 
                                     MouseArea {
@@ -479,17 +437,15 @@ Rectangle {
                                 }
 
                                 // Delete
-                                Rectangle {
+                                Item {
                                     Layout.preferredWidth: 26
                                     Layout.preferredHeight: 26
-                                    radius: 13
-                                    color: delHover.containsMouse ? "#4e1919" : "transparent"
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: "✕"
                                         font.pixelSize: 11
-                                        color: delHover.containsMouse ? "#f38ba8" : "#666666"
+                                        color: delHover.containsMouse ? "#dddddd" : "#666666"
                                     }
 
                                     MouseArea {
@@ -511,7 +467,7 @@ Rectangle {
                 anchors.centerIn: parent
                 visible: root.selectedNotes.length === 0
                 text: "No notes for this day"
-                color: "#444444"
+                color: "#6b6b6b"
                 font.pixelSize: 13
             }
         }
@@ -519,22 +475,14 @@ Rectangle {
         // Add note input
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 40
+            Layout.preferredHeight: 36
             radius: 8
-            color: "#1a1a1a"
-            border.color: noteInput.activeFocus ? "#444444" : "#2a2a2a"
-            border.width: 1
-
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: 100
-                }
-            }
+            color: "#161616"
 
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
-                anchors.rightMargin: 8
+                anchors.rightMargin: 12
                 spacing: 8
 
                 TextInput {
@@ -542,7 +490,7 @@ Rectangle {
 
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
-                    color: "#dddddd"
+                    color: "#e6e6e6"
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
@@ -550,7 +498,7 @@ Rectangle {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Add a note…"
-                        color: "#555555"
+                        color: "#6b6b6b"
                         font.pixelSize: 13
                         visible: noteInput.text.length === 0
                     }
@@ -560,12 +508,10 @@ Rectangle {
                 }
 
                 Rectangle {
-                    Layout.preferredWidth: newYearlyLabel.implicitWidth + 14
+                    Layout.preferredWidth: newYearlyLabel.implicitWidth + 16
                     Layout.preferredHeight: 22
-                    radius: 11
-                    color: root.newNoteYearly ? "#1e2a3d" : (newYearlyHover.containsMouse ? "#252525" : "transparent")
-                    border.color: root.newNoteYearly ? "#3b5375" : "#333333"
-                    border.width: 1
+                    radius: 6
+                    color: root.newNoteYearly ? "#262626" : "transparent"
 
                     Text {
                         id: newYearlyLabel
@@ -573,7 +519,8 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Yearly"
                         font.pixelSize: 11
-                        color: root.newNoteYearly ? "#89b4fa" : "#777777"
+                        color: root.newNoteYearly ? "#ffffff"
+                             : newYearlyHover.containsMouse ? "#cccccc" : "#808080"
                     }
 
                     MouseArea {
@@ -586,24 +533,16 @@ Rectangle {
                     }
                 }
 
-                Rectangle {
-                    Layout.preferredWidth: 26
-                    Layout.preferredHeight: 26
-                    radius: 13
-                    color: addHover.containsMouse ? "#252525" : "transparent"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "+"
-                        font.pixelSize: 16
-                        font.bold: true
-                        color: "#a6e3a1"
-                    }
+                Text {
+                    text: "+"
+                    font.pixelSize: 16
+                    color: addHover.containsMouse ? "#ffffff" : "#808080"
 
                     MouseArea {
                         id: addHover
 
                         anchors.fill: parent
+                        anchors.margins: -6
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.addNote()

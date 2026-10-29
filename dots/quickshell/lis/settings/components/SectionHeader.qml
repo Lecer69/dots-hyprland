@@ -11,15 +11,9 @@ Item {
     height: 36
 
     Text {
-        anchors { left: parent.left; leftMargin: 16; verticalCenter: parent.verticalCenter }
+        anchors { left: parent.left; leftMargin: 16; bottom: parent.bottom; bottomMargin: 6 }
         text: title
-        font { pixelSize: 11; weight: Font.Medium; letterSpacing: 0.8 }
-        color: "#66ffffff"
-    }
-
-    Rectangle {
-        anchors { left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16; bottom: parent.bottom }
-        height: 1
-        color: "#10ffffff"
+        font { pixelSize: 12; weight: Font.Medium }
+        color: "#6b6b6b"
     }
 }

@@ -1,9 +1,9 @@
 -- put former exec-once commands inside the func and former exec commands outside
 hl.on("hyprland.start", function ()
 
-    -- Bar, wallpaper
+    -- Bar and lock screen. The shell starts hyprpaper itself once the lock
+    -- covers the screens, so the wallpapers don't show before it
     hl.exec_cmd("ON_HYPRSTART=true qs -c lis")
-    hl.exec_cmd("hyprpaper")
 
     hl.exec_cmd("gnome-keyring-daemon --start --foreground --components=secrets")
     hl.exec_cmd("dbus-update-activation-environment --all")

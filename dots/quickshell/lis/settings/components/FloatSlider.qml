@@ -15,28 +15,12 @@ Row {
 
     signal changed(real v)
 
-    spacing: 8
-
-    Rectangle {
-        width: 56; height: 24
-        radius: 6
-        color: "#1e1e1e"
-        border.color: "#333333"
-        border.width: 1
-        anchors.verticalCenter: parent.verticalCenter
-
-        Text {
-            anchors.centerIn: parent
-            text: root.value.toFixed(root.decimals) + root.suffix
-            font { pixelSize: 11; weight: Font.Medium }
-            color: "#eeeeee"
-        }
-    }
+    spacing: 10
 
     Item {
         id: track
-        width: 130
-        height: 24
+        width: 120
+        height: 20
         anchors.verticalCenter: parent.verticalCenter
 
         readonly property real ratio: root.to > root.from
@@ -44,30 +28,24 @@ Row {
             : 0
 
         Rectangle {
-            id: trackBg
             anchors.verticalCenter: parent.verticalCenter
-            x: 0; width: parent.width
-            height: 4; radius: 2
+            width: parent.width
+            height: 3; radius: 1.5
             color: "#2a2a2a"
 
             Rectangle {
                 width: track.ratio * parent.width
                 height: parent.height
                 radius: parent.radius
-                color: "#5c8aff"
+                color: "#bbbbbb"
             }
         }
 
         Rectangle {
-            id: handle
-            width: 14; height: 14; radius: 7
-            color: dragArea.pressed ? "#dddddd" : "#ffffff"
-            border.color: "#404040"
-            border.width: 1
+            width: 12; height: 12; radius: 6
             anchors.verticalCenter: parent.verticalCenter
             x: track.ratio * (track.width - width)
-
-            Behavior on color { ColorAnimation { duration: 60 } }
+            color: "#ffffff"
         }
 
         MouseArea {
@@ -102,5 +80,14 @@ Row {
                 }
             }
         }
+    }
+
+    Text {
+        width: 44
+        anchors.verticalCenter: parent.verticalCenter
+        horizontalAlignment: Text.AlignRight
+        text: root.value.toFixed(root.decimals) + root.suffix
+        font.pixelSize: 12
+        color: "#999999"
     }
 }

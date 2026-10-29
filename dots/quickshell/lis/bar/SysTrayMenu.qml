@@ -64,8 +64,8 @@ PanelWindow {
         root.isOpen = true
     }
 
-    // Place the frame next to the tray icon, away from the bar edge — same
-    // approach as DropdownMenu, so it never covers the bar itself.
+    // Place the frame next to the tray icon, away from the bar edge, so it
+    // never covers the bar itself.
     function reposition(): void {
         if (!anchorItem || !root.screen) return
         const pos = anchorItem.mapToGlobal(0, 0)
@@ -166,10 +166,10 @@ PanelWindow {
 
         width: 280
         height: menuCol.implicitHeight + 12
-        radius: 14
-        color: "#0f0f0f"
+        radius: 10
+        color: "#161616"
         border.width: 1
-        border.color: "#2a2a2a"
+        border.color: "#242424"
 
         // Entries load async — keep the frame placed correctly as it grows
         onHeightChanged: if (root.isOpen) root.reposition()
@@ -205,8 +205,7 @@ PanelWindow {
                 Rectangle {
                     anchors.fill: parent
                     radius: 8
-                    color: backMouse.containsMouse ? "#1c1c1c" : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    color: backMouse.containsMouse ? "#262626" : "transparent"
 
                     RowLayout {
                         anchors.fill: parent
@@ -217,7 +216,7 @@ PanelWindow {
                         Text {
                             text: "‹"
                             font.pixelSize: 14
-                            color: "#888888"
+                            color: "#808080"
                             Layout.alignment: Qt.AlignVCenter
                         }
 
@@ -226,8 +225,8 @@ PanelWindow {
                             Layout.alignment: Qt.AlignVCenter
                             text: root.currentLabel
                             font.pixelSize: 12
-                            font.weight: Font.DemiBold
-                            color: "#dddddd"
+                            font.weight: Font.Medium
+                            color: "#e6e6e6"
                             elide: Text.ElideRight
                         }
                     }
@@ -246,7 +245,7 @@ PanelWindow {
                 visible: root.inSubmenu
                 width: menuCol.width
                 height: 1
-                color: "#222222"
+                color: "#242424"
             }
 
             // App name header
@@ -262,8 +261,9 @@ PanelWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: 12
                     text: root.trayItem?.title ?? ""
-                    color: "#777777"
-                    font.pixelSize: 11
+                    color: "#6b6b6b"
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
                     elide: Text.ElideRight
                 }
             }
@@ -272,7 +272,7 @@ PanelWindow {
                 visible: !root.inSubmenu && (root.trayItem?.title ?? "") !== ""
                 width: menuCol.width
                 height: 1
-                color: "#222222"
+                color: "#242424"
             }
 
             // Menu entries
@@ -295,15 +295,14 @@ PanelWindow {
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
                         height: 1
-                        color: "#222222"
+                        color: "#242424"
                     }
 
                     Rectangle {
                         visible: !modelData.isSeparator
                         anchors.fill: parent
                         radius: 8
-                        color: itemMouse.containsMouse ? "#1c1c1c" : "transparent"
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        color: itemMouse.containsMouse ? "#262626" : "transparent"
 
                         RowLayout {
                             anchors.fill: parent
@@ -331,7 +330,7 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: modelData.text
                                 font.pixelSize: 12
-                                color: modelData.enabled ? "#dddddd" : "#555555"
+                                color: modelData.enabled ? "#e6e6e6" : "#4a4a4a"
                                 elide: Text.ElideRight
                             }
 
@@ -340,7 +339,7 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: "›"
                                 font.pixelSize: 14
-                                color: "#888888"
+                                color: "#808080"
                             }
                         }
 
@@ -372,7 +371,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     text: "Loading…"
-                    color: "#555555"
+                    color: "#6b6b6b"
                     font.pixelSize: 12
                 }
             }

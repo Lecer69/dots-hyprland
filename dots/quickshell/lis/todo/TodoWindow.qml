@@ -29,8 +29,9 @@ PanelWindow {
 
     TodoPanel {
         anchors.centerIn: parent
-        width: 532
-        height: 520
+        width: Math.min(980, parent.width - 160)
+        height: Math.min(680, parent.height - 120)
+        shown: root.shown
         onCloseRequested: root.shown = false
     }
 

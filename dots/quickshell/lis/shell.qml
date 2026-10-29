@@ -22,8 +22,17 @@ import qs.wellbeing
 import qs.battery
 import qs.workspaces
 import qs.internet
+import qs.network
+import qs.bluetooth
+import qs.audio
+import qs.taskmanager
+import qs.displays
 import qs.osu
 import qs.hypridle
+import qs.desktop
+import qs.notes
+import qs.goals
+import qs.screenshot
 
 ShellRoot {
     id: root
@@ -41,7 +50,7 @@ ShellRoot {
     Component.onCompleted: {
         console.log("[shell] ShellRoot completed")
         if (root.startupMode) {
-            screenLock.lock()
+            screenLock.lockAtBoot()
             root.startupMode = false
         }
     }
@@ -57,6 +66,13 @@ ShellRoot {
     WorkspaceOverviewLayer {
         id: workspaceOverviewLayer
         Component.onCompleted: console.log("[shell] WorkspaceOverviewLayer completed")
+    }
+
+    DesktopOverview {
+        locked: screenLock.isLocked
+        onTodoRequested: todoWindow.shown = true
+        onCalendarRequested: calendarWindow.shown = true
+        Component.onCompleted: console.log("[shell] DesktopOverview completed")
     }
 
     WellbeingWindow {
@@ -94,9 +110,48 @@ ShellRoot {
         Component.onCompleted: console.log("[shell] GammaWindow completed")
     }
 
+    NetworkWindow {
+        id: networkWindow
+        Component.onCompleted: console.log("[shell] NetworkWindow completed")
+    }
+
+    BluetoothWindow {
+        id: bluetoothWindow
+        Component.onCompleted: console.log("[shell] BluetoothWindow completed")
+    }
+
+    AudioWindow {
+        id: audioWindow
+        Component.onCompleted: console.log("[shell] AudioWindow completed")
+    }
+
+    TaskManagerWindow {
+        id: taskManagerWindow
+        Component.onCompleted: console.log("[shell] TaskManagerWindow completed")
+    }
+
+    DisplaysWindow {
+        id: displaysWindow
+        Component.onCompleted: console.log("[shell] DisplaysWindow completed")
+    }
+
     TodoWindow {
         id: todoWindow
         Component.onCompleted: console.log("[shell] TodoWindow completed")
+    }
+
+    NotesWindow {
+        id: notesWindow
+        Component.onCompleted: console.log("[shell] NotesWindow completed")
+    }
+
+    GoalsWindow {
+        id: goalsWindow
+        Component.onCompleted: console.log("[shell] GoalsWindow completed")
+    }
+
+    ScreenFreeze {
+        Component.onCompleted: console.log("[shell] ScreenFreeze completed")
     }
 
     CalendarWindow {
@@ -107,6 +162,15 @@ ShellRoot {
     PowerDialog {
         id: powerDialog
         Component.onCompleted: console.log("[shell] PowerDialog completed")
+    }
+
+    SidebarMenu {
+        id: sidebarMenu
+        Component.onCompleted: console.log("[shell] SidebarMenu completed")
+    }
+
+    BarBlur {
+        Component.onCompleted: console.log("[shell] BarBlur completed")
     }
 
     Process {
@@ -140,12 +204,14 @@ ShellRoot {
 
             property var hyprMonitor: Hyprland.monitorFor(modelData)
             property int wsId: hyprMonitor?.activeWorkspace?.id ?? -1
-            property bool fullscreen: HyprlandData.windowList.some(w => w.workspace.id === wsId && w.fullscreen > 0)
+            property bool fullscreen: HyprlandData.hasFullscreen(wsId)
             property bool show: !screenLock.isLocked && !fullscreen
 
             property var bar: Bar {
                 screen: modelData
                 visible: !screenLock.isLocked && BarState.barShown
+                sidebarOpen: sidebarMenu.isOpen && sidebarMenu.screen === modelData
+                onSidebarRequested: sidebarMenu.toggle(modelData)
                 Component.onCompleted: console.log("[shell] Bar completed")
             }
             property var volBar: Loader {
@@ -154,6 +220,7 @@ ShellRoot {
                 sourceComponent: Component {
                     VolumeHoverBar {
                         screen: modelData
+                        onClicked: sidebarMenu.toggle(modelData)
                     }
                 }
             }

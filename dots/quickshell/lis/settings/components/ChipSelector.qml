@@ -12,7 +12,7 @@ Flow {
 
     signal selected(string val)
 
-    spacing: 6
+    spacing: 4
 
     Repeater {
         model: root.options
@@ -20,25 +20,25 @@ Flow {
             required property string modelData
             property bool active: root.value === modelData
 
-            height: 30
-            width: label.implicitWidth + 22
-            radius: 8
-            color: active ? "#30ffffff" : "#14ffffff"
-            border.color: active ? "#44ffffff" : "#18ffffff"
-            border.width: 1
-
-            Behavior on color { ColorAnimation { duration: 100 } }
+            height: 28
+            width: label.implicitWidth + 20
+            radius: 6
+            color: active ? "#262626" : "transparent"
 
             Text {
                 id: label
                 anchors.centerIn: parent
                 text: modelData
-                font { pixelSize: 12; weight: active ? Font.Medium : Font.Normal }
-                color: active ? "#ffffff" : "#99ffffff"
+                font.pixelSize: 12
+                color: active ? "#ffffff"
+                     : area.containsMouse ? "#cccccc"
+                     : "#808080"
             }
 
             MouseArea {
+                id: area
                 anchors.fill: parent
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     root.value = modelData

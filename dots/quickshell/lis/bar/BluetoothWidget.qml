@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell.Bluetooth
-import Quickshell.Io
 
 Item {
     id: root
@@ -29,7 +28,7 @@ Item {
         source: "../icons/" + root._iconName + ".svg"
         width: 18
         height: 18
-        mipmap: true
+        sourceSize: Qt.size(18, 18)
         antialiasing: true
         fillMode: Image.PreserveAspectFit
         anchors.verticalCenter: parent.verticalCenter
@@ -41,11 +40,6 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: if (!kcmProc.running) kcmProc.running = true
-    }
-
-    Process {
-        id: kcmProc
-        command: ["kcmshell6", "kcm_bluetooth"]
+        onClicked: bluetoothWindow.shown = !bluetoothWindow.shown
     }
 }

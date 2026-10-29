@@ -9,6 +9,8 @@ Item {
     id: root
 
     property string value: "#5c8aff"
+    // When set, the popup offers a Reset back to it
+    property string defaultValue: ""
     signal selected(string val)
 
     implicitWidth: trigger.width
@@ -23,9 +25,10 @@ Item {
 
     function hexToHsv(hex) {
         let h = hex.replace("#", "")
+        // Eight digits are #AARRGGBB, the way QML reads colors
         if (h.length === 8) {
-            root.alpha = parseInt(h.substring(6, 8), 16) / 255
-            h = h.substring(0, 6)
+            root.alpha = parseInt(h.substring(0, 2), 16) / 255
+            h = h.substring(2)
         } else {
             root.alpha = 1.0
         }
@@ -64,9 +67,8 @@ Item {
         const gi = Math.round((g + m) * 255)
         const bi = Math.round((b + m) * 255)
         const toHex = n => n.toString(16).padStart(2, "0")
-        let hex = "#" + toHex(ri) + toHex(gi) + toHex(bi)
-        if (root.alpha < 1.0) hex += toHex(Math.round(root.alpha * 255))
-        return hex
+        const rgb = toHex(ri) + toHex(gi) + toHex(bi)
+        return root.alpha < 1.0 ? "#" + toHex(Math.round(root.alpha * 255)) + rgb : "#" + rgb
     }
 
     function commit() {
@@ -80,45 +82,33 @@ Item {
         if (!popup.opened) hexToHsv(root.value)
     }
 
-    // rigger button: swatch + hex label
+    // Trigger button: swatch + hex label
     Rectangle {
         id: trigger
-        width: 132
-        height: 30
-        radius: 8
-        color: mouseArea.containsMouse ? "#1affffff" : "#14ffffff"
-        border.color: popup.opened ? "#5c8aff" : "#22ffffff"
-        border.width: 1
+        width: row.implicitWidth + 16
+        height: 28
+        radius: 6
+        color: mouseArea.containsMouse || popup.opened ? "#1c1c1c" : "transparent"
 
-        Behavior on color { ColorAnimation { duration: 100 } }
-        Behavior on border.color { ColorAnimation { duration: 100 } }
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 6
-            anchors.rightMargin: 10
+        Row {
+            id: row
+            anchors.centerIn: parent
             spacing: 8
 
             Rectangle {
-                width: 20; height: 20
-                radius: 5
+                width: 14; height: 14
+                radius: 4
+                anchors.verticalCenter: parent.verticalCenter
                 color: root.value
                 border.color: "#33ffffff"
                 border.width: 1
             }
 
             Text {
-                Layout.fillWidth: true
+                anchors.verticalCenter: parent.verticalCenter
                 text: root.value.toUpperCase()
                 font.pixelSize: 12
-                color: "#eeffffff"
-                elide: Text.ElideRight
-            }
-
-            Text {
-                text: "⌄"
-                font.pixelSize: 10
-                color: "#88ffffff"
+                color: "#999999"
             }
         }
 
@@ -135,20 +125,26 @@ Item {
     Popup {
         id: popup
         y: trigger.height + 6
-        x: 0
+        // Open leftwards: the trigger sits at the right edge of its row
+        x: trigger.width - width
         width: 240
         padding: 14
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
         modal: false
 
         background: Rectangle {
-            color: "#1e1e1e"
-            radius: 12
-            border.color: "#22ffffff"
+            color: "#161616"
+            radius: 10
+            border.color: "#242424"
             border.width: 1
             layer.enabled: true
         }
 
+        // Opens upwards when the window has no room below the trigger
+        onAboutToShow: {
+            const bottom = trigger.mapToItem(null, 0, trigger.height).y
+            popup.y = bottom + implicitHeight + 6 > root.Window.height ? -implicitHeight - 6 : trigger.height + 6
+        }
         onOpened: hexToHsv(root.value)
         onClosed: root.commit()
 
@@ -312,21 +308,17 @@ Item {
 
                 Rectangle {
                     width: 28; height: 28
-                    radius: 8
+                    radius: 6
                     color: root.value
-                    border.color: "#22ffffff"
+                    border.color: "#33ffffff"
                     border.width: 1
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 30
-                    radius: 8
-                    color: hexField.activeFocus ? "#1affffff" : "#14ffffff"
-                    border.color: hexField.activeFocus ? "#5c8aff" : "#22ffffff"
-                    border.width: 1
-
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    height: 28
+                    radius: 6
+                    color: "#1f1f1f"
 
                     TextInput {
                         id: hexField
@@ -349,6 +341,26 @@ Item {
                             } else {
                                 text = root.value.toUpperCase()
                             }
+                        }
+                    }
+                }
+
+                Text {
+                    visible: root.defaultValue !== "" && root.value.toLowerCase() !== root.defaultValue.toLowerCase()
+                    text: "Reset"
+                    font.pixelSize: 12
+                    color: resetArea.containsMouse ? "#dddddd" : "#999999"
+
+                    MouseArea {
+                        id: resetArea
+
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.hexToHsv(root.defaultValue)
+                            root.commit()
                         }
                     }
                 }

@@ -5,7 +5,6 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
-import qs.notification
 import qs.settings.data
 
 Grid {
@@ -35,6 +34,7 @@ Grid {
 
                 smooth: true
                 antialiasing: true
+                sourceSize: Qt.size(16, 16)
 
                 source: Pipewire.defaultAudioSource?.audio?.muted ? "../icons/mic-off.svg" : "../icons/mic-on.svg"
                 opacity: Pipewire.defaultAudioSource?.audio?.muted ? 0.5 : 1.0
@@ -72,7 +72,7 @@ Grid {
 
                 smooth: true
                 antialiasing: true
-                mipmap: true
+                sourceSize: Qt.size(16, 16)
 
                 source: "../icons/screenshot.svg"
                 fillMode: Image.PreserveAspectFit
@@ -106,7 +106,7 @@ Grid {
 
                 smooth: true
                 antialiasing: true
-                mipmap: true
+                sourceSize: Qt.size(16, 16)
 
                 source: "../icons/color-picker.svg"
                 fillMode: Image.PreserveAspectFit
@@ -141,7 +141,7 @@ Grid {
 
                 smooth: true
                 antialiasing: true
-                mipmap: true
+                sourceSize: Qt.size(16, 16)
 
                 source: gameModeItem.toggled ? "../icons/gamemode-on.svg" : "../icons/gamemode-off.svg"
                 opacity: gameModeItem.toggled ? 1.0 : 0.5
@@ -193,7 +193,7 @@ Grid {
                 height: 16
                 smooth: true
                 antialiasing: true
-                mipmap: true
+                sourceSize: Qt.size(16, 16)
                 source: IdleInhibitState.idleInhibited ? "../icons/sleep-off.svg" : "../icons/sleep.svg"
                 opacity: IdleInhibitState.idleInhibited ? 1.0 : 0.5
                 fillMode: Image.PreserveAspectFit
@@ -222,11 +222,11 @@ Grid {
 
                 smooth: true
                 antialiasing: true
-                mipmap: true
+                sourceSize: Qt.size(16, 16)
 
-                source: NotificationState.notificationsEnabled ? "../icons/notification.svg" : "../icons/notification-off.svg"
+                source: SettingsData.s.general.notificationsEnabled ? "../icons/notification.svg" : "../icons/notification-off.svg"
                 fillMode: Image.PreserveAspectFit
-                opacity: NotificationState.notificationsEnabled ? 1.0 : 0.5
+                opacity: SettingsData.s.general.notificationsEnabled ? 1.0 : 0.5
 
                 Behavior on opacity { NumberAnimation { duration: 120 } }
             }
@@ -239,7 +239,7 @@ Grid {
                     if (mouse.button === Qt.RightButton) {
                         notificationCenterWindow.shown = true
                     } else {
-                        NotificationState.notificationsEnabled = !NotificationState.notificationsEnabled
+                        SettingsData.s.general.notificationsEnabled = !SettingsData.s.general.notificationsEnabled
                     }
                 }
             }

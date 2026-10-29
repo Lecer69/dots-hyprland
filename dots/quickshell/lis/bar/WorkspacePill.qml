@@ -103,17 +103,15 @@ Item {
             width: 18
             height: 18
             source: root.iconSource
-            sourceSize.width: width * 2
-            sourceSize.height: height * 2
+            sourceSize.width: width
+            sourceSize.height: height
             fillMode: Image.PreserveAspectFit
             opacity: sameMonitor ? 1.0 : 0.38
             visible: root.iconSource !== ""
             smooth: true
-            mipmap: true
             antialiasing: true
             layer.enabled: SettingsData.s.bar.workspaceIconTint
             layer.smooth: true
-            layer.mipmap: true
             layer.effect: MultiEffect {
                 colorization: 1.0
                 colorizationColor: "#e8e8e8"

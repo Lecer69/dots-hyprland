@@ -11,7 +11,8 @@ PanelWindow {
 
     signal closeRequested()
 
-    visible: isOpen
+    // Stays mapped while the card fades out
+    visible: isOpen || launcherCard.opacity > 0
     color: "transparent"
 
     WlrLayershell.namespace: "quickshell:launcher"
@@ -40,7 +41,7 @@ PanelWindow {
         function onRawEvent(event) {
             if (!win.isOpen) return
 
-            if (event.name === "workspace" || event.name === "activewindow" || event.name === "activespecial")
+            if (event.name === "workspace" || event.name === "activespecial")
                 win.closeRequested()
         }
     }

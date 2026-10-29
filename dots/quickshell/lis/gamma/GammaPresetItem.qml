@@ -32,12 +32,6 @@ Rectangle {
     radius: 8
     color: rowHover.hovered ? "#161616" : "transparent"
 
-    Behavior on color {
-        ColorAnimation {
-            duration: 100
-        }
-    }
-
     HoverHandler {
         id: rowHover
     }
@@ -55,17 +49,17 @@ Rectangle {
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 10
-        anchors.rightMargin: 8
+        anchors.rightMargin: 10
         spacing: 8
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            spacing: 2
 
             Text {
                 Layout.fillWidth: true
                 text: root.name
-                color: "#dddddd"
+                color: "#e6e6e6"
                 font.pixelSize: 13
                 elide: Text.ElideRight
             }
@@ -73,31 +67,23 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 text: root.summary()
-                color: "#555555"
-                font.pixelSize: 10
-                font.family: "monospace"
+                color: "#6b6b6b"
+                font.pixelSize: 11
                 elide: Text.ElideRight
             }
         }
 
         // Delete
-        Rectangle {
-            Layout.preferredWidth: 26
-            Layout.preferredHeight: 26
-            radius: 13
-            color: delHover.containsMouse ? "#4e1919" : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 11
-                color: delHover.containsMouse ? "#f38ba8" : "#666666"
-            }
+        Text {
+            text: "✕"
+            font.pixelSize: 11
+            color: delHover.containsMouse ? "#dddddd" : "#666666"
 
             MouseArea {
                 id: delHover
 
                 anchors.fill: parent
+                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.removeRequested()

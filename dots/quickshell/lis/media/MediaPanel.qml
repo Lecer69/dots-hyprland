@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell.Services.Mpris
-import qs.settings.data
 
 Rectangle {
     id: root
@@ -12,7 +11,7 @@ Rectangle {
     signal closeRequested()
 
     readonly property bool hasPlayer: player !== null
-    readonly property real contentHeight: header.height + 1 + 20 + content.implicitHeight + 24
+    readonly property real contentHeight: header.height + 8 + content.implicitHeight + 24
 
     function cycleLoop(): void {
         if (!root.player || !root.player.canLoop) return
@@ -22,10 +21,10 @@ Rectangle {
         else root.player.loopState = MprisLoopState.None
     }
 
-    radius: 14
+    radius: 12
     color: "#0f0f0f"
     clip: true
-    border.color: "#2a2a2a"
+    border.color: "#1f1f1f"
     border.width: 1
 
     // Subtle open/close animation: fade + unfold from the bar
@@ -42,83 +41,54 @@ Rectangle {
         onClicked: mouse.accepted = true
     }
 
-    Rectangle {
+    Item {
         id: header
 
         width: parent.width
-        height: 52
-        color: "transparent"
+        height: 56
 
         Text {
+            id: title
+
             anchors.left: parent.left
             anchors.leftMargin: 24
             anchors.verticalCenter: parent.verticalCenter
             text: "Now Playing"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#dddddd"
+            color: "#ffffff"
         }
 
-        Rectangle {
-            anchors.right: closeButton.left
-            anchors.rightMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(identityText.implicitWidth + 22, 150)
-            height: 24
-            radius: 12
-            color: "#1a1a1a"
-            border.color: "#2a2a2a"
-            border.width: 1
+        Text {
+            anchors.left: title.right
+            anchors.leftMargin: 8
+            anchors.baseline: title.baseline
+            width: Math.min(implicitWidth, 150)
+            elide: Text.ElideRight
             visible: root.hasPlayer
-
-            Text {
-                id: identityText
-
-                anchors.centerIn: parent
-                width: Math.min(parent.width - 14, implicitWidth)
-                elide: Text.ElideRight
-                text: root.player && root.player.identity ? root.player.identity : "Media"
-                font.pixelSize: 11
-                color: "#888888"
-            }
+            text: root.player && root.player.identity ? root.player.identity : "Media"
+            font.pixelSize: 12
+            color: "#6b6b6b"
         }
 
-        Rectangle {
-            id: closeButton
-
+        Text {
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: 24
             anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
-            radius: 14
-            color: closeHover.containsMouse ? "#252525" : "transparent"
-
-            Behavior on color { ColorAnimation { duration: 100 } }
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 12
-                color: "#888888"
-            }
+            text: "✕"
+            font.pixelSize: 12
+            color: closeHover.containsMouse ? "#dddddd" : "#666666"
 
             MouseArea {
                 id: closeHover
 
                 anchors.fill: parent
+                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.closeRequested()
             }
         }
-    }
-
-    Rectangle {
-        anchors.top: header.bottom
-        width: parent.width
-        height: 1
-        color: "#222222"
     }
 
     ColumnLayout {
@@ -129,7 +99,7 @@ Rectangle {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 24
-        anchors.topMargin: 20
+        anchors.topMargin: 8
         spacing: 18
 
         // Track row: album art + info
@@ -147,17 +117,14 @@ Rectangle {
                     id: artBase
 
                     anchors.fill: parent
-                    radius: 10
-                    color: "#1a1a1a"
-                    border.color: "#2a2a2a"
-                    border.width: 1
+                    radius: 8
+                    color: "#161616"
                 }
 
                 Image {
                     id: art
 
                     anchors.fill: parent
-                    anchors.margins: 1
                     source: root.player ? root.player.trackArtUrl : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
@@ -170,8 +137,7 @@ Rectangle {
                     id: artMask
 
                     anchors.fill: parent
-                    anchors.margins: 1
-                    radius: 9
+                    radius: 8
                     color: "white"
                     visible: false
                     layer.enabled: true
@@ -193,7 +159,7 @@ Rectangle {
                     visible: art.status !== Image.Ready
                     text: "♪"
                     font.pixelSize: 20
-                    color: "#555555"
+                    color: "#4a4a4a"
                 }
 
                 MouseArea {
@@ -214,7 +180,7 @@ Rectangle {
                     text: root.player ? (root.player.trackTitle || "Unknown Title") : ""
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
-                    color: "#dddddd"
+                    color: "#e6e6e6"
                 }
 
                 Text {
@@ -223,7 +189,7 @@ Rectangle {
                     visible: text !== ""
                     text: root.player ? (root.player.trackArtist || "") : ""
                     font.pixelSize: 12
-                    color: "#aaaaaa"
+                    color: "#999999"
                 }
 
                 Text {
@@ -231,8 +197,8 @@ Rectangle {
                     elide: Text.ElideRight
                     visible: text !== ""
                     text: root.player ? (root.player.trackAlbum || "") : ""
-                    font.pixelSize: 11
-                    color: "#777777"
+                    font.pixelSize: 12
+                    color: "#6b6b6b"
                 }
             }
         }
@@ -265,9 +231,9 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width
-                    height: (seekMouse.containsMouse || seekBlock.scrubbing) ? 6 : 4
+                    height: (seekMouse.containsMouse || seekBlock.scrubbing) ? 5 : 3
                     radius: height / 2
-                    color: "#262626"
+                    color: "#2a2a2a"
                     opacity: seekBlock.seekable ? 1 : 0.4
 
                     Behavior on height { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
@@ -277,7 +243,7 @@ Rectangle {
 
                         height: parent.height
                         radius: height / 2
-                        color: SettingsData.s.general.accentColor
+                        color: "#bbbbbb"
                         width: {
                             const len = root.player && root.player.lengthSupported ? root.player.length : 0
                             if (len <= 0) return 0
@@ -293,10 +259,10 @@ Rectangle {
                     Rectangle {
                         id: handle
 
-                        width: 10
-                        height: 10
-                        radius: 5
-                        color: "#e8e8e8"
+                        width: 12
+                        height: 12
+                        radius: 6
+                        color: "#ffffff"
                         anchors.verticalCenter: parent.verticalCenter
                         x: fill.width - width / 2
                         visible: seekBlock.seekable
@@ -342,7 +308,7 @@ Rectangle {
                 anchors.top: barArea.bottom
                 anchors.topMargin: 6
                 text: formatTime(seekBlock.displayPos)
-                font.pixelSize: 10
+                font.pixelSize: 11
                 color: "#999999"
             }
 
@@ -351,8 +317,8 @@ Rectangle {
                 anchors.top: barArea.bottom
                 anchors.topMargin: 6
                 text: root.player && root.player.lengthSupported ? formatTime(root.player.length) : "--:--"
-                font.pixelSize: 10
-                color: "#666666"
+                font.pixelSize: 11
+                color: "#6b6b6b"
             }
         }
 
@@ -418,23 +384,11 @@ Rectangle {
             Layout.fillHeight: true
             Layout.preferredHeight: visible ? 120 : 0
 
-            Column {
+            Text {
                 anchors.centerIn: parent
-                spacing: 10
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "♪"
-                    font.pixelSize: 26
-                    color: "#3a3a3a"
-                }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Nothing playing"
-                    font.pixelSize: 13
-                    color: "#666666"
-                }
+                text: "Nothing playing"
+                font.pixelSize: 13
+                color: "#6b6b6b"
             }
         }
     }

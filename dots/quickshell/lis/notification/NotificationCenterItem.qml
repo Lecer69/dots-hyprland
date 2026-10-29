@@ -8,19 +8,10 @@ Rectangle {
     signal dismissed()
 
     property var entry
-    property color accent: "#89b4fa"
 
-    radius: 10
-    color: itemHover.containsMouse ? "#161616" : "#131313"
-    border.color: "#242424"
-    border.width: 1
+    radius: 8
+    color: itemHover.containsMouse ? "#161616" : "transparent"
     implicitHeight: rowLayout.implicitHeight + 20
-
-    Behavior on color {
-        ColorAnimation {
-            duration: 100
-        }
-    }
 
     MouseArea {
         id: itemHover
@@ -34,7 +25,7 @@ Rectangle {
 
         anchors {
             fill: parent
-            leftMargin: 14
+            leftMargin: 10
             rightMargin: 10
             topMargin: 10
             bottomMargin: 10
@@ -89,14 +80,14 @@ Rectangle {
             width: 32
             height: 32
             radius: 16
-            color: Qt.darker(root.accent, 2.6)
+            color: "#1f1f1f"
             Layout.alignment: Qt.AlignVCenter
             visible: iconImage.status !== Image.Ready && hintImage.status !== Image.Ready
 
             Text {
                 anchors.centerIn: parent
                 text: (root.entry.appName ?? "?").charAt(0).toUpperCase()
-                color: root.accent
+                color: "#999999"
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }
@@ -112,24 +103,23 @@ Rectangle {
 
                 Text {
                     text: root.entry.appName ?? ""
-                    color: "#888888"
+                    color: "#808080"
                     font.pixelSize: 11
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Medium
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
 
                 Text {
                     text: root.entry.time ?? ""
-                    color: "#5a5a5a"
+                    color: "#6b6b6b"
                     font.pixelSize: 11
-                    font.family: "monospace"
                 }
             }
 
             Text {
                 text: root.entry.summary ?? ""
-                color: "#dddddd"
+                color: "#e6e6e6"
                 font.pixelSize: 13
                 font.weight: Font.Medium
                 elide: Text.ElideRight
@@ -146,7 +136,7 @@ Rectangle {
                     .trim()
 
                 text: cleaned
-                color: "#828282"
+                color: "#999999"
                 font.pixelSize: 12
                 elide: Text.ElideRight
                 maximumLineCount: 2
@@ -157,17 +147,15 @@ Rectangle {
             }
         }
 
-        Rectangle {
+        Item {
             width: 24
             height: 24
-            radius: 12
-            color: closeHover.containsMouse ? "#252525" : "transparent"
             Layout.alignment: Qt.AlignVCenter
 
             Text {
                 anchors.centerIn: parent
                 text: "✕"
-                color: "#888888"
+                color: closeHover.containsMouse ? "#dddddd" : "#666666"
                 font.pixelSize: 11
             }
 
@@ -178,12 +166,6 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.dismissed()
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 100
-                }
             }
         }
     }

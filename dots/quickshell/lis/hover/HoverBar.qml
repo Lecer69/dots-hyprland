@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.settings.data
+import qs.tools
 
 PanelWindow {
     id: root
@@ -39,12 +40,14 @@ PanelWindow {
 
     property real value: 0
     signal scrolled(real delta)
+    signal clicked()
 
     property bool hovered: false
     // Wheel travel not yet turned into a step (120 = one mouse notch)
     property int wheelAccum: 0
     property var hyprMonitor: Hyprland.monitorFor(root.screen)
-    property bool fullscreen: hyprMonitor?.activeWorkspace?.hasFullscreen ?? false
+    // The workspace's hasFullscreen counts maximized windows too
+    property bool fullscreen: HyprlandData.hasFullscreen(hyprMonitor?.activeWorkspace?.id ?? -1)
 
     Rectangle {
         id: strip
@@ -86,6 +89,7 @@ PanelWindow {
         hoverEnabled: true
         onEntered: root.hovered = true
         onExited: root.hovered = false
+        onClicked: if (!root.fullscreen) root.clicked()
         onWheel: wh => {
             if (root.fullscreen) return
             // Touchpads send many tiny deltas, wrapped in zero-delta ScrollBegin/End

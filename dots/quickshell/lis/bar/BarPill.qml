@@ -1,4 +1,5 @@
 import QtQuick
+import qs.settings.data
 
 Rectangle {
     id: barPill
@@ -10,9 +11,21 @@ Rectangle {
     property bool vertical: false
 
     radius: 14
-    color: '#c30f0f0f'
+    color: SettingsData.s.bar.pillColor
 
     default property alias content: contentItem.data
+
+    // Drawn over the fill rather than as the Rectangle's own border, which
+    // cuts the fill away under it: a see-through border then tints the
+    // pill's edge instead of showing the desktop behind
+    Rectangle {
+        anchors.fill: parent
+        radius: parent.radius
+        color: "transparent"
+        border.width: SettingsData.s.bar.pillBorderWidth
+        border.color: SettingsData.s.bar.pillBorderColor
+        visible: border.width > 0
+    }
 
     Item {
         id: contentItem

@@ -8,7 +8,6 @@ ColumnLayout {
     property string appName: ""
     property int seconds: 0
     property int maxSeconds: 1
-    property color accent: "#89b4fa"
     property bool isActive: false
     property string timeLabel: "0s"
     property string iconName: "application-x-executable"
@@ -47,7 +46,7 @@ ColumnLayout {
                 width: 8
                 height: 8
                 radius: 4
-                color: root.accent
+                color: "#808080"
                 visible: !iconImg.visible
 
                 SequentialAnimation on opacity {
@@ -74,7 +73,7 @@ ColumnLayout {
                 height: 22 + 4
                 radius: (22 + 4) / 2
                 color: "transparent"
-                border.color: root.accent
+                border.color: "#bbbbbb"
                 border.width: 1.5
                 visible: root.isActive && iconImg.visible
                 opacity: 0.6
@@ -100,7 +99,7 @@ ColumnLayout {
 
         Text {
             text: root.appName
-            color: root.isActive ? "#eeeeee" : "#999999"
+            color: root.isActive ? "#ffffff" : "#e6e6e6"
             font.pixelSize: 12
             font.weight: root.isActive ? Font.Medium : Font.Normal
             elide: Text.ElideRight
@@ -109,29 +108,27 @@ ColumnLayout {
 
         Text {
             text: root.timeLabel
-            color: root.accent
-            font.pixelSize: 11
-            font.bold: true
-            font.family: "monospace"
+            color: "#999999"
+            font.pixelSize: 12
         }
     }
 
     Item {
         Layout.fillWidth: true
-        implicitHeight: 5
+        implicitHeight: 3
 
         Rectangle {
             anchors.fill: parent
-            radius: 2.5
-            color: "#1e1e1e"
+            radius: 1.5
+            color: "#1f1f1f"
         }
 
         Rectangle {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            radius: 2.5
-            color: root.accent
+            radius: 1.5
+            color: root.isActive ? "#e6e6e6" : "#808080"
             width: root.maxSeconds > 0 ? Math.max(5, parent.width * Math.min(root.seconds / root.maxSeconds, 1)) : 5
 
             Behavior on width {

@@ -12,14 +12,7 @@ Item {
     property string description: ""
 
     Layout.fillWidth: true
-    implicitHeight: description !== "" ? 62 : 46
-
-    Rectangle {
-        anchors { fill: parent; leftMargin: 8; rightMargin: 8 }
-        radius: 8
-        color: rowHover.hovered ? "#191919" : "transparent"
-        Behavior on color { ColorAnimation { duration: 80 } }
-    }
+    implicitHeight: description !== "" ? 58 : 44
 
     RowLayout {
         anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
@@ -33,15 +26,15 @@ Item {
             Text {
                 text: root.label
                 font.pixelSize: 13
-                color: "#eeeeee"
+                color: "#e6e6e6"
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
             Text {
                 visible: root.description !== ""
                 text: root.description
-                font.pixelSize: 11
-                color: "#777777"
+                font.pixelSize: 12
+                color: "#6b6b6b"
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -53,9 +46,5 @@ Item {
             implicitHeight: childrenRect.height
             Layout.alignment: Qt.AlignVCenter
         }
-    }
-
-    HoverHandler {
-        id: rowHover
     }
 }

@@ -7,8 +7,10 @@ Rectangle {
     id: root
     width: 400
     height: content.implicitHeight + 24
-    radius: 18
-    color: '#0b0b0b'
+    radius: 12
+    color: "#0f0f0f"
+    border.color: "#1f1f1f"
+    border.width: 1
 
     signal dismissed
 
@@ -105,7 +107,7 @@ Rectangle {
                         maskSource: Rectangle {
                             width: hintImage.width
                             height: hintImage.height
-                            radius: 12
+                            radius: 8
                         }
                     }
                 }
@@ -144,7 +146,7 @@ Rectangle {
                         id: appLabel
                         text: root.notification?.appName ?? ""
                         visible: text !== ""
-                        color: '#8a8a8a'
+                        color: "#808080"
                         font.pixelSize: 12
                         Layout.maximumWidth: 120
                         elide: Text.ElideRight
@@ -154,7 +156,7 @@ Rectangle {
                     Text {
                         visible: appLabel.visible && summaryLabel.visible
                         text: "·"
-                        color: '#5a5a5a'
+                        color: "#4a4a4a"
                         font.pixelSize: 12
                     }
 
@@ -162,7 +164,7 @@ Rectangle {
                         id: summaryLabel
                         text: root.notification?.summary ?? ""
                         visible: text !== ""
-                        color: '#e2e2e2'
+                        color: "#e6e6e6"
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         Layout.fillWidth: true
@@ -180,7 +182,7 @@ Rectangle {
 
                     text: cleaned
                     visible: cleaned !== ""
-                    color: '#9a9a9a'
+                    color: "#999999"
                     font.pixelSize: 12
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
@@ -190,17 +192,15 @@ Rectangle {
                 }
             }
 
-            Rectangle {
+            Item {
                 Layout.preferredWidth: 22
                 Layout.preferredHeight: 22
                 Layout.alignment: Qt.AlignTop
-                radius: 11
-                color: closeHover.containsMouse ? "#40ffffff" : "transparent"
 
                 Text {
                     anchors.centerIn: parent
                     text: "✕"
-                    color: "#80ffffff"
+                    color: closeHover.containsMouse ? "#dddddd" : "#666666"
                     font.pixelSize: 12
                 }
 
@@ -226,9 +226,9 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
                     Layout.horizontalStretchFactor: 1
-                    implicitHeight: 30
-                    radius: 10
-                    color: actionHover.containsMouse ? "#30ffffff" : "#18ffffff"
+                    implicitHeight: 28
+                    radius: 6
+                    color: actionHover.pressed ? "#333333" : actionHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
 
                     Text {
                         anchors.centerIn: parent
@@ -237,6 +237,7 @@ Rectangle {
                         text: modelData.text
                         color: "#e6e6e6"
                         font.pixelSize: 12
+                        font.weight: Font.Medium
                         elide: Text.ElideRight
                         textFormat: Text.PlainText
                     }

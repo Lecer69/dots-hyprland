@@ -53,7 +53,7 @@ PanelWindow {
                 defaultAction: () => notif.invokeAction("default")
             })
 
-            if (!NotificationState.notificationsEnabled) return
+            if (!SettingsData.s.general.notificationsEnabled) return
 
             if (SettingsData.s.osu.disableNotifications) {
                 const focusedAppId = ToplevelManager.activeToplevel?.appId ?? ""

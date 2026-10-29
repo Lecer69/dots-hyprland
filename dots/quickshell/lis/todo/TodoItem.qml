@@ -1,170 +1,166 @@
 import QtQuick
-import QtQuick.Layouts
 
+// A task: drag handle, check, its text (wrapping, so a long task can be read
+// whole), the name of its list when all tasks are shown, a star and ✕
 Rectangle {
     id: root
 
-    property real taskId: -1
-    property string text: ""
-    property bool done: false
-    property bool important: false
-    property real dragY: 0
+    required property var task
+    // Shown before the star; empty for none
+    property string listName: ""
+    property bool dragged: false
+    // The item the drag positions are given in
+    property Item dragSpace: null
 
-    signal toggleDone()
-    signal toggleImportant()
-    signal removeRequested()
-    signal dragStarted()
-    signal dragMoved(real y)
+    signal dragStarted(point p)
+    signal dragMoved(point p)
     signal dragEnded()
 
-    property bool dragging: false
+    readonly property real band: 44
 
-    width: parent ? parent.width : 0
-    height: 44
+    height: Math.max(root.band, label.y * 2 + label.height)
     radius: 8
-    color: dragging ? "#1c1c1c" : (rowHover.hovered ? "#161616" : "transparent")
-    border.color: dragging ? "#333333" : "transparent"
-    border.width: 1
-    z: dragging ? 10 : 0
+    color: root.dragged ? "#1f1f1f" : hover.hovered ? "#161616" : "transparent"
 
-    Behavior on color {
-        ColorAnimation {
-            duration: 100
-        }
+    FontMetrics {
+        id: metrics
+
+        font: label.font
     }
 
     HoverHandler {
-        id: rowHover
+        id: hover
     }
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: 8
+    // Drag handle
+    Item {
+        x: 8
+        width: 18
+        height: root.band
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 3
+
+            Repeater {
+                model: 3
+
+                Row {
+                    spacing: 3
+
+                    Rectangle { width: 3; height: 3; radius: 1.5; color: "#444444" }
+                    Rectangle { width: 3; height: 3; radius: 1.5; color: "#444444" }
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.SizeVerCursor
+            // The list scrolls otherwise, and the drag never ends
+            preventStealing: true
+            onPressed: mouse => root.dragStarted(mapToItem(root.dragSpace, mouse.x, mouse.y))
+            onPositionChanged: mouse => root.dragMoved(mapToItem(root.dragSpace, mouse.x, mouse.y))
+            onReleased: root.dragEnded()
+            onCanceled: root.dragEnded()
+        }
+    }
+
+    // Check
+    Rectangle {
+        x: 36
+        y: (root.band - height) / 2
+        width: 18
+        height: 18
+        radius: width / 2
+        color: root.task.done ? "#e6e6e6" : "transparent"
+        border.color: root.task.done ? "#e6e6e6" : "#4a4a4a"
+        border.width: 1.5
+
+        MouseArea {
+            anchors.fill: parent
+            anchors.margins: -4
+            cursorShape: Qt.PointingHandCursor
+            onClicked: TodoService.toggleDone(root.task.id)
+        }
+    }
+
+    Text {
+        id: label
+
+        x: 64
+        y: Math.round((root.band - metrics.height) / 2)
+        width: trailing.x - x - 10
+        text: root.task.text
+        textFormat: Text.PlainText
+        wrapMode: Text.Wrap
+        color: root.task.done ? "#6b6b6b" : "#e6e6e6"
+        font.pixelSize: 13
+        font.strikeout: root.task.done
+    }
+
+    Row {
+        id: trailing
+
+        anchors.right: parent.right
         anchors.rightMargin: 8
-        spacing: 10
+        height: root.band
 
-        // Drag handle
-        Item {
-            Layout.preferredWidth: 18
-            Layout.fillHeight: true
-
-            Column {
-                anchors.centerIn: parent
-                spacing: 3
-
-                Repeater {
-                    model: 3
-                    Row {
-                        spacing: 3
-                        Rectangle { width: 3; height: 3; radius: 1.5; color: "#555555" }
-                        Rectangle { width: 3; height: 3; radius: 1.5; color: "#555555" }
-                    }
-                }
-            }
-
-            MouseArea {
-                id: dragArea
-
-                anchors.fill: parent
-                cursorShape: Qt.SizeVerCursor
-                hoverEnabled: true
-                onPressed: {
-                    root.dragging = true;
-                    root.dragStarted();
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        const globalPos = mapToItem(root.parent, mouse.x, mouse.y);
-                        root.dragMoved(globalPos.y);
-                    }
-                }
-                onReleased: {
-                    root.dragging = false;
-                    root.dragEnded();
-                }
-            }
-        }
-
-        // Checkbox
-        Rectangle {
-            Layout.preferredWidth: 20
-            Layout.preferredHeight: 20
-            radius: width / 2
-            color: root.done ? "#60ff54" : "transparent"
-            border.color: root.done ? "#60ff54" : "#444444"
-            border.width: 1.5
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.toggleDone();
-                }
-            }
-        }
-
-        // Task text
         Text {
-            Layout.fillWidth: true
-            text: root.text
-            color: root.done ? "#555555" : "#dddddd"
-            font.pixelSize: 13
-            font.strikeout: root.done
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, 110)
+            rightPadding: 6
+            visible: root.listName !== ""
+            text: root.listName
             elide: Text.ElideRight
+            color: "#6b6b6b"
+            font.pixelSize: 12
         }
 
         // Star / important
-        Rectangle {
-            Layout.preferredWidth: 26
-            Layout.preferredHeight: 26
-            radius: 13
-            color: starHover.containsMouse ? "#252525" : "transparent"
+        Item {
+            width: 26
+            height: parent.height
 
             Rectangle {
                 anchors.centerIn: parent
-                width: 12
-                height: 12
+                width: 10
+                height: 10
                 radius: width / 2
-                color: root.important ? "#ffc900" : "transparent"
-                border.color: root.important ? "#ffc900" : "#666666"
+                color: root.task.important ? "#e6e6e6" : "transparent"
+                border.color: root.task.important ? "#e6e6e6" : starArea.containsMouse ? "#999999" : "#4a4a4a"
                 border.width: 1.5
             }
 
             MouseArea {
-                id: starHover
+                id: starArea
 
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.toggleImportant();
-                }
+                onClicked: TodoService.toggleImportant(root.task.id)
             }
         }
 
         // Delete
-        Rectangle {
-            Layout.preferredWidth: 26
-            Layout.preferredHeight: 26
-            radius: 13
-            color: delHover.containsMouse ? "#4e1919" : "transparent"
+        Item {
+            width: 26
+            height: parent.height
 
             Text {
                 anchors.centerIn: parent
                 text: "✕"
                 font.pixelSize: 11
-                color: delHover.containsMouse ? "#f38ba8" : "#666666"
+                color: removeArea.containsMouse ? "#dddddd" : "#666666"
             }
 
             MouseArea {
-                id: delHover
+                id: removeArea
 
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.removeRequested();
-                }
+                onClicked: TodoService.removeTask(root.task.id)
             }
         }
     }

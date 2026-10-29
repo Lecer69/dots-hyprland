@@ -62,6 +62,11 @@ Singleton {
             // Bar
             property JsonObject bar: JsonObject {
                 property string position: "top"
+                property string pillColor: "#c30f0f0f"
+                // 0 hides the border
+                property int pillBorderWidth: 1
+                property string pillBorderColor: "#26ffffff"
+                property bool pillBlur: false
                 property bool showBluetooth: true
                 property bool showGameMode: true
                 property bool showNetwork: true
@@ -70,6 +75,9 @@ Singleton {
                 property bool showColorPicker: true
                 property bool showScreenshot: true
                 property int workspaceNumbers: 10
+                // Screens that show their own number of workspaces, by
+                // screen name; the rest use workspaceNumbers
+                property var workspaceNumbersPerMonitor: ({})
                 property string workspaceStyle: "numbers"
                 property bool onlyAccessibleWorkspaces: false
                 property bool trayIconTint: true
@@ -116,6 +124,16 @@ Singleton {
                 property bool backdropOtherMonitors: false
                 property real backdropOpacity: 0.6
                 property string backdropColor: "#000000"
+                // How long the backdrop takes to fade in or out, in ms
+                property int backdropFadeDuration: 400
+            }
+
+            // Cleanup page (~/.config/hypr/hyprland/scripts/cleanup.sh)
+            property JsonObject cleanup: JsonObject {
+                // Cached versions of each package the pacman cache keeps
+                property int pacmanKeep: 2
+                // Ticked items, by cleanup.sh's item names
+                property var selected: ["pacman", "coredumps", "yay", "thumbnails", "crashes"]
             }
         }
     }

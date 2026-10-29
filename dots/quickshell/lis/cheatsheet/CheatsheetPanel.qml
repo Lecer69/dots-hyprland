@@ -7,8 +7,6 @@ Item {
 
     property real columnHeight: 600
 
-    readonly property color accentColor: "#f38ba8"
-
     implicitWidth: flow.implicitWidth
     implicitHeight: Math.min(flow.implicitHeight, root.columnHeight)
 
@@ -25,7 +23,6 @@ Item {
             delegate: CheatsheetCategory {
                 required property var modelData
                 categoryName: modelData
-                accentColor: root.accentColor
             }
         }
     }

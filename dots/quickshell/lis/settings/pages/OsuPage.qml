@@ -42,6 +42,15 @@ ScrollView {
                 onChanged: v => SettingsData.s.osu.backdropOpacity = v
             }
         }
+        SettingRow {
+            label: "Backdrop Fade"
+            description: "How long the backdrop takes to fade in and out"
+            IntSlider {
+                from: 0; to: 2000; stepSize: 50; suffix: " ms"
+                value: SettingsData.s.osu.backdropFadeDuration
+                onChanged: v => SettingsData.s.osu.backdropFadeDuration = v
+            }
+        }
 
         Item { height: 16 }
     }

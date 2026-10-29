@@ -98,13 +98,23 @@ hl.window_rule({match = {title = "^(Add Non-Steam Game)(.*)$" }, center = true})
 hl.window_rule({match = {title = "^(Add Non-Steam Game)(.*)$" }, float = true})
 
 -- Tearing
-hl.window_rule({match = {title = ".*\\.exe" }, immediate = true})
-hl.window_rule({match = {title = ".*minecraft.*" }, immediate = true})
-hl.window_rule({match = {class = "^(steam_app).*" }, immediate = true})
-hl.window_rule({match = {class = "osu!" }, immediate = true})
-hl.window_rule({match = {class = "^()$", title = "^()$" }, immediate = true })
-hl.window_rule({match = {class = "^()$", title = "^()$" }, no_follow_mouse = true })
-hl.window_rule({match = {title = ".*\\.exe" }, no_follow_mouse = true})
+hl.window_rule({match = {class = "^(osu!\\.exe)$"}, immediate = true})
+hl.window_rule({match = {class = "^(steam_app).*"}, immediate = true})
+hl.window_rule({match = {title = "(?i).*minecraft.*"}, immediate = true})
+hl.window_rule({match = {title = ".*\\.exe"}, immediate = true})
+hl.window_rule({match = {class = "^()$", title = "^()$"}, immediate = true})
+
+-- Wobble
+hl.window_rule({match = {class = "^(osu!\\.exe)$"}, no_wobble = true})
+hl.window_rule({match = {class = "^(steam_app).*"}, no_wobble = true})
+hl.window_rule({match = {title = "(?i).*minecraft.*"}, no_wobble = true})
+hl.window_rule({match = {title = ".*\\.exe"}, no_wobble = true})
+hl.window_rule({match = {class = "^()$", title = "^()$"}, no_wobble = true})
+
+-- Follow mouse
+hl.window_rule({match = {class = "^(osu!\\.exe)$"}, no_follow_mouse = true})
+hl.window_rule({match = {class = "^()$", title = "^()$"}, no_follow_mouse = true})
+hl.window_rule({match = {title = ".*\\.exe"}, no_follow_mouse = true})
 
 -- Special window
 hl.workspace_rule({ workspace = "special:special", gaps_out = 24 })
@@ -116,3 +126,13 @@ hl.layer_rule({ match = { namespace = "gtk4-layer-shell" }, no_anim = true})
 hl.layer_rule({ match = { namespace = "quickshell:polkitagent" }, no_anim = true})
 hl.layer_rule({ match = { namespace = "quickshell:osubackdrop" }, no_anim = true})
 hl.layer_rule({ match = { namespace = "quickshell:media" }, no_anim = true})
+-- The shell's right sidebar: Hyprland slides it in, with the layersIn/Out timing
+hl.layer_rule({ match = { namespace = "quickshell:sidebar" }, animation = "slide right"})
+hl.layer_rule({ match = { namespace = "quickshell:traymenu" }, no_anim = true})
+hl.layer_rule({ match = { namespace = "quickshell:launcher" }, no_anim = true})
+hl.layer_rule({ match = { namespace = "quickshell:desktop" }, no_anim = true})
+-- The region screenshot's freeze (screenshot/ScreenFreeze.qml): shown at once, or the live screen shows under it
+hl.layer_rule({ match = { namespace = "quickshell:freeze" }, no_anim = true})
+-- Blur behind the shell bar's pills. Only takes effect while the shell's
+-- "Pill Blur" setting turns blur on (it's off above, and windows opt out)
+hl.layer_rule({ match = { namespace = "quickshell:bar" }, blur = true, ignore_alpha = 0.05 })

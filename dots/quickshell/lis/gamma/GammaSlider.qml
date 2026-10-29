@@ -6,7 +6,6 @@ ColumnLayout {
 
     property string label: "Label"
     property real value: 1
-    property color accent: "#ffffff"
     readonly property real from: 0.1
     readonly property real to: 2
 
@@ -21,17 +20,15 @@ ColumnLayout {
 
         Text {
             text: root.label
-            color: "#aaaaaa"
+            color: "#e6e6e6"
             font.pixelSize: 13
             Layout.fillWidth: true
         }
 
         Text {
             text: root.value.toFixed(2)
-            color: root.accent
+            color: "#999999"
             font.pixelSize: 12
-            font.bold: true
-            font.family: "monospace"
         }
 
     }
@@ -43,17 +40,17 @@ ColumnLayout {
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            height: 4
-            radius: 2
+            height: 3
+            radius: 1.5
             color: "#2a2a2a"
         }
 
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: handle.x + handle.width / 2
-            height: 4
-            radius: 2
-            color: root.accent
+            height: 3
+            radius: 1.5
+            color: "#bbbbbb"
         }
 
         Rectangle {
@@ -63,20 +60,10 @@ ColumnLayout {
 
             anchors.verticalCenter: parent.verticalCenter
             x: position * (parent.width - width)
-            width: 16
-            height: 16
-            radius: 8
-            color: trackArea.pressed ? Qt.darker(root.accent, 1.3) : root.accent
-            border.color: "#0f0f0f"
-            border.width: 2
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 80
-                }
-
-            }
-
+            width: 12
+            height: 12
+            radius: 6
+            color: "#ffffff"
         }
 
         MouseArea {

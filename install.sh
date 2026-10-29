@@ -149,7 +149,7 @@ PACMAN_PACKAGES=(
     ttf-dejavu pavucontrol-qt ffmpeg git base base-devel systemsettings
     qt5ct qt6ct qt5-wayland kvantum fuzzel breeze breeze-icons plasma-desktop
     grim wl-clipboard gwenview slurp plasma-nm ddcutil brightnessctl eza glu
-    libqalculate cliphist gnome-system-monitor xdg-user-dirs xdotool ufw ark
+    libqalculate cliphist gnome-system-monitor xdg-user-dirs ydotool ufw ark
     gamemode matugen imagemagick reflector
 )
 
@@ -161,7 +161,6 @@ AUR_PACKAGES=(
 )
 
 OPTIONAL_PACKAGES=(
-    nwg-displays
     code
 )
 
@@ -552,6 +551,12 @@ do_systemctl() {
         info "Skipping ufw."
     fi
 
+    if confirm "Enable ydotool?"; then
+        run systemctl --user enable --now ydotool
+    else
+        info "Skipping ufw."
+    fi
+
     if confirm "Enable power-profiles-daemon.service?"; then
         run sudo systemctl enable --now power-profiles-daemon.service
     else
@@ -716,7 +721,7 @@ do_update() {
     run killall qs quickshell
     replace_dotfiles "update"
     run hyprctl reload
-    run qs -c lis
+    run nohup qs -c lis > /dev/null 2>&1 &
 
     install_custom_commands
 

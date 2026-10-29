@@ -238,12 +238,14 @@ hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("systemctl suspend"), { locked =
 hl.bind("SUPER + CTRL + SHIFT + ALT + mouse:276", hl.dsp.exec_cmd("systemctl poweroff"))
 hl.bind("SUPER + CTRL + SHIFT + ALT + mouse:275", hl.dsp.exec_cmd("systemctl reboot"))
 
---##! XWayland Stuff
-hl.bind("SHIFT + ALT + Z", hl.dsp.exec_cmd("xdotool click 1"), { repeating = true, description = "XWayland: Left Click" })
-hl.bind("SHIFT + ALT + X", hl.dsp.exec_cmd("xdotool click 3"), { repeating = true, description = "XWayland: Right Click" })
-hl.bind("SHIFT + ALT + C", hl.dsp.exec_cmd("xdotool click 2"), { repeating = true, description = "XWayland: Middle Click" })
-hl.bind("SHIFT + CTRL + W", hl.dsp.exec_cmd("xdotool click 4"), { repeating = true, description = "XWayland: Scroll Up" })
-hl.bind("SHIFT + CTRL + S", hl.dsp.exec_cmd("xdotool click 5"), { repeating = true, description = "XWayland: Scroll Down" })
+--##! Wayland Stuff
+local yd = "YDOTOOL_SOCKET=$XDG_RUNTIME_DIR/.ydotool_socket ydotool "
+
+hl.bind("SHIFT + ALT + Z", hl.dsp.exec_cmd(yd .. "click 0xC0"), { repeating = true, description = "Wayland: Left Click" })
+hl.bind("SHIFT + ALT + X", hl.dsp.exec_cmd(yd .. "click 0xC1"), { repeating = true, description = "Wayland: Right Click" })
+hl.bind("SHIFT + ALT + C", hl.dsp.exec_cmd(yd .. "click 0xC2"), { repeating = true, description = "Wayland: Middle Click" })
+hl.bind("SHIFT + CTRL + W", hl.dsp.exec_cmd(yd .. "mousemove -w -x 0 -y 1"), { repeating = true, description = "Wayland: Scroll Up" })
+hl.bind("SHIFT + CTRL + S", hl.dsp.exec_cmd(yd .. "mousemove -w -x 0 -y -1"), { repeating = true, description = "Wayland: Scroll Down" })
 
 --##! Apps
 hl.bind("SUPER + Return", hl.dsp.exec_cmd(terminal), { description = "App: Terminal" })

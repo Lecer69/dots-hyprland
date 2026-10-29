@@ -31,8 +31,8 @@ PopupWindow {
 
         anchors.fill: parent
         radius: 8
-        color: "#0f0f0f"
-        border.color: "#2a2a2a"
+        color: "#161616"
+        border.color: "#242424"
         border.width: 1
 
         opacity: root.shown ? 1 : 0
@@ -46,8 +46,8 @@ PopupWindow {
 
             anchors.centerIn: parent
             text: root.text
-            color: "#c8c8c8"
-            font.pixelSize: 11
+            color: "#e6e6e6"
+            font.pixelSize: 12
         }
     }
 }

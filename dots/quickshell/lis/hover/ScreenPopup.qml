@@ -34,7 +34,9 @@ PanelWindow {
         width: 95
         height: 32
         radius: 16
-        color: '#121212'
+        color: "#0f0f0f"
+        border.color: "#1f1f1f"
+        border.width: 1
         opacity: root.showing ? 1.0 : 0.0
 
         Behavior on opacity { NumberAnimation { duration: 150 } }
@@ -49,7 +51,7 @@ PanelWindow {
             fillMode: Image.PreserveAspectFit
 
             smooth: true
-            mipmap: true
+            sourceSize: Qt.size(16, 16)
             antialiasing: true
         }
 
@@ -58,9 +60,9 @@ PanelWindow {
             anchors.rightMargin: 18
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
-            font.pixelSize: 14
+            font.pixelSize: 13
             font.weight: Font.Medium
-            color: "#e3ffffff"
+            color: "#e6e6e6"
         }
     }
 }

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
@@ -11,28 +10,22 @@ Item {
 
     signal toggled(bool value)
 
-    width: 44
-    height: 24
+    width: 36
+    height: 20
 
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: root.checked ? "#5c8aff" : "#40ffffff"
-
-        Behavior on color { ColorAnimation { duration: 150 } }
+        color: root.checked ? "#e6e6e6" : "#2a2a2a"
 
         Rectangle {
-            id: thumb
-            width: 18; height: 18
+            width: 14; height: 14
             radius: height / 2
-            color: "white"
             anchors.verticalCenter: parent.verticalCenter
             x: root.checked ? parent.width - width - 3 : 3
+            color: root.checked ? "#0f0f0f" : "#808080"
 
-            Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-
-            layer.enabled: true
-            layer.effect: null
+            Behavior on x { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         }
     }
 

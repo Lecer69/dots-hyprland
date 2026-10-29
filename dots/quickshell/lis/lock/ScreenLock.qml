@@ -90,7 +90,11 @@ QtObject {
         blockLoading: true
         printErrors: false
         watchChanges: true
-        onFileChanged: reload()
+        // The displays panel writes it once hyprpaper shows a new wallpaper
+        onFileChanged: {
+            reload()
+            root._hyprpaperQuery.running = true
+        }
         onLoaded: root._parseHyprpaperConf()
     }
 
@@ -241,6 +245,32 @@ QtObject {
         if (audio) audio.muted = false
     }
 
+    // At boot hyprpaper is started here, once the lock covers every screen,
+    // not by Hyprland: started alongside the shell, it showed the wallpapers
+    // for as long as the shell took to load
+    property bool _wallpaperPending: false
+
+    function _startWallpaper(confirmed) {
+        if (!root._wallpaperPending) return
+        root._wallpaperPending = false
+        _wallpaperFallback.stop()
+        console.log(confirmed ? "[lock] boot lock covers the screens, starting hyprpaper"
+            : "[lock] boot lock not confirmed in 10 s, starting hyprpaper anyway")
+        Quickshell.execDetached(["sh", "-c", "pgrep -x hyprpaper >/dev/null || exec hyprpaper"])
+    }
+
+    // Should the lock never be confirmed
+    property Timer _wallpaperFallback: Timer {
+        interval: 10000
+        onTriggered: root._startWallpaper(false)
+    }
+
+    function lockAtBoot() {
+        root._wallpaperPending = true
+        _wallpaperFallback.restart()
+        root.lock()
+    }
+
     function lock() {
         if (root.isLocked || _wlLock.locked) return
         root._init()
@@ -304,6 +334,9 @@ QtObject {
     property WlSessionLock _wlLock: WlSessionLock {
         id: _wlLock
         locked: false
+
+        // Hyprland has confirmed every screen shows a lock surface
+        onSecureChanged: if (secure) root._startWallpaper(true)
 
         onLockedChanged: {
             if (!locked && root.isLocked) {

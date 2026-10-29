@@ -53,6 +53,8 @@ Item {
         implicitHeight: workspaceGrid.implicitHeight + padding * 2
         radius: root.largeWorkspaceRadius + padding
         color: WorkspaceOverviewSettings.backgroundColor
+        border.color: WorkspaceOverviewSettings.backgroundBorderColor
+        border.width: 1
 
         layer.enabled: true
         layer.effect: DropShadow {

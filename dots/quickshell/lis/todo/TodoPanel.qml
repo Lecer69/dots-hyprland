@@ -1,362 +1,531 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import qs.common
 
-Rectangle {
+// The to-do tasks, sorted into lists: the lists on the left, All tasks
+// first, and the open list's tasks on the right. A task's text wraps, so a
+// long one can be read whole. Dropping a dragged task on a list moves it
+// there, and on All tasks takes it out of its list.
+PanelFrame {
     id: root
 
-    signal closeRequested()
+    property bool shown: false
+    // The open list's id, -1 for All tasks
+    property real selectedList: -1
+    property bool deleteArmed: false
+    // While a task is dragged over the lists: the id of the one under it
+    property var dropList: null
+    // The lists' top row and the open list's title block share a height, so
+    // the lines under them line up
+    readonly property int topRowHeight: 52
 
-    radius: 14
-    color: "#0f0f0f"
-    clip: true
-    border.color: "#2a2a2a"
-    border.width: 1
+    readonly property var selected: TodoService.lists.find(l => l.id === root.selectedList) ?? null
+    readonly property real viewList: root.selected ? root.selectedList : -1
+    // The open list's tasks, starred first
+    readonly property var tasks: TodoService.listed(root.viewList)
+    readonly property int doneCount: root.tasks.filter(t => t.done).length
 
-    TodoState {
-        id: todoState
+    title: "To-do"
+    subtitle: {
+        const total = TodoService.tasks.length;
+        return total > 0 ? TodoService.tasks.filter(t => t.done).length + "/" + total : "";
     }
 
-    Rectangle {
-        id: header
-
-        width: parent.width
-        height: 52
-        color: "transparent"
-
-        Text {
-            anchors.left: parent.left
-            anchors.leftMargin: 24
-            anchors.verticalCenter: parent.verticalCenter
-            text: "To-do"
-            font.pixelSize: 15
-            font.weight: Font.DemiBold
-            color: "#dddddd"
-        }
-
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-
-            text: {
-                const total = todoState.tasks.length;
-                const done = todoState.tasks.filter(t => t.done).length;
-                return total > 0 ? (done + "/" + total) : "";
-            }
-
-            font.pixelSize: 12
-            color: "#666666"
-        }
-
-        Rectangle {
-            anchors.right: parent.right
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
-            radius: 14
-            color: closeHover.containsMouse ? "#252525" : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 12
-                color: "#888888"
-            }
-
-            MouseArea {
-                id: closeHover
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.closeRequested()
-            }
+    onShownChanged: {
+        if (!root.shown) {
+            root.leave();
+            root.deleteArmed = false;
         }
     }
 
-    Rectangle {
-        anchors.top: header.bottom
-        width: parent.width
-        height: 1
-        color: "#222222"
+    function listName(id: real): string {
+        const list = TodoService.lists.find(l => l.id === id);
+        return list ? (list.name.trim() || "Untitled list") : "";
     }
 
-    ColumnLayout {
-        id: content
+    // Drops the open list if it was left without a name or tasks
+    function leave(): void {
+        const list = root.selected;
+        if (list && list.name.trim() === "" && !TodoService.tasks.some(t => t.list === list.id))
+            TodoService.removeList(list.id);
+    }
 
-        anchors.top: header.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.margins: 24
-        anchors.topMargin: 20
-        spacing: 14
+    function select(id: real): void {
+        if (id === root.selectedList)
+            return;
 
-        // Add task input
-        Rectangle {
-            Layout.fillWidth: true
-            height: 40
-            radius: 8
-            color: "#1a1a1a"
-            border.color: input.activeFocus ? "#444444" : "#2a2a2a"
-            border.width: 1
+        root.leave();
+        root.selectedList = id;
+        root.deleteArmed = false;
+        nameInput.text = root.selected?.name ?? "All tasks";
+        flick.contentY = 0;
+    }
 
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: 100
-                }
-            }
+    function newList(): void {
+        const id = TodoService.addList("");
+        if (id === -1)
+            return;
+
+        root.select(id);
+        nameInput.forceActiveFocus();
+    }
+
+    function addTask(): void {
+        if (!TodoService.addTask(input.text, root.viewList))
+            return;
+
+        input.text = "";
+        // New tasks go last, like `todo add`, so bring them into view
+        Qt.callLater(() => {
+            column.forceLayout();
+            flick.contentY = Math.max(0, flick.contentHeight - flick.height);
+        });
+    }
+
+    // The first click arms it, the second deletes the list and its tasks
+    function deleteList(): void {
+        if (!root.deleteArmed) {
+            root.deleteArmed = true;
+            disarm.restart();
+            return;
+        }
+        TodoService.removeList(root.selectedList);
+        root.select(-1);
+    }
+
+    // The id of the list under p (in the panel), null for none
+    function listAt(p: point): var {
+        const q = lists.mapFromItem(root, p.x, p.y);
+        if (q.x < 0 || q.y < 0 || q.x > lists.width || q.y > lists.height)
+            return null;
+
+        const row = lists.itemAt(q.x + lists.contentX, q.y + lists.contentY);
+        return row ? row.modelData.id : null;
+    }
+
+    // A task moves among the starred ones, or among the rest
+    function dragStart(task: var, p: point): void {
+        const shown = root.tasks;
+        const starred = shown.filter(t => t.important).length;
+        reorder.start(shown.map(t => t.id), task.id, column.mapFromItem(root, p.x, p.y).y,
+            task.important ? 0 : starred, task.important ? starred - 1 : shown.length - 1);
+    }
+
+    // Over the lists, the task stays where it is in its own
+    function dragMove(p: point): void {
+        root.dropList = root.listAt(p);
+        if (root.dropList === null)
+            reorder.move(column.mapFromItem(root, p.x, p.y).y);
+    }
+
+    function dragEnd(): void {
+        const id = reorder.key;
+        const target = root.dropList;
+        root.dropList = null;
+        reorder.end();
+        if (target !== null && target !== root.viewList)
+            TodoService.setList(id, target);
+    }
+
+    Timer {
+        id: disarm
+
+        interval: 3000
+        onTriggered: root.deleteArmed = false
+    }
+
+    Shortcut {
+        sequence: "Ctrl+N"
+        onActivated: root.newList()
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        anchors.topMargin: 8
+        anchors.leftMargin: 24
+        anchors.rightMargin: 24
+        anchors.bottomMargin: 24
+        spacing: 24
+
+        // The lists
+        ColumnLayout {
+            Layout.preferredWidth: 240
+            Layout.fillWidth: false
+            Layout.fillHeight: true
+            spacing: 12
 
             RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 8
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.topRowHeight
                 spacing: 8
 
-                TextInput {
-                    id: input
-
+                Text {
                     Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    color: "#dddddd"
-                    font.pixelSize: 13
-                    clip: true
-                    selectByMouse: true
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Add a task…"
-                        color: "#555555"
-                        font.pixelSize: 13
-                        visible: input.text.length === 0
-                    }
-
-                    Keys.onReturnPressed: {
-                        todoState.addTask(input.text);
-                        input.text = "";
-                    }
-                    Keys.onEnterPressed: {
-                        todoState.addTask(input.text);
-                        input.text = "";
-                    }
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredHeight: 32
+                    leftPadding: 12
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Lists"
+                    color: "#6b6b6b"
+                    font.pixelSize: 12
+                    font.weight: Font.Medium
                 }
 
-                Rectangle {
-                    Layout.preferredWidth: 26
-                    Layout.preferredHeight: 26
-                    radius: 13
-                    color: addHover.containsMouse ? "#252525" : "transparent"
+                PanelButton {
+                    Layout.alignment: Qt.AlignTop
+                    implicitHeight: 32
+                    text: "New list"
+                    onClicked: root.newList()
+                }
+            }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "+"
-                        font.pixelSize: 16
-                        font.bold: true
-                        color: "#a6e3a1"
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: "#262626"
+            }
+
+            ListView {
+                id: lists
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                spacing: 2
+                boundsBehavior: Flickable.StopAtBounds
+
+                model: ScriptModel {
+                    values: [{ id: -1, name: "" }].concat(TodoService.lists)
+                    objectProp: "id"
+                }
+
+                delegate: Rectangle {
+                    id: row
+
+                    required property var modelData
+                    readonly property var tasks: TodoService.listed(row.modelData.id)
+                    readonly property int done: row.tasks.filter(t => t.done).length
+                    readonly property bool isSelected: row.modelData.id === root.viewList
+                    readonly property bool isDropTarget: root.dropList === row.modelData.id && !row.isSelected
+
+                    width: ListView.view.width
+                    height: 58
+                    radius: 8
+                    color: row.isDropTarget ? "#262626" : row.isSelected ? "#1f1f1f" : rowArea.containsMouse ? "#161616" : "transparent"
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 3
+
+                        Item {
+                            Layout.fillHeight: true
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: row.modelData.id === -1 ? "All tasks" : row.modelData.name.trim() || "Untitled list"
+                                textFormat: Text.PlainText
+                                elide: Text.ElideRight
+                                color: row.modelData.id === -1 || row.modelData.name.trim() ? "#e6e6e6" : "#808080"
+                                font.pixelSize: 13
+                                font.weight: Font.Medium
+                            }
+
+                            Text {
+                                visible: row.tasks.length > 0
+                                text: row.done + "/" + row.tasks.length
+                                color: "#6b6b6b"
+                                font.pixelSize: 12
+                            }
+                        }
+
+                        // The next task to do
+                        Text {
+                            Layout.fillWidth: true
+                            text: row.tasks.find(t => !t.done)?.text ?? (row.tasks.length > 0 ? "All done" : "No tasks")
+                            textFormat: Text.PlainText
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            color: "#6b6b6b"
+                            font.pixelSize: 12
+                        }
+
+                        Item {
+                            Layout.fillHeight: true
+                        }
                     }
 
                     MouseArea {
-                        id: addHover
+                        id: rowArea
 
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            todoState.addTask(input.text);
-                            input.text = "";
-                        }
+                        onClicked: root.select(row.modelData.id)
                     }
                 }
             }
         }
 
-        // Task list
-        Item {
+        // As in the notes panel, along the lists and the tasks
+        Rectangle {
+            Layout.preferredWidth: 1
+            Layout.fillHeight: true
+            Layout.topMargin: root.topRowHeight + 25
+            color: "#262626"
+        }
+
+        // The open list
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            spacing: 12
 
-            Flickable {
-                id: flick
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: root.topRowHeight
+                spacing: 6
 
-                anchors.fill: parent
-                contentWidth: width
-                contentHeight: list.height
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                pressDelay: 0
-                flickableDirection: Flickable.VerticalFlick
+                TextInput {
+                    id: nameInput
 
-                Item {
-                    id: list
-
-                    readonly property real rowHeight: 44
-                    readonly property real rowSpacing: 4
-                    readonly property real rowStep: rowHeight + rowSpacing
-
-                    property var orderIds: []
-                    property bool dragActive: false
-                    property real draggedId: -1
-                    property int draggedFromIndex: -1
-                    property int draggedGroupStart: 0
-                    property int draggedGroupEnd: 0
-
-                    function syncOrderFromState() {
-                        if (list.dragActive) {
-                            return;
-                        }
-                        list.orderIds = todoState.sorted().map(t => t.id);
+                    Layout.fillWidth: true
+                    // All tasks can't be renamed
+                    readOnly: root.selected === null
+                    activeFocusOnPress: !readOnly
+                    text: "All tasks"
+                    color: "#ffffff"
+                    selectionColor: "#333333"
+                    selectedTextColor: "#ffffff"
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                    clip: true
+                    selectByMouse: !readOnly
+                    onTextEdited: {
+                        if (root.selected)
+                            TodoService.renameList(root.selectedList, text);
                     }
 
-                    Component.onCompleted: syncOrderFromState()
+                    Keys.onTabPressed: input.forceActiveFocus()
+                    Keys.onReturnPressed: input.forceActiveFocus()
+                    Keys.onEnterPressed: input.forceActiveFocus()
 
-                    Connections {
-                        target: todoState
-                        function onTasksChanged() {
-                            list.syncOrderFromState();
+                    Text {
+                        visible: nameInput.text.length === 0
+                        text: "List name"
+                        color: "#4a4a4a"
+                        font: nameInput.font
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.tasks.length === 0 ? "No tasks" : root.doneCount + " of " + root.tasks.length + " done"
+                        elide: Text.ElideRight
+                        color: "#6b6b6b"
+                        font.pixelSize: 12
+                    }
+
+                    Text {
+                        visible: root.doneCount > 0
+                        text: "Clear completed"
+                        color: clearArea.containsMouse ? "#dddddd" : "#666666"
+                        font.pixelSize: 12
+
+                        MouseArea {
+                            id: clearArea
+
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: TodoService.clearDone(root.viewList)
                         }
                     }
 
-                    width: flick.width
-                    height: Math.max(0, list.orderIds.length * list.rowStep - list.rowSpacing)
+                    Text {
+                        visible: root.selected !== null
+                        text: {
+                            if (!root.deleteArmed)
+                                return "Delete list";
+                            const count = root.tasks.length;
+                            return count === 0 ? "Click again to delete"
+                                : "Click again to delete it and " + count + (count === 1 ? " task" : " tasks");
+                        }
+                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse ? "#dddddd" : "#666666"
+                        font.pixelSize: 12
 
-                    Repeater {
-                        id: repeater
+                        MouseArea {
+                            id: deleteArea
 
-                        model: todoState.tasks
-
-                        delegate: TodoItem {
-                            id: delegateItem
-
-                            required property var modelData
-
-                            readonly property int slot: list.orderIds.indexOf(modelData.id)
-                            readonly property bool isDragged: list.dragActive && modelData.id === list.draggedId
-
-                            width: list.width
-                            visible: delegateItem.slot !== -1
-                            y: delegateItem.isDragged ? delegateItem.dragY : delegateItem.slot * list.rowStep
-
-                            Behavior on y {
-                                enabled: !delegateItem.isDragged
-                                NumberAnimation {
-                                    duration: 150
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-
-                            z: delegateItem.isDragged ? 10 : 0
-
-                            taskId: modelData.id
-                            text: modelData.text
-                            done: modelData.done
-                            important: modelData.important
-
-                            onToggleDone: todoState.toggleDone(delegateItem.taskId)
-                            onToggleImportant: todoState.toggleImportant(delegateItem.taskId)
-                            onRemoveRequested: todoState.removeTask(delegateItem.taskId)
-
-                            onDragStarted: {
-                                const startIndex = list.orderIds.indexOf(delegateItem.taskId);
-                                if (startIndex === -1) {
-                                    return;
-                                }
-                                list.dragActive = true;
-                                list.draggedId = delegateItem.taskId;
-                                list.draggedFromIndex = startIndex;
-
-                                let groupStart = startIndex;
-                                let groupEnd = startIndex;
-                                const sameGroup = (id) => {
-                                    const t = todoState.tasks.find(x => x.id === id);
-                                    return t && t.important === delegateItem.important;
-                                };
-                                while (groupStart > 0 && sameGroup(list.orderIds[groupStart - 1])) {
-                                    groupStart--;
-                                }
-                                while (groupEnd < list.orderIds.length - 1 && sameGroup(list.orderIds[groupEnd + 1])) {
-                                    groupEnd++;
-                                }
-                                list.draggedGroupStart = groupStart;
-                                list.draggedGroupEnd = groupEnd;
-
-                                delegateItem.dragY = startIndex * list.rowStep;
-                            }
-                            onDragMoved: (y) => {
-                                if (!delegateItem.isDragged) {
-                                    return;
-                                }
-                                delegateItem.dragY = y - list.rowHeight / 2;
-
-                                let targetIndex = Math.round(delegateItem.dragY / list.rowStep);
-                                targetIndex = Math.max(list.draggedGroupStart, Math.min(targetIndex, list.draggedGroupEnd));
-
-                                const currentIndex = list.orderIds.indexOf(delegateItem.taskId);
-                                if (targetIndex !== currentIndex) {
-                                    const newOrder = list.orderIds.slice();
-                                    const [moved] = newOrder.splice(currentIndex, 1);
-                                    newOrder.splice(targetIndex, 0, moved);
-                                    list.orderIds = newOrder;
-                                }
-                            }
-                            onDragEnded: {
-                                if (!delegateItem.isDragged) {
-                                    return;
-                                }
-                                delegateItem.dragY = delegateItem.slot * list.rowStep;
-
-                                const finalOrder = list.orderIds.slice();
-                                list.dragActive = false;
-                                list.draggedId = -1;
-                                list.draggedFromIndex = -1;
-
-                                todoState.applyOrder(finalOrder);
-                            }
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.deleteList()
                         }
                     }
                 }
             }
 
-            // Empty state
-            Text {
-                anchors.centerIn: parent
-                visible: todoState.tasks.length === 0
-                text: "No tasks yet"
-                color: "#444444"
-                font.pixelSize: 13
-            }
-        }
-
-        // Clear done button
-        Rectangle {
-            Layout.fillWidth: true
-            height: 38
-            radius: 8
-            visible: todoState.tasks.some(t => t.done)
-            color: clearHover.containsMouse ? "#252525" : "#1a1a1a"
-            border.color: "#2a2a2a"
-            border.width: 1
-
-            Text {
-                anchors.centerIn: parent
-                text: "Clear completed"
-                color: "#888888"
-                font.pixelSize: 13
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: "#262626"
             }
 
-            MouseArea {
-                id: clearHover
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 36
+                radius: 8
+                color: "#161616"
 
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: todoState.clearDone()
+                TextInput {
+                    id: input
+
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 36
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: "#e6e6e6"
+                    selectionColor: "#333333"
+                    selectedTextColor: "#ffffff"
+                    font.pixelSize: 13
+                    clip: true
+                    selectByMouse: true
+
+                    Keys.onReturnPressed: root.addTask()
+                    Keys.onEnterPressed: root.addTask()
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        visible: input.text.length === 0
+                        text: root.selected ? "Add a task to " + root.listName(root.selectedList) + "…" : "Add a task…"
+                        elide: Text.ElideRight
+                        color: "#6b6b6b"
+                        font.pixelSize: 13
+                    }
+                }
+
+                Text {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "+"
+                    font.pixelSize: 16
+                    color: addArea.containsMouse ? "#ffffff" : "#808080"
+
+                    MouseArea {
+                        id: addArea
+
+                        anchors.fill: parent
+                        anchors.margins: -6
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.addTask()
+                    }
+                }
             }
 
-            Behavior on color {
-                ColorAnimation {
-                    duration: 100
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Flickable {
+                    id: flick
+
+                    anchors.fill: parent
+                    contentWidth: width
+                    contentHeight: column.height
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    flickableDirection: Flickable.VerticalFlick
+
+                    Column {
+                        id: column
+
+                        width: flick.width
+                        spacing: 4
+
+                        // Rows making way for a dragged one, and for tasks
+                        // being added, moved or deleted
+                        move: Transition {
+                            NumberAnimation { properties: "y"; duration: 150; easing.type: Easing.OutCubic }
+                        }
+
+                        Repeater {
+                            id: repeater
+
+                            // Keyed, so a task keeps its row through every
+                            // change, and its row moves instead of being
+                            // made again
+                            model: ScriptModel {
+                                values: reorder.arrange(root.tasks)
+                                objectProp: "id"
+                            }
+
+                            delegate: Item {
+                                id: wrap
+
+                                required property var modelData
+
+                                readonly property bool isDragged: reorder.key === wrap.modelData.id
+
+                                width: column.width
+                                height: item.height
+                                z: wrap.isDragged ? 10 : 0
+
+                                TodoItem {
+                                    id: item
+
+                                    width: parent.width
+                                    // Follows the mouse while dragged,
+                                    // wherever the Column has put the row
+                                    y: wrap.isDragged ? reorder.top - wrap.y : 0
+                                    task: wrap.modelData
+                                    listName: root.viewList === -1 ? root.listName(wrap.modelData.list) : ""
+                                    dragged: wrap.isDragged
+                                    dragSpace: root
+
+                                    onDragStarted: p => root.dragStart(wrap.modelData, p)
+                                    onDragMoved: p => root.dragMove(p)
+                                    onDragEnded: root.dragEnd()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    visible: root.tasks.length === 0
+                    text: root.selected ? "No tasks in this list" : "No tasks yet"
+                    color: "#6b6b6b"
+                    font.pixelSize: 13
                 }
             }
         }
+    }
+
+    Reorder {
+        id: reorder
+
+        column: column
+        repeater: repeater
+        onDropped: ids => TodoService.applyOrder(ids)
     }
 }

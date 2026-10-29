@@ -22,13 +22,24 @@ Rectangle {
         return query
     }
 
+    // Set when an entry is picked: the card then swells and fades, as if
+    // opening into the app, instead of folding back up
+    property bool launching: false
+
     onIsOpenChanged: {
-        if (isOpen) {
-            query = initialQuery
-            searchBar.setQuery(initialQuery)
-        } else {
-            query = ""
-        }
+        if (!isOpen) return
+        launching = false
+        resultsList.chosen = false
+        query = initialQuery
+        searchBar.setQuery(initialQuery)
+    }
+
+    // Emptied only once the card has faded out, so it closes as it looked
+    onOpacityChanged: {
+        if (isOpen || opacity > 0) return
+        query = ""
+        launching = false
+        resultsList.chosen = false
     }
 
     // After the results have updated
@@ -156,8 +167,27 @@ Rectangle {
 
     width: 520
     height: col.implicitHeight + 16
-    color: "#c30f0f0f"
-    radius: 28
+    color: "#0f0f0f"
+    radius: 12
+    border.color: "#1f1f1f"
+    border.width: 1
+
+    // Drops in on opening, and fades back out before the window unmaps
+    opacity: isOpen ? 1 : 0
+    scale: isOpen ? 1 : launching ? 1.04 : 0.95
+    transformOrigin: launching ? Item.Center : Item.Top
+    transform: Translate {
+        y: card.isOpen || card.launching ? 0 : -12
+        Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+    }
+    // A launch holds on a moment longer, so the zooming icon can be seen
+    Behavior on opacity {
+        NumberAnimation {
+            duration: card.launching ? 320 : 180
+            easing.type: card.launching ? Easing.InQuad : Easing.OutCubic
+        }
+    }
+    Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
 
     ColumnLayout {
         id: col
@@ -190,7 +220,10 @@ Rectangle {
             results: card.results
             isClipboard: card.isClipboard
             isEmoji: card.isEmoji
-            onActivated: card.closeRequested()
+            onActivated: {
+                card.launching = true
+                card.closeRequested()
+            }
         }
     }
 }

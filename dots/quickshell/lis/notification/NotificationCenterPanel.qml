@@ -6,18 +6,17 @@ Rectangle {
 
     signal closeRequested()
 
-    radius: 14
+    radius: 12
     color: "#0f0f0f"
     clip: true
-    border.color: "#2a2a2a"
+    border.color: "#1f1f1f"
     border.width: 1
 
-    Rectangle {
+    Item {
         id: header
 
         width: parent.width
-        height: 52
-        color: "transparent"
+        height: 56
 
         Text {
             anchors.left: parent.left
@@ -26,41 +25,27 @@ Rectangle {
             text: "Notifications"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#dddddd"
+            color: "#ffffff"
         }
 
-        Rectangle {
+        Text {
             anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.rightMargin: 24
             anchors.verticalCenter: parent.verticalCenter
-            width: 28
-            height: 28
-            radius: 14
-            color: closeHover.containsMouse ? "#252525" : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                font.pixelSize: 12
-                color: "#888888"
-            }
+            text: "✕"
+            font.pixelSize: 12
+            color: closeHover.containsMouse ? "#dddddd" : "#666666"
 
             MouseArea {
                 id: closeHover
 
                 anchors.fill: parent
+                anchors.margins: -6
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.closeRequested()
             }
         }
-    }
-
-    Rectangle {
-        anchors.top: header.bottom
-        width: parent.width
-        height: 1
-        color: "#222222"
     }
 
     ColumnLayout {
@@ -70,8 +55,8 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 20
-        anchors.topMargin: 16
+        anchors.margins: 24
+        anchors.topMargin: 8
         spacing: 12
 
         Item {
@@ -82,7 +67,7 @@ Rectangle {
                 id: historyList
 
                 anchors.fill: parent
-                spacing: 8
+                spacing: 4
                 clip: true
                 model: NotificationHistory.model
                 visible: count > 0
@@ -97,26 +82,28 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: "No notifications"
-                color: "#666666"
+                color: "#6b6b6b"
                 font.pixelSize: 13
                 visible: historyList.count === 0
             }
         }
 
         Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 38
-            radius: 8
-            color: clearHover.containsMouse ? "#252525" : "#1a1a1a"
-            border.color: "#2a2a2a"
-            border.width: 1
+            Layout.alignment: Qt.AlignRight
+            Layout.preferredWidth: clearLabel.implicitWidth + 24
+            Layout.preferredHeight: 28
+            radius: 6
+            color: clearHover.pressed ? "#333333" : clearHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
             visible: historyList.count > 0
 
             Text {
+                id: clearLabel
+
                 anchors.centerIn: parent
                 text: "Clear all"
-                color: "#888888"
-                font.pixelSize: 13
+                color: "#e6e6e6"
+                font.pixelSize: 12
+                font.weight: Font.Medium
             }
 
             MouseArea {
@@ -126,12 +113,6 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: NotificationHistory.clear()
-            }
-
-            Behavior on color {
-                ColorAnimation {
-                    duration: 100
-                }
             }
         }
     }

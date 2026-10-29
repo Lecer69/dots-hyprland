@@ -15,11 +15,11 @@ Item {
     readonly property real cx: sz * 0.5
     readonly property real r: sz * 0.5 - 6
 
+    // Only a critical level gets a colour
     function arcColor() {
-        if (root.charging) return "#a6e3a1"
-        if (root.percent <= 10) return "#f38ba8"
-        if (root.percent <= 30) return "#fab387"
-        return "#89b4fa"
+        if (root.charging) return "#e6e6e6"
+        if (root.percent <= 10) return "#e06c6c"
+        return "#bbbbbb"
     }
 
     property real animatedSweep: percent * 3.6
@@ -45,7 +45,7 @@ Item {
 
         ShapePath {
             strokeColor: "#2a2a2a"
-            strokeWidth: 6
+            strokeWidth: 4
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
             PathAngleArc {
@@ -60,7 +60,7 @@ Item {
 
         ShapePath {
             strokeColor: root.arcColor()
-            strokeWidth: 6
+            strokeWidth: 4
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
             PathAngleArc {
@@ -81,10 +81,9 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.available ? root.percent + "%" : "--"
-            font.pixelSize: 22
+            font.pixelSize: 20
             font.weight: Font.DemiBold
-            font.family: "monospace"
-            color: "#dddddd"
+            color: "#e6e6e6"
         }
 
         Rectangle {

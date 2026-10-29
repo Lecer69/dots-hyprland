@@ -100,12 +100,17 @@ Singleton {
     function guessIcon(str) {
         if (!str || str.length == 0) return "image-missing";
 
-        // hardcoded fixes
-        if (str === "v2rayN" || str === "v2rayN-bin" || str === "xray")
-            return DesktopEntries.byId("v2rayN-bin").icon
+        // hardcoded fixes, when those apps' entries are installed (and
+        // loaded); otherwise the guesses below take over
+        if (str === "v2rayN" || str === "v2rayN-bin" || str === "xray") {
+            const icon = DesktopEntries.byId("v2rayN-bin")?.icon
+            if (icon) return icon
+        }
 
-        if (str?.toLowerCase().includes("osu"))
-            return DesktopEntries.byId("osu-lazer").icon
+        if (str?.toLowerCase().includes("osu")) {
+            const icon = DesktopEntries.byId("osu-lazer")?.icon
+            if (icon) return icon
+        }
 
         if (str === "AppRun") {
             for (const id of ["Navicat.Premium.18", "Navicat.Premium.16"]) {
