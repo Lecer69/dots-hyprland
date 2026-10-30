@@ -6,9 +6,7 @@ My personal Hyprland dotfiles using quickshell. (fast and lightweight)
   <img src="preview/screenshot.png" width="100%" />
 </p>
 
-<p align="center">
-  <a href="preview/video.mp4"><b>▶ Watch the preview video</b></a>
-</p>
+https://github.com/user-attachments/assets/e4b28459-381c-448e-9042-47d1eca1bd22
 
 > ## 🔴 THIS ONLY WORKS ON ARCH BASED DISTROS 🔴
 > ### This setup is built exclusively for **Arch Linux AND Arch-based distros** and will **NOT** work on any other distribution.
