@@ -127,7 +127,7 @@ Row {
         const desc = root.effectiveDescription(bind)
         let text = desc
 
-        // Strip category prefix (e.g. "Window: ")
+        // Strip the "Window: " style prefix
         if (cat && cat.length > 0) {
             const re = new RegExp(
                 "^\\s*" + cat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*:\\s*"
@@ -145,7 +145,6 @@ Row {
     visible: repeater.model.length > 0
     spacing: 12
 
-    // Line down the side of the section
     Rectangle {
         width: 1
         height: section.height
@@ -187,7 +186,6 @@ Row {
         }
     }
 
-    // Components
     component KeyCap: Rectangle {
         id: keyCap
         property string label: ""

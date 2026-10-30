@@ -8,9 +8,9 @@ import qs.tools
 PanelWindow {
     id: root
 
-    // Which screen side this strip sits on for horizontal bars
+    // Screen side, for horizontal bars
     property bool preferredRight: false
-    // Which end of the bar edge this strip sits on for vertical bars
+    // Edge end, for vertical bars
     property bool bottomEnd: false
 
     readonly property string barPosition: SettingsData.s.bar.position
@@ -27,7 +27,7 @@ PanelWindow {
     color: "transparent"
     exclusiveZone: 0
 
-    // Stick out of the screen edge so only a thin sliver is hoverable
+    // Sticks out of the screen so only a sliver is hoverable
     WlrLayershell.margins.top: anchorTop && !verticalBar ? -33 : 0
     WlrLayershell.margins.bottom: anchorBottom && !verticalBar ? -33 : 0
     WlrLayershell.margins.left: anchorLeft && verticalBar ? -33 : 0
@@ -43,10 +43,10 @@ PanelWindow {
     signal clicked()
 
     property bool hovered: false
-    // Wheel travel not yet turned into a step (120 = one mouse notch)
+    // Wheel travel not yet a step (120 = one notch)
     property int wheelAccum: 0
     property var hyprMonitor: Hyprland.monitorFor(root.screen)
-    // The workspace's hasFullscreen counts maximized windows too
+    // hasFullscreen counts maximized windows too
     property bool fullscreen: HyprlandData.hasFullscreen(hyprMonitor?.activeWorkspace?.id ?? -1)
 
     Rectangle {
@@ -55,7 +55,6 @@ PanelWindow {
         width: root.verticalBar ? 30 : 4
         height: root.verticalBar ? 4 : 30
 
-        // Horizontal bars: hug the top/bottom edge. Vertical bars: hug the left/right edge
         x: root.verticalBar
             ? (root.anchorLeft ? 8 : root.width - width - 8)
             : (root.anchorRight ? root.width - width - 3.5 : 3.5)
@@ -71,7 +70,7 @@ PanelWindow {
 
         Behavior on opacity { NumberAnimation { duration: 180 } }
 
-        // Horizontal bars: fill grows bottom-up. Vertical bars: left-to-right
+        // Fills bottom-up, or left-to-right on vertical bars
         Rectangle {
             anchors.bottom: root.verticalBar ? undefined : parent.bottom
             anchors.left: root.verticalBar ? parent.left : undefined
@@ -92,8 +91,7 @@ PanelWindow {
         onClicked: if (!root.fullscreen) root.clicked()
         onWheel: wh => {
             if (root.fullscreen) return
-            // Touchpads send many tiny deltas, wrapped in zero-delta ScrollBegin/End
-            // events, so step per notch's worth of travel rather than per event
+            // Touchpads send many tiny deltas, so step per notch's worth of travel
             if (wh.phase === Qt.ScrollEnd) {
                 root.wheelAccum = 0
                 return

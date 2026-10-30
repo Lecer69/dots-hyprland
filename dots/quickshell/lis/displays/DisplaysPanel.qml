@@ -11,29 +11,25 @@ PanelFrame {
 
     property bool shown: false
 
-    // Editable copy of the monitors, and the state Hyprland is using
+    // Editable copy of the monitors, and what Hyprland is using
     property var monitors: []
     property string appliedState: ""
     property int selected: 0
 
-    // After Apply: keep the new settings, or they're reverted when the
-    // countdown runs out
+    // After Apply: reverted unless kept before the countdown ends
     property bool confirming: false
     property int countdown: 0
     property string backupLua: ""
     property string backupConf: ""
 
-    // Monitor name -> the image hyprpaper shows on it, and -> the monitor's
-    // wallpaper block in hyprpaper.conf ({ monitor, path, fit_mode, ... })
+    // Monitor name -> shown image, and -> its hyprpaper.conf block
     property var wallpapers: ({})
     property var wallpaperBlocks: ({})
     property string wallpaperError: ""
-    // The monitor whose wallpaper is being picked. The panel is hidden
-    // meanwhile, so the file chooser isn't under it
+    // The panel hides meanwhile, so the file chooser isn't under it
     property string pickingFor: ""
     readonly property bool picking: pickingFor !== ""
-    // Picked images are copied here, so moving the original doesn't take the
-    // wallpaper away
+    // Picked images are copied here, so moving the original is safe
     readonly property string wallpaperDir: Quickshell.env("HOME") + "/.config/lis/wallpapers"
 
     readonly property bool changed: appliedState !== "" && JSON.stringify(monitors) !== appliedState
@@ -57,7 +53,6 @@ PanelFrame {
         }
         const monitors = list.map(m => {
             const modes = m.availableModes.map(s => s.replace("Hz", ""))
-            // The listed mode string matching the current mode
             const mode = modes.find(s => {
                 const [size, rate] = s.split("@")
                 return size === m.width + "x" + m.height && Math.abs(Number(rate) - m.refreshRate) < 0.05
@@ -81,7 +76,7 @@ PanelFrame {
         if (root.selected >= monitors.length) root.selected = 0
     }
 
-    // Size on the desktop: the mode divided by the scale, turned by rotation
+    // The mode divided by the scale, turned by rotation
     function logicalSize(m: var): var {
         const size = m.mode.split("@")[0].split("x").map(Number)
         let w = size[0] / m.scale
@@ -96,8 +91,7 @@ PanelFrame {
         root.monitors = copy
     }
 
-    // Moves monitor i to (x, y) snapped to the others' edges, then shifts
-    // everything so the layout starts at 0,0
+    // Snaps to the others' edges, then shifts the layout to start at 0,0
     function place(i: int, x: real, y: real): void {
         const me = logicalSize(root.monitors[i])
         let bestX = x
@@ -136,7 +130,7 @@ PanelFrame {
         return m.modes.filter(s => s.startsWith(size + "@")).map(s => s.split("@")[1]).sort((a, b) => Number(b) - Number(a))
     }
 
-    // Same format nwg-displays writes, identifying monitors by description
+    // nwg-displays' format: monitors by description
     function luaConfig(): string {
         const blocks = root.monitors.map(m => {
             const props = ['    output = "desc:' + m.description.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"']
@@ -178,7 +172,7 @@ PanelFrame {
         return path === "" ? "" : "file://" + path.split("/").map(encodeURIComponent).join("/")
     }
 
-    // The picked file's name, without the prefix its copy got
+    // Without the prefix its copy got
     function wallpaperName(path: string): string {
         const file = path.split("/").pop()
         return path.startsWith(root.wallpaperDir + "/") ? file.replace(/^[^.]*\.\d+\./, "") : file
@@ -212,8 +206,7 @@ PanelFrame {
         return map
     }
 
-    // hyprpaper.conf with the monitor's block pointing at path, the rest left
-    // as it is. A monitor without a block gets one at the end
+    // The monitor's block pointing at path; a missing block is added at the end
     function withWallpaper(conf: string, monitor: string, path: string): string {
         const lines = conf === "" ? [] : conf.replace(/\n$/, "").split("\n")
         let start = -1
@@ -252,7 +245,7 @@ PanelFrame {
     }
 
     function setWallpaper(monitor: string, source: string): void {
-        // hyprctl takes "monitor,path,fit", so the copy's name has no commas
+        // hyprctl takes "monitor,path,fit", so no commas in the name
         const name = source.split("/").pop().replace(/[,\n]/g, "_")
         const dot = name.lastIndexOf(".")
         const short = dot > 0 ? name.slice(0, dot).slice(0, 60) + name.slice(dot).slice(0, 8) : name.slice(0, 60)
@@ -265,7 +258,7 @@ PanelFrame {
         setter.running = true
     }
 
-    // Once hyprpaper shows the copy: so it shows it after a restart too
+    // Once hyprpaper shows it, so it survives a restart
     function saveWallpaper(monitor: string, path: string): void {
         root.wallpapers = Object.assign({}, root.wallpapers, { [monitor]: path })
         hyprpaperConf.readable = false
@@ -343,8 +336,7 @@ PanelFrame {
     FileView {
         id: hyprpaperConf
 
-        // Set by each read: whether the text can be rewritten. A missing file
-        // counts as empty
+        // Whether the text can be rewritten; a missing file counts as empty
         property bool readable: false
         property bool missing: false
 
@@ -364,7 +356,7 @@ PanelFrame {
         }
     }
 
-    // Prints the path picked in the portal's file chooser; 1 is cancelled
+    // Prints the picked path; exit 1 is cancelled
     Process {
         id: picker
 
@@ -390,9 +382,7 @@ PanelFrame {
         }
     }
 
-    // Copies the image, has hyprpaper show the copy, then drops the
-    // monitor's older copies. hyprpaper takes any file, and draws nothing
-    // for one that isn't an image
+    // Copy, show it, then drop the older copies; hyprpaper takes non-images too
     Process {
         id: setter
 
@@ -452,7 +442,7 @@ done
         }
     }
 
-    // Read the monitors back once Hyprland has applied the old config
+    // Once Hyprland has applied the old config
     Timer {
         id: reloadTimer
 
@@ -470,8 +460,7 @@ done
         anchors.bottomMargin: 24
         spacing: 16
 
-        // Arrangement: drag a monitor to move it. On a screen too short for
-        // the whole panel, this gives up height so the buttons stay visible
+        // Drag a monitor to move it; gives up height on short screens
         Rectangle {
             id: canvas
 
@@ -523,8 +512,7 @@ done
                     color: tile.isSelected ? "#262626" : "#1c1c1c"
                     z: tileArea.drag.active ? 1 : 0
 
-                    // The monitor's wallpaper, cropped as hyprpaper's cover
-                    // fit does, and dimmed so the name stays readable
+                    // Cropped like hyprpaper's cover fit, dimmed so the name reads
                     Image {
                         id: tileWallpaper
 
@@ -556,7 +544,6 @@ done
                         opacity: tile.isSelected ? 0.5 : 0.3
                     }
 
-                    // Over the wallpaper
                     Rectangle {
                         anchors.fill: parent
                         radius: tile.radius
@@ -604,7 +591,7 @@ done
             }
         }
 
-        // Monitors that are turned off can't be dragged, so they're picked here
+        // Turned-off monitors can't be dragged, so they're picked here
         Row {
             visible: root.monitors.length > root.enabledCount
             spacing: 4
@@ -640,7 +627,6 @@ done
             }
         }
 
-        // Settings for the selected monitor
         ColumnLayout {
             visible: root.current !== null
             enabled: !root.confirming
@@ -671,7 +657,7 @@ done
 
                     checked: root.current ? root.current.enabled : false
                     onToggled: v => {
-                        // At least one monitor has to stay on
+                        // At least one monitor stays on
                         if (v || root.enabledCount > 1) root.update({ enabled: v })
                         enabledToggle.checked = Qt.binding(() => root.current ? root.current.enabled : false)
                     }
@@ -777,13 +763,12 @@ done
 
                 SettingLabel { text: "Wallpaper" }
 
-                // Set right away, not with Apply
+                // Applied right away, not with Apply
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 12
 
-                    // Shaped like the monitor, and cropped as hyprpaper's
-                    // cover fit does
+                    // Cropped like hyprpaper's cover fit
                     Item {
                         readonly property var size: root.current ? root.logicalSize(root.current) : ({ w: 16, h: 9 })
 

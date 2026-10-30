@@ -14,6 +14,9 @@ Rectangle {
     border.color: "#1f1f1f"
     border.width: 1
 
+    // The active profile, so Up/Down move on from it
+    readonly property Item initialFocus: [performanceOption, balancedOption, saverOption].find(o => o.selected && o.visible) ?? balancedOption
+
     BatteryState {
         id: state
     }
@@ -68,7 +71,6 @@ Rectangle {
         anchors.topMargin: 8
         spacing: 16
 
-        // Ring
         RowLayout {
             visible: state.available
             Layout.fillWidth: true
@@ -125,6 +127,8 @@ Rectangle {
         }
 
         PowerProfileOption {
+            id: performanceOption
+
             label: "Performance"
             description: "Maximum clocks, no throttling"
             visible: state.hasPerformance
@@ -134,6 +138,8 @@ Rectangle {
         }
 
         PowerProfileOption {
+            id: balancedOption
+
             label: "Balanced"
             description: "Balanced clocks, balanced power usage"
             selected: state.profile === "balanced"
@@ -141,6 +147,8 @@ Rectangle {
         }
 
         PowerProfileOption {
+            id: saverOption
+
             label: "Power Saver"
             description: "Lower clocks, lower power usage"
             selected: state.profile === "power-saver"

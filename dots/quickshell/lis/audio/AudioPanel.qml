@@ -5,19 +5,19 @@ import QtQuick.Layouts
 import Quickshell.Services.Pipewire
 import qs.common
 
-// Output, input, and the apps using audio, each on its own tab
+// Output, input and app audio, one tab each
 PanelFrame {
     id: root
 
     property bool shown: false
     // 0 Output, 1 Input, 2 Apps
     property int tab: 0
+    readonly property Item initialFocus: tabs
 
     readonly property var audioNodes: Pipewire.nodes.values.filter(n => n.audio)
     readonly property var sinks: audioNodes.filter(n => !n.isStream && n.isSink)
     readonly property var sources: audioNodes.filter(n => !n.isStream && !n.isSink)
-    // Apps playing and recording audio (isSink can't tell these apart).
-    // Level meters, like this panel's own for the mic, aren't apps
+    // isSink can't tell playback from recording; level meters aren't apps
     readonly property var streams: audioNodes.filter(n => n.isStream && n.properties["media.class"] === "Stream/Output/Audio")
     readonly property var recordings: audioNodes.filter(n => n.isStream && n.properties["media.class"] === "Stream/Input/Audio"
         && n.properties["stream.monitor"] !== "true")
@@ -26,8 +26,7 @@ PanelFrame {
     // As tall as the tallest tab, so switching tabs doesn't resize it
     implicitHeight: headerHeight + 8 + tabs.implicitHeight + 20 + pages.implicitHeight + 24
 
-    // Volume, mute and properties (media.class above) only update for
-    // tracked nodes
+    // Node properties only update while tracked
     PwObjectTracker {
         objects: root.shown ? root.audioNodes : []
     }
@@ -51,6 +50,10 @@ PanelFrame {
 
             spacing: 4
 
+            activeFocusOnTab: true
+            Keys.onLeftPressed: root.tab = Math.max(0, root.tab - 1)
+            Keys.onRightPressed: root.tab = Math.min(2, root.tab + 1)
+
             Repeater {
                 model: ["Output", "Input", "Apps"]
 
@@ -61,13 +64,12 @@ PanelFrame {
                     required property int index
 
                     readonly property bool active: root.tab === tabItem.index
-                    // How many apps are using audio, on the Apps tab
                     readonly property int count: tabItem.index === 2 ? root.streams.length + root.recordings.length : 0
 
                     implicitWidth: tabLabel.implicitWidth + 24
                     implicitHeight: 30
                     radius: 6
-                    color: tabItem.active ? "#1f1f1f" : tabArea.containsMouse ? "#161616" : "transparent"
+                    color: tabItem.active ? (tabs.activeFocus ? "#2a2a2a" : "#1f1f1f") : tabArea.containsMouse ? "#161616" : "transparent"
 
                     Row {
                         id: tabLabel
@@ -183,7 +185,7 @@ PanelFrame {
                         input: true
                     }
 
-                    // Live microphone level, lined up under the slider
+                    // Mic level
                     Item {
                         Layout.fillWidth: true
                         Layout.topMargin: 6

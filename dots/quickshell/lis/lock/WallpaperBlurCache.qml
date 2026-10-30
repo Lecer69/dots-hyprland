@@ -4,17 +4,13 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Pre-blurs lock screen wallpapers into a disk cache so locking is instant.
-// Files are named md5(wallpaper path + blur params), so an image blurred in
-// a previous session is found synchronously at startup without spawning
-// anything. A .stamp sidecar records the source's mtime:size; a background
-// job re-blurs when it no longer matches (wallpaper file replaced in place).
+// Pre-blurs lock wallpapers into a disk cache; a .stamp file re-blurs when the source changes
 QtObject {
     id: root
 
     readonly property string cacheDir: Quickshell.env("HOME") + "/.cache/lis/lockblur"
 
-    // name -> image url; carries ?v=<stamp> so a re-blur busts Qt's pixmap cache
+    // name -> url; ?v=<stamp> busts Qt's pixmap cache
     property var urls: ({})
     property var _pending: ({}) // name -> true while a job runs
 
@@ -64,8 +60,7 @@ echo "READY $new"
         root.urls = next
     }
 
-    // Synchronously picks up an image blurred in a previous session (a tiny
-    // stamp file read), so the very first lock after boot shows it at once
+    // Synchronously picks up an image blurred in a previous session
     function prime(wallpaperPath, blurSize, blurPasses) {
         if (!wallpaperPath || wallpaperPath.length === 0) return
         const name = root.nameFor(wallpaperPath, blurSize, blurPasses)
@@ -75,8 +70,7 @@ echo "READY $new"
         if (stamp.length > 0) root._setUrl(name, stamp)
     }
 
-    // Validates the cached image against the wallpaper file in the
-    // background, re-blurring if it changed; `urls` updates when done
+    // Checks the cached image in the background and re-blurs if the wallpaper changed
     function ensureCached(wallpaperPath, blurSize, blurPasses) {
         if (!wallpaperPath || wallpaperPath.length === 0) return
         const name = root.nameFor(wallpaperPath, blurSize, blurPasses)
@@ -107,9 +101,7 @@ echo "READY $new"
         printErrors: false
     }
 
-    // Drop entries not used for 30 days (validation touches live ones) and
-    // the pre-v4 cache (sha1-named, full resolution). Delayed so startup
-    // validation has touched everything still in use first.
+    // Drops entries unused for 30 days, after startup validation has touched the live ones
     property Timer _pruneTimer: Timer {
         interval: 60000
         running: true

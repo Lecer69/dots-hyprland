@@ -1,7 +1,6 @@
 import QtQuick
 
-// A card of the desktop overview: the panel surface with a title row, and an
-// optional link (`action`) at its right; children go under it
+// A desktop overview card: title row, optional link (`action`), children under it
 Rectangle {
     id: root
 
@@ -18,8 +17,7 @@ Rectangle {
     border.color: "#1f1f1f"
     border.width: 1
 
-    // Keeps clicks, and the double-click that closes the overview, from the
-    // desktop behind
+    // Keeps clicks, including the closing double-click, from the desktop
     MouseArea {
         anchors.fill: parent
     }

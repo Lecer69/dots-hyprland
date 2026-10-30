@@ -14,6 +14,17 @@ Flow {
 
     spacing: 4
 
+    function shift(direction: int): void {
+        const next = root.options[root.options.indexOf(root.value) + direction]
+        if (next === undefined) return
+        root.value = next
+        root.selected(next)
+    }
+
+    activeFocusOnTab: true
+    Keys.onLeftPressed: root.shift(-1)
+    Keys.onRightPressed: root.shift(1)
+
     Repeater {
         model: root.options
         delegate: Rectangle {
@@ -23,7 +34,7 @@ Flow {
             height: 28
             width: label.implicitWidth + 20
             radius: 6
-            color: active ? "#262626" : "transparent"
+            color: active ? (root.activeFocus ? "#333333" : "#262626") : "transparent"
 
             Text {
                 id: label

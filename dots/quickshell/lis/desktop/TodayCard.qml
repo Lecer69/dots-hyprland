@@ -7,8 +7,7 @@ import qs.common
 import qs.settings.data
 import qs.tools
 
-// The calendar's notes for the coming week, and today's screen time and
-// data use from the wellbeing and internet usage trackers
+// This week's calendar notes, and today's screen time and data use
 OverviewCard {
     id: root
 
@@ -16,7 +15,7 @@ OverviewCard {
 
     readonly property string todayKey: Qt.formatDate(root.now, "yyyy-MM-dd")
 
-    // ISO 8601 week number: a week belongs to the year of its Thursday
+    // ISO 8601 week: a week belongs to the year of its Thursday
     readonly property int week: {
         const d = new Date(Date.UTC(root.now.getFullYear(), root.now.getMonth(), root.now.getDate()));
         d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -24,7 +23,7 @@ OverviewCard {
         return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
     }
 
-    // { label, text } for the notes of today and the next 6 days
+    // { label, text } for today and the next 6 days
     readonly property var upcoming: {
         const list = [];
         for (let i = 0; i < 7; i++) {
@@ -36,7 +35,7 @@ OverviewCard {
         return list;
     }
 
-    // Seconds and MB per app, summed; -1 until read
+    // -1 until read
     property real screenTime: -1
     property real dataUsed: -1
     readonly property bool showScreenTime: SettingsData.s.tracking.wellbeingEnabled && root.screenTime >= 0

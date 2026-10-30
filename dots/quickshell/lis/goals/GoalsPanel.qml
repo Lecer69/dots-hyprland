@@ -5,14 +5,13 @@ import QtQuick.Layouts
 import Quickshell
 import qs.common
 
-// Goals with sub goals, kept by GoalsService in ~/.config/lis/goals.json.
-// Open goals come first and done ones after; each part keeps the order the
-// goals are dragged into.
+// Goals with sub goals; open ones first, done ones after
 PanelFrame {
     id: root
 
-    // The goals that are open, by id
+    // Ids of the open goals
     property var expanded: []
+    readonly property Item initialFocus: input
 
     title: "Goals"
     subtitle: GoalsService.goals.length > 0 ? GoalsService.doneCount + "/" + GoalsService.goals.length : ""
@@ -27,7 +26,7 @@ PanelFrame {
             return;
 
         input.text = "";
-        // Once the row is there, scroll it into view
+        // Once the row exists
         Qt.callLater(() => {
             const item = repeater.itemAt(GoalsService.sorted.findIndex(g => g.id === id));
             if (!item)
@@ -64,9 +63,11 @@ PanelFrame {
                 font.pixelSize: 13
                 clip: true
                 selectByMouse: true
+                activeFocusOnTab: true
 
                 Keys.onReturnPressed: root.addGoal()
                 Keys.onEnterPressed: root.addGoal()
+                Keys.onDownPressed: KeyNav.step(input, true, "goals")
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -117,8 +118,6 @@ PanelFrame {
                     width: flick.width
                     spacing: 4
 
-                    // Rows sliding out of the way: of a dragged row, and of
-                    // goals opening, closing, being added or deleted
                     move: Transition {
                         NumberAnimation { properties: "y"; duration: 150; easing.type: Easing.OutCubic }
                     }
@@ -126,8 +125,7 @@ PanelFrame {
                     Repeater {
                         id: repeater
 
-                        // Keyed, so a goal keeps its row, and its row moves
-                        // instead of being made again
+                        // Keyed, so a goal's row moves instead of being remade
                         model: ScriptModel {
                             values: reorder.arrange(GoalsService.sorted)
                             objectProp: "id"
@@ -148,17 +146,16 @@ PanelFrame {
                                 id: goalItem
 
                                 width: parent.width
-                                // Follows the mouse while dragged, wherever
-                                // the Column has put the row
+                                // Follows the mouse while dragged
                                 y: wrap.isDragged ? reorder.top - wrap.y : 0
                                 goal: wrap.modelData
                                 expanded: root.expanded.includes(wrap.modelData.id)
                                 dragged: wrap.isDragged
                                 dragSpace: column
+                                above: input
 
                                 onToggleExpanded: root.toggleExpanded(wrap.modelData.id)
-                                // A goal moves among the open goals, or among
-                                // the done ones
+                                // Moves among the open goals, or among the done ones
                                 onDragStarted: y => {
                                     const sorted = GoalsService.sorted;
                                     const open = sorted.filter(g => !g.done).length;

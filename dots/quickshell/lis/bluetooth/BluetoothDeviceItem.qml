@@ -3,15 +3,14 @@ import QtQuick.Layouts
 import Quickshell.Bluetooth
 import qs.common
 
-// One Bluetooth device: click to expand its actions
+// A device; click to expand its actions
 Rectangle {
     id: root
 
     required property var device
     property bool expanded: false
 
-    // Set by pair(): trust and connect once pairing finishes, so the device
-    // reconnects by itself next time
+    // Trust and connect once paired, so it reconnects by itself
     property bool _connectAfterPair: false
 
     signal toggleRequested()
@@ -36,9 +35,32 @@ Rectangle {
         root.device.pair()
     }
 
+    // What its main button would do
+    function mainAction(): void {
+        if (root.device.pairing)
+            root.device.cancelPair()
+        else if (!root.device.paired)
+            root.pair()
+        else if (root.busy)
+            return
+        else if (root.device.connected)
+            root.device.disconnect()
+        else
+            root.device.connect()
+    }
+
     implicitHeight: column.implicitHeight + 16
     radius: 8
-    color: root.expanded || rowArea.containsMouse ? "#161616" : "transparent"
+    color: root.expanded && root.activeFocus ? "#1f1f1f"
+        : root.expanded || rowArea.containsMouse || root.activeFocus ? "#161616" : "transparent"
+
+    readonly property bool listRow: true
+    activeFocusOnTab: true
+    Keys.onUpPressed: KeyNav.step(root, false)
+    Keys.onDownPressed: KeyNav.step(root, true)
+    Keys.onSpacePressed: root.toggleRequested()
+    Keys.onReturnPressed: root.mainAction()
+    Keys.onEnterPressed: root.mainAction()
 
     Connections {
         target: root.device

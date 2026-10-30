@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.common
 
 PanelWindow {
     id: root
@@ -12,7 +13,7 @@ PanelWindow {
     visible: shown
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
     WlrLayershell.exclusiveZone: -1
 
     anchors {
@@ -20,6 +21,12 @@ PanelWindow {
         bottom: true
         left: true
         right: true
+    }
+
+    PanelKeyboard {
+        id: keyboard
+        open: root.shown
+        initialFocus: audioPanel.initialFocus
     }
 
     Shortcut {

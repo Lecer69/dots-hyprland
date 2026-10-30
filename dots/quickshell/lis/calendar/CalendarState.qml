@@ -5,11 +5,11 @@ import Quickshell.Io
 QtObject {
     id: root
 
-    // { id: real, date: "YYYY-MM-DD", text: string, yearly: bool }
+    // { id, date: "YYYY-MM-DD", text, yearly }
     property var notes: []
     property bool _loaded: false
 
-    // Atomic writes (temp file + rename), done before setText returns
+    // Atomic writes, done before setText returns
     property FileView _store: FileView {
         path: Quickshell.env("HOME") + "/.config/lis/calendar.json"
         blockWrites: true
@@ -61,7 +61,7 @@ QtObject {
         const md = note.date.slice(5);
         if (md === key.slice(5))
             return true;
-        // Yearly Feb 29 notes show on Feb 28 in non-leap years
+        // Yearly Feb 29 notes show on Feb 28 in other years
         return md === "02-29" && key.slice(5) === "02-28" && !_isLeap(d.getFullYear());
     }
 

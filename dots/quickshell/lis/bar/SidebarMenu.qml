@@ -4,23 +4,15 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
+import qs.common
 
-// Right-edge sidebar, opened by clicking the volume hover bar. Items are
-// grouped under their `section`; items without one are pinned to the bottom.
+// Right-edge sidebar; items without a section are pinned to the bottom
 Scope {
     id: root
 
     property list<QtObject> items: [
         QtObject {
-            property string section: "Panels"
-            property string label: "Notification Center"
-            property string icon: "../icons/notification.svg"
-            property var action: () => {
-                return notificationCenterWindow.shown = true;
-            }
-        },
-        QtObject {
-            property string section: "Panels"
+            property string section: "Organize"
             property string label: "Calendar"
             property string icon: "../icons/calendar.svg"
             property var action: () => {
@@ -28,7 +20,7 @@ Scope {
             }
         },
         QtObject {
-            property string section: "Panels"
+            property string section: "Organize"
             property string label: "To-Do"
             property string icon: "../icons/todo.svg"
             property var action: () => {
@@ -36,7 +28,7 @@ Scope {
             }
         },
         QtObject {
-            property string section: "Panels"
+            property string section: "Organize"
             property string label: "Goals"
             property string icon: "../icons/goals.svg"
             property var action: () => {
@@ -44,7 +36,7 @@ Scope {
             }
         },
         QtObject {
-            property string section: "Panels"
+            property string section: "Organize"
             property string label: "Notes"
             property string icon: "../icons/notes.svg"
             property var action: () => {
@@ -52,23 +44,15 @@ Scope {
             }
         },
         QtObject {
-            property string section: "Panels"
-            property string label: "Color Settings"
-            property string icon: "../icons/color.svg"
+            property string section: "Activity"
+            property string label: "Notification Center"
+            property string icon: "../icons/notification.svg"
             property var action: () => {
-                return gammaWindow.shown = true;
+                return notificationCenterWindow.shown = true;
             }
         },
         QtObject {
-            property string section: "Panels"
-            property string label: "Internet Usage"
-            property string icon: "../icons/data.svg"
-            property var action: () => {
-                return internetUsageWindow.shown = true;
-            }
-        },
-        QtObject {
-            property string section: "Panels"
+            property string section: "Activity"
             property string label: "Wellbeing"
             property string icon: "../icons/wellbeing.svg"
             property var action: () => {
@@ -76,7 +60,15 @@ Scope {
             }
         },
         QtObject {
-            property string section: "System"
+            property string section: "Activity"
+            property string label: "Internet Usage"
+            property string icon: "../icons/data.svg"
+            property var action: () => {
+                return internetUsageWindow.shown = true;
+            }
+        },
+        QtObject {
+            property string section: "Devices"
             property string label: "Audio"
             property string icon: "../icons/speaker-high.svg"
             property var action: () => {
@@ -84,7 +76,7 @@ Scope {
             }
         },
         QtObject {
-            property string section: "System"
+            property string section: "Devices"
             property string label: "Bluetooth"
             property string icon: "../icons/bluetooth.svg"
             property var action: () => {
@@ -92,7 +84,7 @@ Scope {
             }
         },
         QtObject {
-            property string section: "System"
+            property string section: "Devices"
             property string label: "Network"
             property string icon: "../icons/wifi.svg"
             property var action: () => {
@@ -100,11 +92,19 @@ Scope {
             }
         },
         QtObject {
-            property string section: "System"
+            property string section: "Devices"
             property string label: "Displays"
             property string icon: "../icons/monitor.svg"
             property var action: () => {
                 return displaysWindow.shown = true;
+            }
+        },
+        QtObject {
+            property string section: "Devices"
+            property string label: "Color Settings"
+            property string icon: "../icons/color.svg"
+            property var action: () => {
+                return gammaWindow.shown = true;
             }
         },
         QtObject {
@@ -116,6 +116,15 @@ Scope {
             }
         },
         QtObject {
+            property string section: "System"
+            property string label: "Battery & Power"
+            property string icon: "../icons/battery.svg"
+            property var action: () => {
+                return batteryWindow.shown = true;
+            }
+        },
+        QtObject {
+            property string section: "System"
             property string label: "Settings"
             property string icon: "../icons/settings.svg"
             property var action: () => {
@@ -152,7 +161,41 @@ Scope {
         return out
     }
 
-    // Opens on the given screen, or closes when it's already open there
+    // Display order, which is also the arrow keys' order
+    readonly property var shownItems: {
+        let out = []
+        for (let i = 0; i < root.sections.length; i++) out = out.concat(root.itemsIn(root.sections[i]))
+        return out.concat(root.itemsIn(""))
+    }
+    // -1 for none
+    property int current: -1
+
+    onIsOpenChanged: if (root.isOpen) root.current = -1
+
+    // The first press starts at the top (Down) or the bottom (Up)
+    function moveCurrent(step): void {
+        const count = root.shownItems.length
+        if (count === 0) return
+        root.current = root.current < 0
+            ? (step > 0 ? 0 : count - 1)
+            : (root.current + step + count) % count
+    }
+
+    function activate(item): void {
+        root.isOpen = false
+        item.action()
+    }
+
+    function activateCurrent(): void {
+        if (root.current >= 0 && root.current < root.shownItems.length)
+            root.activate(root.shownItems[root.current])
+    }
+
+    function focusedScreen(): var {
+        return Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    }
+
+    // Closes instead when already open on that screen
     function toggle(screen): void {
         if (root.isOpen && root.screen === screen) {
             root.isOpen = false
@@ -166,7 +209,7 @@ Scope {
         target: "sidebar"
 
         function toggle(): void {
-            root.toggle(Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null)
+            root.toggle(root.focusedScreen())
         }
 
         function close(): void {
@@ -174,13 +217,17 @@ Scope {
         }
     }
 
-    // Click anywhere outside the sidebar closes it. On the top layer, so the
-    // sidebar (overlay) is always above it.
+    GlobalShortcut {
+        name: "sidebar"
+        description: "Toggles the sidebar"
+        onPressed: root.toggle(root.focusedScreen())
+    }
+
+    // Click-outside catcher, on the top layer so the sidebar stays above it
     PanelWindow {
         screen: root.screen
         visible: root.isOpen
         color: "transparent"
-        // Keeps clear of the bar's reserved space
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "quickshell:sidebarbackdrop"
@@ -198,9 +245,7 @@ Scope {
         }
     }
 
-    // Hyprland slides it in and out, like it animates the other panels (the
-    // quickshell:sidebar layer rule in hyprland/rules.lua). A slide in QML
-    // runs at 60 fps on NVIDIA, where Qt steps animations every 16 ms.
+    // Hyprland slides it (rules.lua); a QML slide runs at 60 fps on NVIDIA
     PanelWindow {
         screen: root.screen
         visible: root.isOpen
@@ -208,7 +253,7 @@ Scope {
         implicitWidth: 280
         exclusiveZone: 0
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        WlrLayershell.keyboardFocus: keyboard.mode
         WlrLayershell.namespace: "quickshell:sidebar"
 
         anchors {
@@ -223,17 +268,32 @@ Scope {
             right: 8
         }
 
+        PanelKeyboard {
+            id: keyboard
+            open: root.isOpen
+            initialFocus: sidebarPanel
+        }
+
         Shortcut {
             sequences: ["Escape"]
             onActivated: root.isOpen = false
         }
 
         Rectangle {
+            id: sidebarPanel
+
             anchors.fill: parent
             radius: 12
             color: "#0f0f0f"
             border.color: "#1f1f1f"
             border.width: 1
+
+            // Keys only attach to items
+            focus: true
+            Keys.onUpPressed: root.moveCurrent(-1)
+            Keys.onDownPressed: root.moveCurrent(1)
+            Keys.onReturnPressed: root.activateCurrent()
+            Keys.onEnterPressed: root.activateCurrent()
 
             Item {
                 id: header
@@ -329,11 +389,13 @@ Scope {
         id: entry
 
         required property var modelData
+        readonly property int shownIndex: root.shownItems.indexOf(entry.modelData)
+        readonly property bool highlighted: root.current === entry.shownIndex
 
         Layout.fillWidth: true
         implicitHeight: 36
         radius: 8
-        color: area.pressed ? "#1f1f1f" : area.containsMouse ? "#161616" : "transparent"
+        color: area.pressed ? "#1f1f1f" : entry.highlighted ? "#161616" : "transparent"
 
         RowLayout {
             anchors {
@@ -350,14 +412,14 @@ Scope {
                 sourceSize: Qt.size(16, 16)
                 fillMode: Image.PreserveAspectFit
                 smooth: true
-                opacity: area.containsMouse ? 1 : 0.6
+                opacity: entry.highlighted ? 1 : 0.6
             }
 
             Text {
                 Layout.fillWidth: true
                 text: entry.modelData.label
                 font.pixelSize: 13
-                color: area.containsMouse ? "#ffffff" : "#e6e6e6"
+                color: entry.highlighted ? "#ffffff" : "#e6e6e6"
                 elide: Text.ElideRight
             }
         }
@@ -368,10 +430,10 @@ Scope {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                root.isOpen = false
-                entry.modelData.action()
-            }
+            // Hover moves the highlight, so the keys carry on from there
+            onEntered: root.current = entry.shownIndex
+            onExited: if (root.current === entry.shownIndex) root.current = -1
+            onClicked: root.activate(entry.modelData)
         }
     }
 }

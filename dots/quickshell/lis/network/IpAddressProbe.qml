@@ -1,8 +1,7 @@
 import QtQuick
 import Quickshell.Io
 
-// A device's IPv4 address, read from NetworkManager whenever it turns active
-// (Quickshell.Networking only exposes the hardware address)
+// A device's IPv4 address from NetworkManager (Quickshell.Networking only has the MAC)
 Item {
     id: root
 
@@ -25,7 +24,7 @@ Item {
         command: ["nmcli", "-g", "IP4.ADDRESS", "device", "show", root.device]
 
         stdout: StdioCollector {
-            // "192.168.1.20/24", several are joined with " | "
+            // "192.168.1.20/24", several joined with " | "
             onStreamFinished: root.address = text.trim().split(" | ")[0].split("/")[0]
         }
     }

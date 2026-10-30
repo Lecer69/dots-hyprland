@@ -14,18 +14,17 @@ Item {
     signal entered()
     signal chosen()
 
-    // Clipboard entries are cliphist lines: "<id>\t<preview>"
+    // cliphist lines: "<id>\t<preview>"
     readonly property string clipLine: isClipboard && typeof entry === "string" ? entry : ""
     readonly property var imageInfo: clipLine !== "" ? ClipboardHistory.imageInfo(clipLine) : null
     readonly property bool isImage: imageInfo !== null
     readonly property string thumbUrl: isImage ? (ClipboardHistory.thumbs[ClipboardHistory.idOf(clipLine)] ?? "") : ""
 
-    // Emoji entries are "<emoji> <name and keywords>"
+    // "<emoji> <name and keywords>"
     readonly property string emojiLine: isEmoji && typeof entry === "string" ? entry : ""
     readonly property string emoji: emojiLine.split(" ")[0]
 
-    // 0 to 1 as the row arrives: its content fades in sliding from the
-    // right. The list starts it.
+    // 0 to 1 as the row arrives; the list starts it
     property real appear: 1
 
     function enter(delay: int): void {
@@ -40,22 +39,19 @@ Item {
         NumberAnimation { target: row; property: "appear"; to: 1; duration: 280; easing.type: Easing.OutCubic }
     }
 
-    // 0 to 1 once the row is picked: its icon or emoji zooms out of the
-    // launcher while it closes
+    // 0 to 1 once picked: the icon zooms out as the launcher closes
     property real launchProgress: 0
 
     function launch(): void { launchAnim.restart() }
 
-    // Fixed per kind, so rows never resize under the list while it scrolls
+    // Fixed per kind, so rows never resize while scrolling
     height: isImage ? 72 : 36
-    // Rows sit above the list's highlight (z 0), and a launching row above
-    // the rows below it while its icon zooms
+    // Above the highlight; a launching row above the rest
     z: launchProgress > 0 ? 2 : 1
 
-    // A newly selected emoji wiggles
     onHighlightedChanged: if (highlighted && isEmoji) wiggle.restart()
 
-    // Linear; the icon below eases its growth and fade on its own curves
+    // Linear; the icon eases on its own curves
     NumberAnimation {
         id: launchAnim
         target: row
@@ -67,7 +63,7 @@ Item {
     readonly property real launchGrowth: 1 + 1.6 * (1 - Math.pow(1 - launchProgress, 3))
     readonly property real launchFade: 1 - launchProgress * launchProgress
 
-    // Hover on a row that isn't selected; the list draws the selection
+    // Hover; the list draws the selection
     Rectangle {
         anchors.fill: parent
         radius: 8
@@ -86,7 +82,6 @@ Item {
         opacity: row.appear
 
         transform: [
-            // The selected row's content leans right
             Translate {
                 x: row.highlighted ? 3 : 0
                 Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -111,7 +106,6 @@ Item {
             sourceSize.height: 18
             fillMode: Image.PreserveAspectFit
             Layout.alignment: Qt.AlignVCenter
-            // Grows a little on the selected row
             scale: row.highlighted ? 1.15 : 1
             Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
             opacity: row.launchFade
@@ -132,7 +126,6 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             Layout.preferredWidth: 24
             Layout.alignment: Qt.AlignVCenter
-            // Pops up on the selected row
             scale: row.highlighted ? 1.25 : 1
             Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
             opacity: row.launchFade
@@ -159,7 +152,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
         }
 
-        // Thumbnails are pre-made at 2x this size (ClipboardHistory)
+        // Thumbnails are made at 2x this size
         Rectangle {
             visible: row.isImage
             Layout.preferredWidth: 96
@@ -176,14 +169,13 @@ Item {
                 sourceSize.height: 120
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
-                // Settles in once loaded, and zooms a little on the selected row
                 opacity: status === Image.Ready ? 1 : 0
                 scale: status !== Image.Ready ? 0.92 : row.highlighted ? 1.06 : 1
                 Behavior on opacity { NumberAnimation { duration: 180 } }
                 Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
             }
 
-            // Thumbnail not made yet
+            // Not made yet
             Text {
                 anchors.centerIn: parent
                 visible: row.thumbUrl === ""
@@ -204,7 +196,7 @@ Item {
                 return ClipboardHistory.textOf(row.clipLine).slice(0, 120)
             }
 
-            // Clipboard text may look like markup; never render it as such
+            // Clipboard text may look like markup
             textFormat: Text.PlainText
             color: row.isMath ? "#ffffff" : row.isImage ? "#999999" : row.highlighted ? "#ffffff" : "#e6e6e6"
             Behavior on color { ColorAnimation { duration: 140 } }

@@ -3,8 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.common
 
-// An app playing or recording audio: its icon (click to mute), name, what
-// it's playing, and its own volume
+// An app playing or recording audio
 ColumnLayout {
     id: root
 
@@ -20,6 +19,13 @@ ColumnLayout {
     }
     readonly property real volume: node.audio ? node.audio.volume : 0
     readonly property bool muted: node.audio ? node.audio.muted : false
+
+    Keys.onPressed: event => {
+        if (event.key !== Qt.Key_M || !root.node.audio)
+            return
+        root.node.audio.muted = !root.muted
+        event.accepted = true
+    }
     readonly property string iconPath: {
         const names = [props["application.icon-name"], props["application.process.binary"], (props["application.name"] ?? "").toLowerCase()]
         for (const name of names) {

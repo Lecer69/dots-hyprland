@@ -38,7 +38,7 @@ Item {
         const p = root.rawActivePlayer
         const key = playerKey(p)
 
-        // Track (or player) changed — reset idle tracking.
+        // Track or player changed
         if (key !== root.idleKey) {
             root.idleKey = key
             root.idleElapsedMs = 0
@@ -73,8 +73,7 @@ Item {
         onTriggered: root.syncPlayer()
     }
 
-    // Player changes are picked up by the poll timer (the Mpris singleton
-    // does not expose a playersChanged signal).
+    // Mpris has no playersChanged signal, so a timer polls
     Component.onCompleted: root.syncPlayer()
 
     readonly property bool hasMedia: activePlayer !== null

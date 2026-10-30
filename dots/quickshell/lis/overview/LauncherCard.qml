@@ -22,8 +22,7 @@ Rectangle {
         return query
     }
 
-    // Set when an entry is picked: the card then swells and fades, as if
-    // opening into the app, instead of folding back up
+    // Picked: the card swells and fades instead of folding up
     property bool launching: false
 
     onIsOpenChanged: {
@@ -34,7 +33,7 @@ Rectangle {
         searchBar.setQuery(initialQuery)
     }
 
-    // Emptied only once the card has faded out, so it closes as it looked
+    // Emptied once faded, so it closes as it looked
     onOpacityChanged: {
         if (isOpen || opacity > 0) return
         query = ""
@@ -52,8 +51,7 @@ Rectangle {
         }
     }
 
-    // Loaded at startup and kept current, so the clipboard view opens with
-    // the history already there
+    // So the clipboard view opens with the history there
     Component.onCompleted: ClipboardHistory.refresh()
 
     onIsClipboardChanged: {
@@ -90,7 +88,7 @@ Rectangle {
         if (!/^[\d\s\+\-\*\/\%\^\(\)\.\,sqrtceilfloorlogabsroundpiePIE]+$/i.test(expr)) return null
 
         try {
-            // Replace common math functions with JS equivalents
+            // Math functions to their JS names
             const sanitized = expr
                 .replace(/sqrt/gi, "Math.sqrt")
                 .replace(/ceil/gi,  "Math.ceil")
@@ -146,7 +144,7 @@ Rectangle {
             .slice(0, 30)
     }
 
-    // The whole history: the list only creates rows for what's on screen
+    // The whole history; the list only makes rows on screen
     property var clipResults: {
         if (!isClipboard) return []
         return ClipboardHistory.filter(cleanQuery)
@@ -172,7 +170,6 @@ Rectangle {
     border.color: "#1f1f1f"
     border.width: 1
 
-    // Drops in on opening, and fades back out before the window unmaps
     opacity: isOpen ? 1 : 0
     scale: isOpen ? 1 : launching ? 1.04 : 0.95
     transformOrigin: launching ? Item.Center : Item.Top
@@ -180,7 +177,7 @@ Rectangle {
         y: card.isOpen || card.launching ? 0 : -12
         Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     }
-    // A launch holds on a moment longer, so the zooming icon can be seen
+    // Held a moment longer on launch, so the icon zoom shows
     Behavior on opacity {
         NumberAnimation {
             duration: card.launching ? 320 : 180

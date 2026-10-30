@@ -5,25 +5,20 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The to-do panel's tasks and lists, kept in ~/.config/lis/todo.json. A
-// change is saved right away, and a list's name once the typing pauses.
-// The tasks used to live in the todo CLI's file (todo-bin); they're brought
-// over from it once.
+// Tasks and lists in ~/.config/lis/todo.json; brought over once from the todo CLI's file
 Singleton {
     id: root
 
-    // { id: real, text: string, done: bool, important: bool, list: real } in
-    // the user's order; list is the id of the task's list, -1 for none
+    // { id, text, done, important, list (-1 for none) }, in the user's order
     property var tasks: []
-    // { id: real, name: string }, in the order they were made
+    // { id, name }, in creation order
     property var lists: []
 
     property bool _loaded: false
     property bool _dirty: false
     property real _lastId: 0
 
-    // Atomic writes (temp file + rename), done before setText returns, so
-    // the save on shutdown or reload completes too
+    // Atomic writes, done before setText returns, so a save on quit completes
     FileView {
         id: store
 
@@ -60,7 +55,7 @@ Singleton {
             try {
                 parsed = JSON.parse(text);
             } catch (e) {
-                // Left as it is: nothing is saved over a file that didn't parse
+                // Nothing is saved over a file that didn't parse
                 console.warn("[todo] todo.json isn't valid JSON, so nothing will be saved:", e);
                 return;
             }
@@ -77,9 +72,7 @@ Singleton {
         root._loaded = true;
     }
 
-    // From the older formats: the CLI's file held the tasks, and this file
-    // the stars and lists, by task text. Before that, this file held the
-    // tasks (an array)
+    // From the older formats: the CLI's file plus stars and lists by text, or a plain array
     function _bringOver(old: var): void {
         const important = Array.isArray(old?.important) ? old.important : [];
         const assigned = old?.assigned && typeof old.assigned === "object" && !Array.isArray(old.assigned) ? old.assigned : {};
@@ -90,8 +83,7 @@ Singleton {
             .map(t => root._task(root._newId(), root._clean(t.text), !!t.done, !!t.important, -1));
         const fromCli = [];
         for (const line of root._cliText().split(/\r?\n/)) {
-            // Like the CLI, which skips other lines, and those of 5 characters
-            // or fewer
+            // Like the CLI: other lines, and ones of 5 characters or fewer, are skipped
             const mark = line.slice(0, 4);
             const text = line.slice(4);
             if (line.length > 5 && (mark === "[ ] " || mark === "[*] ") && !fromPanel.some(t => t.text === text))
@@ -104,8 +96,7 @@ Singleton {
         console.log("[todo] brought", root.tasks.length, "tasks over into todo.json");
     }
 
-    // The CLI's file: $TODO_PATH, else ~/TODO if that exists (older
-    // versions), else ~/.todo
+    // $TODO_PATH, else ~/TODO if it exists, else ~/.todo
     function _cliText(): string {
         const home = Quickshell.env("HOME");
         const paths = Quickshell.env("TODO_PATH") ? [Quickshell.env("TODO_PATH")] : [home + "/TODO", home + "/.todo"];
@@ -133,7 +124,7 @@ Singleton {
         };
     }
 
-    // Unique, also for tasks made in the same millisecond
+    // Unique even within a millisecond
     function _newId(): real {
         root._lastId = Math.max(Date.now(), root._lastId + 1);
         return root._lastId;
@@ -168,14 +159,13 @@ Singleton {
         return root.listed(-1);
     }
 
-    // The tasks of a list, or every task for -1, starred first
+    // A list's tasks, or every task for -1, starred first
     function listed(list: real): var {
         const tasks = list === -1 ? root.tasks : root.tasks.filter(t => t.list === list);
         return tasks.filter(t => t.important).concat(tasks.filter(t => !t.important));
     }
 
-    // New tasks go last, into the list (-1 for none). Returns whether one
-    // was added.
+    // Last, into the list (-1 for none); returns whether one was added
     function addTask(text: string, list: real): bool {
         const clean = root._clean(text);
         if (clean === "" || !root._loaded)
@@ -193,7 +183,7 @@ Singleton {
         root._update(id, t => ({ important: !t.important }));
     }
 
-    // Moves the task to the list, -1 for none
+    // -1 for none
     function setList(id: real, list: real): void {
         root._update(id, () => ({ list: root.lists.some(l => l.id === list) ? list : -1 }));
     }
@@ -202,21 +192,19 @@ Singleton {
         root._set(root.tasks.filter(t => t.id !== id));
     }
 
-    // The done tasks of a list, or of every list for -1
+    // A list's done tasks, or every list's for -1
     function clearDone(list: real): void {
         root._set(root.tasks.filter(t => !t.done || (list !== -1 && t.list !== list)));
     }
 
-    // ids: some tasks in their new order. They take the places they had
-    // between them, so the tasks of a list can be reordered without moving
-    // the others
+    // ids take the places they had between them, so one list reorders without moving others
     function applyOrder(ids: var): void {
         const moved = ids.map(id => root.tasks.find(t => t.id === id)).filter(t => t !== undefined);
         let i = 0;
         root._set(root.tasks.map(t => ids.includes(t.id) ? moved[i++] : t));
     }
 
-    // Returns the new list's id, -1 for none
+    // Returns the id, -1 for none
     function addList(name: string): real {
         if (!root._loaded)
             return -1;
@@ -228,7 +216,7 @@ Singleton {
         return id;
     }
 
-    // For every keystroke: saved once the typing pauses
+    // Saved once the typing pauses
     function renameList(id: real, name: string): void {
         root.lists = root.lists.map(l => l.id === id ? { id: id, name: name } : l);
         root._dirty = true;

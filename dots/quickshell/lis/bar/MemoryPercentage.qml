@@ -8,8 +8,7 @@ Item {
 
     property bool vertical: false
 
-    // Vertical bars: icon above a colored usage ring.
-    // Top/bottom bars: the classic icon + percentage text.
+    // Vertical bars: icon over a usage ring; horizontal: icon and percentage
     implicitWidth: root.vertical ? sz : row.width
     implicitHeight: root.vertical ? iconImg.height + 6 + sz : 16
 
@@ -28,8 +27,7 @@ Item {
     }
     onLoadChanged: {
         const next = load * 360
-        // Snap for tiny changes: animating every resource tick would repaint
-        // the whole bar at 60fps twice a second, a constant CPU drain.
+        // Snap small changes; animating every tick keeps repainting the bar
         root._snapSweep = Math.abs(next - root.animatedSweep) < 5
         root.animatedSweep = next
         root._snapSweep = false
@@ -66,7 +64,6 @@ Item {
 
             vendorExtensionsEnabled: true
 
-            // track
             ShapePath {
                 strokeColor: Qt.rgba(1, 1, 1, 0.13)
                 strokeWidth: 2.5
@@ -82,7 +79,6 @@ Item {
                 }
             }
 
-            // usage arc
             ShapePath {
                 strokeColor: root.arcColor
                 strokeWidth: 2.5
@@ -99,7 +95,6 @@ Item {
             }
         }
 
-        // percentage label
         Text {
             anchors.centerIn: parent
             text: Math.round(root.load * 100)

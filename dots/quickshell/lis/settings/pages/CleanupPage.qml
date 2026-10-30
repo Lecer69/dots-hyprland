@@ -8,23 +8,22 @@ import qs.settings.data
 import qs.settings
 import qs.tools
 
-// The list scrolls; the Clean button stays in view below it
+// The list scrolls; the Clean button stays below it
 Item {
     id: root
 
-    // What SettingsPanel's PgUp/PgDn scroll, as on the other pages
+    // What SettingsPanel's PgUp/PgDn scroll
     readonly property Item contentItem: scroll.contentItem
 
-    // The settings' StackLayout sizes itself from its pages' implicit size
+    // The StackLayout sizes from its pages' implicit size
     implicitWidth: scroll.implicitWidth
     implicitHeight: scroll.implicitHeight + footer.height
 
-    // Scans and cleans; runs cleanup-root.sh beside it through pkexec
+    // Runs cleanup-root.sh beside it through pkexec
     readonly property string script: Quickshell.env("HOME") + "/.config/hypr/hyprland/scripts/cleanup.sh"
 
-    // From cleanup.sh scan, by item: {bytes, count}
+    // By item: {bytes, count}
     property var sizes: ({})
-    // Items whose sizes are being worked out
     property var scanningItems: []
     property bool rescanAll: false
     property bool cleaning: false
@@ -34,7 +33,6 @@ Item {
     readonly property int keep: SettingsData.s.cleanup.pacmanKeep
     readonly property var selected: SettingsData.s.cleanup.selected
 
-    // Ticked items with something to delete
     readonly property var cleanable: root.selected.filter(item => (root.sizes[item]?.bytes ?? 0) > 0)
     readonly property real cleanableBytes: root.cleanable.reduce((total, item) => total + root.sizes[item].bytes, 0)
 
@@ -44,7 +42,7 @@ Item {
         confirmTimeout.stop()
     }
 
-    // Sizes are worked out each time the page comes into view
+    // Sizes are worked out each time the page shows
     readonly property bool open: visible && (QsWindow.window?.visible ?? false)
     onOpenChanged: if (open) scan([])
 
@@ -106,9 +104,7 @@ Item {
         }
     }
 
-    // pkexec exits 126 when its password prompt is dismissed and 127 when
-    // it isn't allowed; cleanup.sh deletes nothing then. It exits 3 when it
-    // left a cache alone because pacman or yay was using it
+    // pkexec exits 126 when dismissed, 127 when not allowed; cleanup.sh exits 3 when pacman or yay held a cache
     Process {
         id: cleaner
 
@@ -240,7 +236,7 @@ Item {
             anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: 0.5 }
             spacing: 6
 
-            // The first click asks; a second one within 4 s deletes
+            // A second click within 4 s deletes
             Rectangle {
                 id: cleanButton
 

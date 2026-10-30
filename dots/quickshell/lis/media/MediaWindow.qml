@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.common
 
 PanelWindow {
     id: root
@@ -10,11 +11,11 @@ PanelWindow {
     property Item anchorItem: null
     signal closeRequested()
 
-    // Stay visible while the panel fades out
+    // Stays mapped while the panel fades out
     visible: shown || panel.opacity > 0.01
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.namespace: "quickshell:media"
 
@@ -23,6 +24,12 @@ PanelWindow {
         bottom: true
         left: true
         right: true
+    }
+
+    PanelKeyboard {
+        id: keyboard
+        open: root.shown
+        initialFocus: panel
     }
 
     Shortcut {
@@ -56,7 +63,7 @@ PanelWindow {
 
     MediaPanel {
         id: panel
-        width: 360
+        width: 390
         height: panel.contentHeight
         player: root.player
         shown: root.shown

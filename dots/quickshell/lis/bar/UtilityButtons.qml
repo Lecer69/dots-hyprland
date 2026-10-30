@@ -21,7 +21,6 @@ Grid {
         objects: [Pipewire.defaultAudioSource]
     }
 
-    // Microphone
     Loader {
         sourceComponent: Item {
             width: 16
@@ -57,7 +56,6 @@ Grid {
         }
     }
 
-    // Screenshot
     Loader {
         active: SettingsData.s.bar.showScreenshot
         visible: active
@@ -91,7 +89,6 @@ Grid {
         }
     }
 
-    // Color Picker
     Loader {
         active: SettingsData.s.bar.showColorPicker
         visible: active
@@ -123,7 +120,6 @@ Grid {
         }
     }
 
-    // Game Mode
     Loader {
         active: SettingsData.s.bar.showGameMode
         visible: active
@@ -181,7 +177,6 @@ Grid {
         }
     }
 
-    // Idle inhibit
     Loader {
         sourceComponent: Item {
             width: 16
@@ -209,7 +204,6 @@ Grid {
         }
     }
 
-    // Notifications
     Loader {
         sourceComponent: Item {
             width: 16

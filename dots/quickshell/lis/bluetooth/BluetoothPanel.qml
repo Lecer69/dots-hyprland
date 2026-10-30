@@ -18,7 +18,7 @@ PanelFrame {
     property var availableDevices: []
     property string _order: ""
 
-    // Connected first; unnamed devices only show an address, so they're left out
+    // Connected first; unnamed devices are left out
     readonly property var _sorted: {
         const byName = (a, b) => a.name.localeCompare(b.name)
         return {
@@ -27,8 +27,7 @@ PanelFrame {
         }
     }
 
-    // Swap the lists only when the order changes, so rows aren't rebuilt on
-    // every property update
+    // Only when the order changes, so rows aren't rebuilt on every update
     function syncDevices(): void {
         const order = root._sorted.paired.map(d => d.address).join(",")
             + "|" + root._sorted.available.map(d => d.address).join(",")
@@ -38,7 +37,6 @@ PanelFrame {
         root.availableDevices = root._sorted.available
     }
 
-    // Scan only while the panel is open
     function updateDiscovery(): void {
         if (root.powered) root.adapter.discovering = root.shown
     }

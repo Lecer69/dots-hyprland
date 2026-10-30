@@ -13,13 +13,12 @@ PanelFrame {
     readonly property var wifiDevices: Networking.devices.values.filter(d => d.type === DeviceType.Wifi)
 
     property string expandedName: ""
-    // The network the password prompt is for, null while it's closed
+    // Null while the prompt is closed
     property var passwordTarget: null
     property var wifiNetworks: []
     property string _networkOrder: ""
 
-    // Connected, then saved, then strongest; signal is bucketed so small
-    // changes don't reorder the list
+    // Connected, saved, then strongest; signal is bucketed so the list doesn't jitter
     readonly property var _sortedNetworks: {
         const all = []
         for (const device of root.wifiDevices) {
@@ -46,8 +45,7 @@ PanelFrame {
         return text
     }
 
-    // Swap the list only when the order changes, so rows aren't rebuilt on
-    // every signal update
+    // Only when the order changes, so rows aren't rebuilt on every update
     function syncNetworks(): void {
         const order = root._sortedNetworks.map(n => n.name).join("\n")
         if (order === root._networkOrder) return
@@ -55,7 +53,6 @@ PanelFrame {
         root.wifiNetworks = root._sortedNetworks
     }
 
-    // Scan only while the panel is open
     function updateScanning(): void {
         for (const device of root.wifiDevices)
             device.scannerEnabled = root.shown
@@ -97,7 +94,6 @@ PanelFrame {
         anchors.rightMargin: 24
         spacing: 20
 
-        // Wired
         ColumnLayout {
             visible: root.wiredDevices.length > 0
             Layout.fillWidth: true
@@ -123,7 +119,6 @@ PanelFrame {
             }
         }
 
-        // Wi-Fi
         ColumnLayout {
             visible: root.wifiDevices.length > 0
             Layout.fillWidth: true
@@ -168,7 +163,7 @@ PanelFrame {
                 }
             }
 
-            // Password prompt for a secured network that isn't saved yet
+            // For a secured network that isn't saved yet
             Rectangle {
                 visible: root.passwordTarget !== null
                 Layout.fillWidth: true
@@ -208,6 +203,7 @@ PanelFrame {
                             TextInput {
                                 id: passwordInput
 
+                                activeFocusOnTab: true
                                 anchors.fill: parent
                                 anchors.leftMargin: 10
                                 anchors.rightMargin: 10

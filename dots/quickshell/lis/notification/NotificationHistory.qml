@@ -6,7 +6,7 @@ QtObject {
 
     property ListModel model: ListModel {}
 
-    // Newest first; older entries drop off past this
+    // Older entries drop off past this
     readonly property int maxEntries: 100
 
     function add(entry): void {

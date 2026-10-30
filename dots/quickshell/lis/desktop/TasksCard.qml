@@ -1,8 +1,7 @@
 import QtQuick
 import qs.todo
 
-// The to-do tasks, in the to-do panel's order; clicking one marks it done
-// or not
+// To-do tasks; clicking one toggles it done
 OverviewCard {
     id: root
 
@@ -19,7 +18,7 @@ OverviewCard {
     Flickable {
         id: flick
 
-        // Row highlights reach into the card's padding
+        // Row highlights reach into the padding
         anchors.fill: parent
         anchors.leftMargin: -8
         anchors.rightMargin: -8

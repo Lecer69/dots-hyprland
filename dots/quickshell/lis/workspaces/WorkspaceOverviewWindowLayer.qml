@@ -59,10 +59,7 @@ Item {
 
             property bool atInitPosition: (initX == x && initY == y)
 
-            // The workspace a window was dropped on, until Hyprland's window
-            // list says it's there (refreshed ~150 ms after the move). Placed
-            // from the list alone, the tile first slid back to its old
-            // workspace and only then to the new one
+            // Where a dropped window goes until Hyprland's list shows it there, so it doesn't slide back first
             property int pendingWorkspace: -1
             readonly property int shownWorkspace: pendingWorkspace !== -1 ? pendingWorkspace : (windowData?.workspace?.id ?? 1)
             onWindowDataChanged: if (windowData?.workspace?.id === pendingWorkspace) pendingWorkspace = -1
@@ -129,14 +126,12 @@ Item {
                     root.draggingFromWorkspace = -1
                     if (targetWorkspace !== -1 && targetWorkspace !== windowData?.workspace.id) {
                         Hyprland.dispatch(`hl.dsp.window.move({ workspace = "${targetWorkspace}", window = "address:${window.windowData?.address}", follow = false })`)
-                        // Slides straight to the workspace it was dropped on
                         window.pendingWorkspace = targetWorkspace
                         pendingTimeout.restart()
                         window.settle()
                     }
                     else {
-                        // Tiled: back to its place. Floating: stays where
-                        // it's dropped, which the move below makes its place
+                        // Tiled: back to its place; floating: stays where dropped
                         if (!window.windowData.floating) {
                             window.settle()
                             return
@@ -169,7 +164,6 @@ Item {
         }
     }
 
-    // Focused workspace indicator
     Rectangle {
         id: focusedWorkspaceIndicator
         property int rowIndex: root.monitor ? root.getWsRow(root.monitor.activeWorkspace?.id ?? 1) : 0

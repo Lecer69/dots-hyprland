@@ -30,13 +30,18 @@ Rectangle {
     width: parent ? parent.width : 0
     height: 56
     radius: 8
-    color: rowHover.hovered ? "#161616" : "transparent"
+    color: rowHover.hovered || root.activeFocus ? "#161616" : "transparent"
+
+    activeFocusOnTab: true
+    Keys.onSpacePressed: root.applyRequested()
+    Keys.onReturnPressed: root.applyRequested()
+    Keys.onEnterPressed: root.applyRequested()
 
     HoverHandler {
         id: rowHover
     }
 
-    // Declared before the content so the delete button's MouseArea stays on top
+    // Before the content, so the delete button's MouseArea is on top
     MouseArea {
         id: applyArea
 
@@ -73,7 +78,6 @@ Rectangle {
             }
         }
 
-        // Delete
         Text {
             text: "✕"
             font.pixelSize: 11

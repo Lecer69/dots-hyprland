@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.SystemTray
+import qs.common
 
 PanelWindow {
     id: root
@@ -11,11 +12,11 @@ PanelWindow {
     property bool isOpen: false
     property Item anchorItem: null
 
-    // Stay visible while the menu animates out
+    // Stays mapped while the menu fades out
     visible: isOpen || menuFrame.opacity > 0.01
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.namespace: "quickshell:traymenu"
 
@@ -24,6 +25,12 @@ PanelWindow {
         bottom: true
         left: true
         right: true
+    }
+
+    PanelKeyboard {
+        id: keyboard
+        open: root.isOpen
+        initialFocus: menuFrame
     }
 
     Shortcut {
@@ -44,13 +51,12 @@ PanelWindow {
     function openFor(item, anchorItem): void {
         _clearStack()
 
-        // No menu at all: don't open an empty frame
+        // No menu: don't open an empty frame
         if (!item || !item.menu || !root.screen) return
 
         root.trayItem = item
         root.anchorItem = anchorItem
 
-        // Open away from the bar edge, clamped on-screen
         root.reposition()
 
         var op = openerComponent.createObject(root)
@@ -64,8 +70,7 @@ PanelWindow {
         root.isOpen = true
     }
 
-    // Place the frame next to the tray icon, away from the bar edge, so it
-    // never covers the bar itself.
+    // Next to the tray icon, never over the bar
     function reposition(): void {
         if (!anchorItem || !root.screen) return
         const pos = anchorItem.mapToGlobal(0, 0)
@@ -116,6 +121,12 @@ PanelWindow {
         root.inSubmenu    = true
     }
 
+    // Submenus rebuild the entries, so focus moves to the new first one
+    function focusFirstEntry(): void {
+        menuFrame.forceActiveFocus()
+        Qt.callLater(() => KeyNav.step(menuFrame, true, true))
+    }
+
     function popSubmenu() {
         if (root.openerStack.length <= 1) return
 
@@ -148,9 +159,7 @@ PanelWindow {
         root.inSubmenu    = false
     }
 
-    // Backdrop: click anywhere outside to close. While open the window's input
-    // mask covers the screen so the click reaches this catcher; closed: the
-    // window is fully click-through and never blocks the bar.
+    // While open, the mask covers the screen so outside clicks close it; closed, it's click-through
     mask: Region {
         item: root.isOpen ? backdrop : null
     }
@@ -171,8 +180,18 @@ PanelWindow {
         border.width: 1
         border.color: "#242424"
 
-        // Entries load async — keep the frame placed correctly as it grows
+        // Entries load async; keep it placed as it grows
         onHeightChanged: if (root.isOpen) root.reposition()
+
+        // Down/Up go to the first/last entry; Left leaves a submenu
+        Keys.onDownPressed: KeyNav.step(menuFrame, true, true)
+        Keys.onUpPressed: KeyNav.step(menuFrame, false, true)
+        Keys.onLeftPressed: {
+            if (!root.inSubmenu)
+                return
+            root.popSubmenu()
+            root.focusFirstEntry()
+        }
 
         opacity: root.isOpen ? 1 : 0
         scale: root.isOpen ? 1 : 0.98
@@ -181,7 +200,6 @@ PanelWindow {
         Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-        // Click shield
         MouseArea {
             anchors.fill: parent
             onClicked: mouse.accepted = true
@@ -196,7 +214,6 @@ PanelWindow {
             anchors.margins: 6
             spacing: 2
 
-            // Submenu back button
             Item {
                 visible: root.inSubmenu
                 width: menuCol.width
@@ -248,7 +265,6 @@ PanelWindow {
                 color: "#242424"
             }
 
-            // App name header
             Item {
                 visible: !root.inSubmenu && (root.trayItem?.title ?? "") !== ""
                 width: menuCol.width
@@ -275,17 +291,38 @@ PanelWindow {
                 color: "#242424"
             }
 
-            // Menu entries
             Repeater {
                 id: menuRepeater
 
                 model: root.activeOpener ? root.activeOpener.children : null
 
                 delegate: Item {
+                    id: entry
+
                     required property QsMenuEntry modelData
+
+                    function activate(): void {
+                        if (entry.modelData.hasChildren) {
+                            root.pushSubmenu(entry.modelData)
+                            root.focusFirstEntry()
+                        } else {
+                            entry.modelData.triggered()
+                            root.close()
+                        }
+                    }
 
                     width: menuCol.width
                     height: modelData.isSeparator ? 9 : 32
+
+                    // Separators and disabled entries aren't stops
+                    readonly property bool listRow: true
+                    activeFocusOnTab: !modelData.isSeparator && modelData.enabled
+                    Keys.onUpPressed: KeyNav.step(entry, false)
+                    Keys.onDownPressed: KeyNav.step(entry, true)
+                    Keys.onSpacePressed: entry.activate()
+                    Keys.onReturnPressed: entry.activate()
+                    Keys.onEnterPressed: entry.activate()
+                    Keys.onRightPressed: if (entry.modelData.hasChildren) entry.activate()
 
                     Rectangle {
                         visible: modelData.isSeparator
@@ -302,7 +339,7 @@ PanelWindow {
                         visible: !modelData.isSeparator
                         anchors.fill: parent
                         radius: 8
-                        color: itemMouse.containsMouse ? "#262626" : "transparent"
+                        color: itemMouse.containsMouse || entry.activeFocus ? "#262626" : "transparent"
 
                         RowLayout {
                             anchors.fill: parent
@@ -362,7 +399,7 @@ PanelWindow {
                 }
             }
 
-            // Loading state: only while entries haven't arrived yet
+            // Until the entries arrive
             Item {
                 visible: menuRepeater.count === 0
                 width: menuCol.width

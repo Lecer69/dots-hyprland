@@ -7,8 +7,7 @@ Item {
     implicitWidth: icon.width
     implicitHeight: icon.height
 
-    // BlueZ state over D-Bus, updated as it changes: nothing to poll, and
-    // nothing to hang when bluetoothd isn't running
+    // BlueZ over D-Bus: nothing to poll
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property var connectedDevices: (root.adapter?.devices.values ?? []).filter(d => d.connected)
 

@@ -21,14 +21,14 @@ PanelFrame {
     property var _prevTicks: ({})
     property real _prevTotal: 0
     property int _shownCount: 0
+    readonly property Item initialFocus: search
 
     function formatMemory(bytes: real): string {
         if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + " GB"
         return Math.round(bytes / 1048576) + " MB"
     }
 
-    // CPU is the share of the whole machine since the previous sample, from
-    // the tick counters in /proc/<pid>/stat
+    // CPU share of the whole machine since the last sample, from /proc/<pid>/stat ticks
     function ingest(text: string): void {
         const parts = text.split("===\n")
         if (parts.length < 4) return
@@ -47,7 +47,7 @@ PanelFrame {
         const ticks = {}
         const rows = []
         for (const line of parts[3].split("\n")) {
-            // The name sits in parentheses and may contain spaces
+            // The name is in parentheses and may contain spaces
             const open = line.indexOf("(")
             const close = line.lastIndexOf(")")
             if (open < 0 || close < open) continue
@@ -72,7 +72,7 @@ PanelFrame {
         refreshModel()
     }
 
-    // Updates the model in place, so the list keeps its scroll position
+    // In place, so the list keeps its scroll position
     function refreshModel(): void {
         const query = root.filterText.toLowerCase()
         const rows = root._rows.filter(r => (root.showAll || r.own)
@@ -95,7 +95,7 @@ PanelFrame {
 
         root._shownCount = rows.length
 
-        // The selection follows the pid and goes away with the process
+        // The selection follows the pid and goes with the process
         const selected = rows.find(r => r.pid === root.selectedPid)
         if (!selected) root.selectedPid = -1
         root.selectedOwned = selected ? selected.own : false
@@ -106,13 +106,34 @@ PanelFrame {
             Quickshell.execDetached(["kill", "-" + name, String(root.selectedPid)])
     }
 
+    // Up from the first row goes back to the search
+    function stepSelection(delta: int): void {
+        let index = -1
+        for (let i = 0; i < procModel.count; i++) {
+            if (procModel.get(i).pid === root.selectedPid) {
+                index = i
+                break
+            }
+        }
+        if (index === 0 && delta < 0) {
+            search.forceActiveFocus()
+            return
+        }
+        const next = index < 0 ? 0 : Math.max(0, Math.min(procModel.count - 1, index + delta))
+        if (next >= procModel.count)
+            return
+        const row = procModel.get(next)
+        root.selectedPid = row.pid
+        root.selectedOwned = row.own
+        list.positionViewAtIndex(next, ListView.Contain)
+    }
+
     onSortKeyChanged: refreshModel()
     onFilterTextChanged: refreshModel()
     onShowAllChanged: refreshModel()
     onShownChanged: {
         if (shown) return
-        // Start over next time, so the first figures aren't an average over
-        // the time the panel was closed
+        // Start over, so the first figures don't average over the closed time
         root.selectedPid = -1
         root._prevTotal = 0
         root._prevTicks = {}
@@ -139,7 +160,6 @@ PanelFrame {
         }
     }
 
-    // GPUs, disks and network for the meters
     SystemStats {
         id: systemStats
 
@@ -185,7 +205,14 @@ PanelFrame {
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
+                    activeFocusOnTab: true
                     onTextChanged: root.filterText = text
+
+                    Keys.onDownPressed: {
+                        list.forceActiveFocus()
+                        if (root.selectedPid === -1)
+                            root.stepSelection(1)
+                    }
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -251,6 +278,14 @@ PanelFrame {
                 spacing: 1
                 boundsBehavior: Flickable.StopAtBounds
 
+                activeFocusOnTab: true
+                Keys.onUpPressed: root.stepSelection(-1)
+                Keys.onDownPressed: root.stepSelection(1)
+                Keys.onDeletePressed: event => {
+                    if (root.selectedOwned)
+                        root.sendSignal(event.modifiers & Qt.ShiftModifier ? "KILL" : "TERM")
+                }
+
                 delegate: Rectangle {
                     id: row
 
@@ -265,7 +300,7 @@ PanelFrame {
                     width: list.width
                     height: 30
                     radius: 6
-                    color: row.selected ? "#1f1f1f" : rowArea.containsMouse ? "#161616" : "transparent"
+                    color: row.selected ? (list.activeFocus ? "#2a2a2a" : "#1f1f1f") : rowArea.containsMouse ? "#161616" : "transparent"
 
                     RowLayout {
                         anchors.fill: parent
@@ -359,7 +394,13 @@ PanelFrame {
 
         horizontalAlignment: alignRight ? Text.AlignRight : Text.AlignLeft
         text: label + (root.sortKey === key ? " ▾" : "")
-        color: root.sortKey === key ? "#e6e6e6" : headerArea.containsMouse ? "#cccccc" : "#6b6b6b"
+        color: root.sortKey === key || header.activeFocus ? "#e6e6e6" : headerArea.containsMouse ? "#cccccc" : "#6b6b6b"
+        font.underline: header.activeFocus
+
+        activeFocusOnTab: true
+        Keys.onSpacePressed: root.sortKey = header.key
+        Keys.onReturnPressed: root.sortKey = header.key
+        Keys.onEnterPressed: root.sortKey = header.key
         font.pixelSize: 12
         font.weight: Font.Medium
 

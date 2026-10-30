@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Networking
 import qs.common
 
-// One Wi-Fi network: click to expand its actions
+// A network; click to expand its actions
 Rectangle {
     id: root
 
@@ -17,7 +17,7 @@ Rectangle {
     readonly property int signalLevel: Math.round(network.signalStrength * 100)
     readonly property bool secured: network.security !== WifiSecurityType.Open
         && network.security !== WifiSecurityType.Owe
-    // 802.1X needs more than a password, which connectWithPsk can't give it
+    // 802.1X needs more than a password
     readonly property bool enterprise: [WifiSecurityType.Wpa2Eap, WifiSecurityType.WpaEap,
         WifiSecurityType.Wpa3SuiteB192, WifiSecurityType.DynamicWep, WifiSecurityType.Leap].includes(network.security)
     readonly property bool unsupported: enterprise && !network.known
@@ -55,6 +55,14 @@ Rectangle {
             root.network.connect()
     }
 
+    // What its main button would do
+    function mainAction(): void {
+        if (root.network.connected)
+            root.network.disconnect()
+        else if (!root.unsupported)
+            root.connect()
+    }
+
     function iconName(): string {
         if (root.signalLevel <= 20) return "wifi-1b"
         if (root.signalLevel <= 40) return "wifi-2b"
@@ -65,7 +73,16 @@ Rectangle {
 
     implicitHeight: column.implicitHeight + 16
     radius: 8
-    color: root.expanded || rowArea.containsMouse ? "#161616" : "transparent"
+    color: root.expanded && root.activeFocus ? "#1f1f1f"
+        : root.expanded || rowArea.containsMouse || root.activeFocus ? "#161616" : "transparent"
+
+    readonly property bool listRow: true
+    activeFocusOnTab: true
+    Keys.onUpPressed: KeyNav.step(root, false)
+    Keys.onDownPressed: KeyNav.step(root, true)
+    Keys.onSpacePressed: root.toggleRequested()
+    Keys.onReturnPressed: root.mainAction()
+    Keys.onEnterPressed: root.mainAction()
 
     Connections {
         target: root.network

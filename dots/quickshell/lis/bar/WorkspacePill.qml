@@ -46,7 +46,6 @@ Item {
     width: 22
     height: 22
 
-    // Focused circle
     Rectangle {
         anchors.fill: parent
         radius: 12
@@ -59,7 +58,6 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 160 } }
     }
 
-    // Workspace number
     Text {
         id: wsNum
         anchors.centerIn: parent
@@ -73,7 +71,6 @@ Item {
         Behavior on color { ColorAnimation { duration: 160 } }
     }
 
-    // Workspace dot (end-4 style)
     Rectangle {
         id: wsDot
         anchors.centerIn: parent
@@ -89,7 +86,6 @@ Item {
         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     }
 
-    // App icon
     Item {
         id: iconContainer
 

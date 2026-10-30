@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.common
 
-// Mute toggle (the icon), volume slider and percentage for a PipeWire node
+// Mute icon, volume slider and percentage for a node
 RowLayout {
     id: root
 
@@ -13,6 +13,13 @@ RowLayout {
     readonly property bool muted: node && node.audio ? node.audio.muted : false
 
     spacing: 12
+
+    Keys.onPressed: event => {
+        if (event.key !== Qt.Key_M || !root.node || !root.node.audio)
+            return
+        root.node.audio.muted = !root.muted
+        event.accepted = true
+    }
 
     Image {
         Layout.preferredWidth: 16

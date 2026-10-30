@@ -36,7 +36,7 @@ HoverBar {
 
     function tryMatch() {
         if (!DdcMonitorState.ready) return
-        if (brightnessBar.ready || brightnessBar.busNum !== "") return // already resolved
+        if (brightnessBar.ready || brightnessBar.busNum !== "") return
 
         console.log("screen name:", brightnessBar.screen?.name)
 
@@ -92,7 +92,7 @@ HoverBar {
 
         stdout: SplitParser {
             onRead: data => {
-                if (brightnessBar.brightnessDevice !== "") return   // already picked one
+                if (brightnessBar.brightnessDevice !== "") return
                 const parts = data.trim().split(",")
                 // device,class,current,percent,max
                 if (parts.length >= 5 && parts[1] === "backlight") {

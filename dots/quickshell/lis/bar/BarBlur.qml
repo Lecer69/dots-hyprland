@@ -4,18 +4,13 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import qs.settings.data
 
-// "Pill Blur". A Hyprland layer rule (hyprland/rules.lua) blurs behind the
-// bar's namespace, but only while Hyprland's blur is on, and the config
-// keeps it off. This turns it on at runtime while the setting is on, and
-// back to what it was after; windows stay sharp, since a window rule opts
-// them all out of blur. A config reload resets it, so it's applied again.
+// Pill Blur: Hyprland only blurs layers while its blur is on, so this turns it on at runtime
 Scope {
     id: root
 
     readonly property bool enabled: SettingsData.s.bar.pillBlur
 
-    // Lua run in Hyprland's config state, which keeps the value blur had
-    // before in a global
+    // Keeps blur's earlier value in a Hyprland global
     readonly property string enableCode: 'if lis_blur_was == nil then lis_blur_was = hl.get_config("decoration.blur.enabled") end '
         + 'hl.config({ decoration = { blur = { enabled = true } } })'
     readonly property string disableCode: 'if lis_blur_was ~= nil then hl.config({ decoration = { blur = { enabled = lis_blur_was } } }) end '
@@ -23,7 +18,7 @@ Scope {
 
     property bool _again: false
 
-    // One hyprctl at a time, so quick toggles can't land out of order
+    // One hyprctl at a time, so toggles stay in order
     function apply(): void {
         if (runner.running) {
             root._again = true
@@ -34,7 +29,7 @@ Scope {
     }
 
     onEnabledChanged: apply()
-    // Also when off: undoes blur a crashed shell may have left on
+    // Also when off: undoes blur left on by a crash
     Component.onCompleted: apply()
 
     Process {

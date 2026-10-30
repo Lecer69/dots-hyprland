@@ -13,6 +13,16 @@ Item {
     width: 36
     height: 20
 
+    function flip(): void {
+        root.checked = !root.checked
+        root.toggled(root.checked)
+    }
+
+    activeFocusOnTab: true
+    Keys.onSpacePressed: root.flip()
+    Keys.onReturnPressed: root.flip()
+    Keys.onEnterPressed: root.flip()
+
     Rectangle {
         anchors.fill: parent
         radius: height / 2
@@ -32,9 +42,6 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            root.checked = !root.checked
-            root.toggled(root.checked)
-        }
+        onClicked: root.flip()
     }
 }

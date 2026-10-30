@@ -44,7 +44,6 @@ Column {
             Repeater {
                 model: WorkspaceOverviewSettings.columns
 
-                // Workspace cell
                 Rectangle {
                     id: workspace
 

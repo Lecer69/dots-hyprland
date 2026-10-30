@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Rectangle {
     id: root
@@ -13,7 +14,16 @@ Rectangle {
     Layout.fillWidth: true
     height: 52
     radius: 8
-    color: selected ? "#1f1f1f" : (hover.containsMouse ? "#161616" : "transparent")
+    color: selected ? (root.activeFocus ? "#262626" : "#1f1f1f")
+        : (hover.containsMouse || root.activeFocus ? "#161616" : "transparent")
+
+    readonly property bool listRow: true
+    activeFocusOnTab: true
+    Keys.onUpPressed: KeyNav.step(root, false)
+    Keys.onDownPressed: KeyNav.step(root, true)
+    Keys.onSpacePressed: root.clicked()
+    Keys.onReturnPressed: root.clicked()
+    Keys.onEnterPressed: root.clicked()
 
     RowLayout {
         anchors.fill: parent

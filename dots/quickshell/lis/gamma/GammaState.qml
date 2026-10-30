@@ -10,7 +10,7 @@ QtObject {
     property real contrast:   1.0
     property real saturation: 1.0
 
-    // { id: real, name: string, gamma: real, brightness: real, contrast: real, saturation: real }
+    // { id, name, gamma, brightness, contrast, saturation }
     property var presets: []
     property bool _loaded: false
 
@@ -79,7 +79,7 @@ QtObject {
         command: []
     }
 
-    // Atomic writes (temp file + rename), done before setText returns
+    // Atomic writes, done before setText returns
     property FileView _store: FileView {
         path: Quickshell.env("HOME") + "/.config/lis/gamma-presets.json"
         blockWrites: true

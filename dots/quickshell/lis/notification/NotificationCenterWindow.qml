@@ -3,16 +3,19 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.common
 
 PanelWindow {
     id: root
 
     property bool shown: false
 
+    onShownChanged: if (shown) panel.showNewest()
+
     visible: shown
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
     WlrLayershell.exclusiveZone: -1
 
     anchors {
@@ -22,12 +25,19 @@ PanelWindow {
         right: true
     }
 
+    PanelKeyboard {
+        id: keyboard
+        open: root.shown
+        initialFocus: panel.initialFocus
+    }
+
     Shortcut {
         sequences: ["Escape"]
         onActivated: root.shown = false
     }
 
     NotificationCenterPanel {
+        id: panel
         anchors.centerIn: parent
         width: 460
         height: 580

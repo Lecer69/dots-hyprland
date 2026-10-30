@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-# Opens the desktop's file chooser through the XDG portal and prints the path
-# of the image picked. Exits 1 when the dialog is cancelled, 2 on an error.
-#
-# usage: pick-image.py [title]
-#
-# The portal closes the dialog once the caller leaves the bus, so the call and
-# the wait for its answer have to share one connection: gdbus can't do that.
+# Prints the image picked in the portal's file chooser; exit 1 is cancelled, 2 an error
+# The call and its answer share one D-Bus connection, or the portal closes the dialog
 
 import os
 import sys
@@ -46,8 +41,7 @@ def main():
         bus.signal_subscribe(PORTAL, "org.freedesktop.portal.Request", "Response", path,
                              None, Gio.DBusSignalFlags.NONE, on_response)
 
-    # The request's path is known up front, so the answer can't arrive before
-    # the subscription
+    # The request path is known up front, so the answer can't beat the subscription
     token = "lis%d" % os.getpid()
     sender = bus.get_unique_name()[1:].replace(".", "_")
     expected = "%s/request/%s/%s" % (PORTAL_PATH, sender, token)

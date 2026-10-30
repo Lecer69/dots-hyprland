@@ -14,11 +14,11 @@ Rectangle {
 
     signal dismissed
 
-    // Tracked by the server while this card shows it; null once closed
+    // Null once closed
     property var notification
     property int timeout: (root.notification && root.notification.expireTimeout > 0) ? root.notification.expireTimeout : (SettingsData.s.general.notificationTimeout * 1000)
 
-    // "default" is invoked by clicking the card, not shown as a button
+    // "default" is the card click, not a button
     readonly property var defaultAction: (root.notification?.actions ?? []).find(a => a.identifier === "default") ?? null
     readonly property var buttonActions: (root.notification?.actions ?? []).filter(a => a.identifier !== "default")
 
@@ -29,14 +29,13 @@ Rectangle {
         root.dismissed()
     }
 
-    // Covers closes by the app, and the ones below
+    // Covers closes by the app
     Connections {
         target: root.notification
         function onClosed() { root._remove() }
     }
 
-    // Closing the notification removes (destroys) this card before the
-    // call returns, so nothing of the card may be touched after it
+    // Closing destroys this card before returning, so touch nothing after
     function _close(expired) {
         const notification = root.notification
         if (!notification) root._remove()
@@ -45,8 +44,7 @@ Rectangle {
     }
 
     function _invoke(action) {
-        // invoke() closes the notification unless it's resident; a resident
-        // one (and its card) stays
+        // invoke() closes it unless it's resident
         const resident = root.notification?.resident ?? false
         action.invoke()
         if (resident) dismissTimer.restart()
@@ -91,7 +89,7 @@ Rectangle {
             Item {
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 44
-                // Centered on the text, which can be taller (2-line message)
+                // The text can be two lines
                 Layout.alignment: Qt.AlignVCenter
                 visible: iconImage.status === Image.Ready || hintImage.status === Image.Ready
 
@@ -137,7 +135,6 @@ Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 spacing: 3
 
-                // App · summary
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 6
@@ -214,7 +211,7 @@ Rectangle {
             }
         }
 
-        // Equal-width buttons along the bottom; only cards with actions
+        // Only cards with actions
         RowLayout {
             Layout.fillWidth: true
             spacing: 6

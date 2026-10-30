@@ -1,16 +1,18 @@
 import QtQuick
+import qs.common
 
-// A task: drag handle, check, its text (wrapping, so a long task can be read
-// whole), the name of its list when all tasks are shown, a star and ✕
+// A task: drag handle, check, wrapping text, its list's name, star and ✕
 Rectangle {
     id: root
 
     required property var task
-    // Shown before the star; empty for none
+    // Empty for none
     property string listName: ""
     property bool dragged: false
-    // The item the drag positions are given in
+    // The item drag positions are given in
     property Item dragSpace: null
+    // Gets the keyboard on Up from the first task
+    property Item above: null
 
     signal dragStarted(point p)
     signal dragMoved(point p)
@@ -20,7 +22,23 @@ Rectangle {
 
     height: Math.max(root.band, label.y * 2 + label.height)
     radius: 8
-    color: root.dragged ? "#1f1f1f" : hover.hovered ? "#161616" : "transparent"
+    color: root.dragged ? "#1f1f1f" : hover.hovered || root.activeFocus ? "#161616" : "transparent"
+
+    readonly property string listRow: "tasks"
+    activeFocusOnTab: true
+    Keys.onUpPressed: {
+        if (!KeyNav.step(root, false) && root.above)
+            root.above.forceActiveFocus()
+    }
+    Keys.onDownPressed: KeyNav.step(root, true)
+    Keys.onSpacePressed: TodoService.toggleDone(root.task.id)
+    Keys.onDeletePressed: {
+        const id = root.task.id
+        // Focus moves on before the row goes
+        if (!KeyNav.step(root, true) && !KeyNav.step(root, false) && root.above)
+            root.above.forceActiveFocus()
+        TodoService.removeTask(id)
+    }
 
     FontMetrics {
         id: metrics
@@ -32,7 +50,6 @@ Rectangle {
         id: hover
     }
 
-    // Drag handle
     Item {
         x: 8
         width: 18
@@ -66,7 +83,6 @@ Rectangle {
         }
     }
 
-    // Check
     Rectangle {
         x: 36
         y: (root.band - height) / 2
@@ -117,7 +133,6 @@ Rectangle {
             font.pixelSize: 12
         }
 
-        // Star / important
         Item {
             width: 26
             height: parent.height
@@ -142,7 +157,6 @@ Rectangle {
             }
         }
 
-        // Delete
         Item {
             width: 26
             height: parent.height

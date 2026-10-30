@@ -12,11 +12,11 @@ QtObject {
     property int health: 100
     property bool healthAvailable: false
 
-    // "performance" | "balanced" | "power-saver"
+    // "performance", "balanced" or "power-saver"
     property string profile: "balanced"
     property bool profileAvailable: false
 
-    // list of profile names that actually exist on this system, e.g. ["balanced", "power-saver"]
+    // The profiles this system has
     property var availableProfiles: []
     readonly property bool hasPerformance: availableProfiles.indexOf("performance") !== -1
     readonly property bool hasPowerSaver: availableProfiles.indexOf("power-saver") !== -1
@@ -71,7 +71,7 @@ QtObject {
         }
     }
 
-    // Health = energy_full / energy_full_design (falls back to charge_*)
+    // Health is energy_full / energy_full_design (or charge_*)
     property Process healthProc: Process {
         command: ["bash", "-c",
             "for B in BAT0 BAT1; do " +
@@ -113,7 +113,7 @@ QtObject {
         }
     }
 
-    // Parses lines like "  performance:" or "* balanced:" into profile names
+    // Lines like "  performance:" or "* balanced:"
     property Process profileListProc: Process {
         command: ["bash", "-c",
             "powerprofilesctl list 2>/dev/null | grep -E '^[\\* ] *[a-zA-Z-]+:' | sed -E 's/^[\\* ]+//; s/:$//'"]

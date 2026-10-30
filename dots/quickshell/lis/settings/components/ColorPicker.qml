@@ -9,7 +9,7 @@ Item {
     id: root
 
     property string value: "#5c8aff"
-    // When set, the popup offers a Reset back to it
+    // When set, the popup offers a Reset to it
     property string defaultValue: ""
     signal selected(string val)
 
@@ -25,7 +25,7 @@ Item {
 
     function hexToHsv(hex) {
         let h = hex.replace("#", "")
-        // Eight digits are #AARRGGBB, the way QML reads colors
+        // #AARRGGBB, the way QML reads colours
         if (h.length === 8) {
             root.alpha = parseInt(h.substring(0, 2), 16) / 255
             h = h.substring(2)
@@ -82,13 +82,27 @@ Item {
         if (!popup.opened) hexToHsv(root.value)
     }
 
-    // Trigger button: swatch + hex label
     Rectangle {
         id: trigger
         width: row.implicitWidth + 16
         height: 28
         radius: 6
-        color: mouseArea.containsMouse || popup.opened ? "#1c1c1c" : "transparent"
+        color: mouseArea.containsMouse || popup.opened || trigger.activeFocus ? "#1c1c1c" : "transparent"
+
+        // Opened from the keyboard: straight into the hex field, focus back here after
+        property bool openedByKeys: false
+
+        function openForKeys(): void {
+            trigger.openedByKeys = true
+            popup.open()
+            hexField.forceActiveFocus()
+            hexField.selectAll()
+        }
+
+        activeFocusOnTab: true
+        Keys.onSpacePressed: trigger.openForKeys()
+        Keys.onReturnPressed: trigger.openForKeys()
+        Keys.onEnterPressed: trigger.openForKeys()
 
         Row {
             id: row
@@ -121,11 +135,10 @@ Item {
         }
     }
 
-    // popup with full SV square + hue strip + hex input
     Popup {
         id: popup
         y: trigger.height + 6
-        // Open leftwards: the trigger sits at the right edge of its row
+        // Opens leftwards: the trigger is at its row's right edge
         x: trigger.width - width
         width: 240
         padding: 14
@@ -140,18 +153,21 @@ Item {
             layer.enabled: true
         }
 
-        // Opens upwards when the window has no room below the trigger
+        // Opens upwards when there's no room below
         onAboutToShow: {
             const bottom = trigger.mapToItem(null, 0, trigger.height).y
             popup.y = bottom + implicitHeight + 6 > root.Window.height ? -implicitHeight - 6 : trigger.height + 6
         }
         onOpened: hexToHsv(root.value)
-        onClosed: root.commit()
+        onClosed: {
+            root.commit()
+            if (trigger.openedByKeys) trigger.forceActiveFocus()
+            trigger.openedByKeys = false
+        }
 
         contentItem: ColumnLayout {
             spacing: 12
 
-            // SV square
             Item {
                 id: svSquare
                 Layout.fillWidth: true
@@ -210,7 +226,6 @@ Item {
                 }
             }
 
-            // Hue strip
             Item {
                 id: hueStrip
                 Layout.fillWidth: true
@@ -257,7 +272,6 @@ Item {
                 }
             }
 
-            // Alpha strip
             Item {
                 id: alphaStrip
                 Layout.fillWidth: true
@@ -301,7 +315,6 @@ Item {
                 }
             }
 
-            // Hex input + preview
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
@@ -366,7 +379,6 @@ Item {
                 }
             }
 
-            // Quick presets row
             Row {
                 Layout.fillWidth: true
                 spacing: 6

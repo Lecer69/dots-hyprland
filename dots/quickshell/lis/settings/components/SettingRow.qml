@@ -4,7 +4,8 @@ import qs.settings.data
 import qs.settings.pages
 import qs.settings
 
-Item {
+// Lit while its control has keyboard focus
+FocusScope {
     id: root
 
     default property alias content: controlSlot.data
@@ -13,6 +14,12 @@ Item {
 
     Layout.fillWidth: true
     implicitHeight: description !== "" ? 58 : 44
+
+    Rectangle {
+        anchors.fill: parent
+        radius: 8
+        color: root.activeFocus ? "#161616" : "transparent"
+    }
 
     RowLayout {
         anchors { fill: parent; leftMargin: 16; rightMargin: 16 }

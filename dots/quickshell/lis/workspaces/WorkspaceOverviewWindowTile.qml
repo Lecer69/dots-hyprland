@@ -54,8 +54,7 @@ Item {
     x: initX
     y: initY
 
-    // A drag leaves the tile where the mouse let go, until the window's data
-    // next changes; this slides it to its place now
+    // Slides a dropped tile to its place now, not on the next data change
     function settle(): void {
         root.x = Qt.binding(() => root.initX)
         root.y = Qt.binding(() => root.initY)

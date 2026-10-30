@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import qs.settings.components
 import qs.settings.data
 import qs.settings.pages
+import qs.common
 
 PanelWindow {
     id: settingsWindow
@@ -15,7 +16,7 @@ PanelWindow {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
 
     anchors {
         top: true
@@ -24,12 +25,19 @@ PanelWindow {
         right: true
     }
 
+    PanelKeyboard {
+        id: keyboard
+        open: settingsWindow.shown
+        initialFocus: settingsPanel.initialFocus
+    }
+
     Shortcut {
         sequences: ["Escape"]
         onActivated: settingsWindow.shown = false
     }
 
     SettingsPanel {
+        id: settingsPanel
         anchors.centerIn: parent
         width: 780
         height: 560

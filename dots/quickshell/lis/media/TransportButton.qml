@@ -12,12 +12,26 @@ Item {
     property bool accent: false
     property bool active: false
     property bool enabled: true
+    // Defaults are the plain grey look
+    property color accentColor: "#e6e6e6"
+    property color accentIconColor: "#0f0f0f"
+    property color activeColor: "#1f1f1f"
+    property color hoverColor: "#161616"
+    property color iconColor: "#bbbbbb"
+    property color activeIconColor: "#ffffff"
     signal clicked()
 
     readonly property bool showPrimary: !(iconAlt !== "" && useAlt)
 
     width: size
     height: size
+
+    readonly property bool lit: (mouse.containsMouse || root.activeFocus) && root.enabled
+
+    activeFocusOnTab: root.enabled
+    Keys.onSpacePressed: if (root.enabled) root.clicked()
+    Keys.onReturnPressed: if (root.enabled) root.clicked()
+    Keys.onEnterPressed: if (root.enabled) root.clicked()
 
     opacity: root.enabled ? 1.0 : 0.35
     Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -28,9 +42,9 @@ Item {
         anchors.fill: parent
         radius: width / 2
         color: root.accent
-            ? (mouse.pressed ? "#cccccc" : mouse.containsMouse && root.enabled ? "#ffffff" : "#e6e6e6")
-            : root.active ? "#1f1f1f"
-            : (mouse.containsMouse && root.enabled ? "#161616" : "transparent")
+            ? (mouse.pressed ? Qt.darker(root.accentColor, 1.15) : root.lit ? Qt.lighter(root.accentColor, 1.1) : root.accentColor)
+            : root.active ? (root.activeFocus ? Qt.lighter(root.activeColor, 1.25) : root.activeColor)
+            : (root.lit ? root.hoverColor : "transparent")
     }
 
     Item {
@@ -38,7 +52,6 @@ Item {
         width: root.iconSize
         height: root.iconSize
 
-        // Primary icon
         Image {
             id: iconPrimary
 
@@ -57,13 +70,13 @@ Item {
             anchors.fill: iconPrimary
             source: iconPrimary
             colorization: 1.0
-            colorizationColor: root.accent ? "#0f0f0f" : root.active ? "#ffffff" : "#bbbbbb"
+            colorizationColor: root.accent ? root.accentIconColor : root.active ? root.activeIconColor : root.iconColor
             opacity: root.showPrimary ? 1 : 0
 
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
         }
 
-        // Secondary icon (crossfades in when useAlt is set)
+        // Crossfades in when useAlt is set
         Image {
             id: iconSecondary
 
@@ -82,7 +95,7 @@ Item {
             anchors.fill: iconSecondary
             source: iconSecondary
             colorization: 1.0
-            colorizationColor: root.accent ? "#0f0f0f" : root.active ? "#ffffff" : "#bbbbbb"
+            colorizationColor: root.accent ? root.accentIconColor : root.active ? root.activeIconColor : root.iconColor
             opacity: root.showPrimary ? 0 : 1
 
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }

@@ -106,8 +106,7 @@ Item {
                     }
 
                     onClicked: mouse => {
-                        // Real click position in global coordinates: apps like
-                        // Discord use it to place their tray window correctly
+                        // Real click position: apps like Discord place their menu with it
                         const g = trayItem.mapToGlobal(mouse.x, mouse.y)
                         if (mouse.button === Qt.LeftButton) {
                             trayItem.modelData.activate(Qt.point(g.x, g.y))

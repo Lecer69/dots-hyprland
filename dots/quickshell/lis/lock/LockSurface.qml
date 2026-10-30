@@ -18,15 +18,14 @@ Item {
     property string wallpaperPath: ""
     property var blurCache: null
 
-    // Cache entry for this wallpaper + blur params ("" when blur is off)
+    // Cache entry for this wallpaper and blur ("" when blur is off)
     readonly property string _blurName: (blurCache !== null && enableBlur && wallpaperPath.length > 0)
         ? blurCache.nameFor(wallpaperPath, blurSize, blurPasses) : ""
 
-    // Usually primed by ScreenLock before the lock even starts, so the
-    // first frame already has it; "" until a blurred image exists
+    // Usually primed before the lock starts; "" until it exists
     readonly property string blurredSource: _blurName.length > 0 ? (blurCache.urls[_blurName] ?? "") : ""
 
-    // Coalesced: settings can change several params in one go
+    // Coalesced: settings can change several at once
     on_BlurNameChanged: Qt.callLater(root._requestBlur)
 
     function _requestBlur() {
@@ -41,8 +40,7 @@ Item {
     readonly property color red: '#ea7496'
     readonly property color yellow: '#f9da98'
 
-    // Fade only if the blur shows up after the surface appeared; when it's
-    // ready at creation (the normal case) it's there in the first frame
+    // Fades only when the blur arrives after the surface
     property bool _fadeEnabled: false
 
     Component.onCompleted: {
@@ -62,8 +60,7 @@ Item {
             }
         }
 
-        // The cached blur is stored downscaled, so decoding is ~1ms:
-        // load synchronously instead of showing an empty first frame
+        // Cached small, so a synchronous load costs ~1 ms and avoids an empty first frame
         Image {
             id: wallpaperImage
             anchors.fill: parent
@@ -73,8 +70,7 @@ Item {
             source: root.blurredSource
         }
 
-        // Same result as BrightnessContrast with contrast 0 (it mixes toward
-        // black/white by |brightness - 1|), without an extra shader pass
+        // Same as BrightnessContrast with contrast 0, without another shader pass
         Rectangle {
             anchors.fill: parent
             color: root.brightness < 1 ? "black" : "white"
@@ -89,7 +85,6 @@ Item {
         visible: root.enableBlur
     }
 
-    // Clock and Date
     Column {
         id: clockCol
         anchors {
@@ -99,7 +94,6 @@ Item {
         }
         spacing: 6
 
-        // Time
         Item {
             id: timeWrap
             anchors.horizontalCenter: parent.horizontalCenter
@@ -119,7 +113,6 @@ Item {
             }
         }
 
-        // Date
         Item {
             id: dateWrap
             anchors.horizontalCenter: parent.horizontalCenter
@@ -149,7 +142,6 @@ Item {
         }
     }
 
-    // Error text
     Text {
         id: errorText
         anchors {
@@ -180,7 +172,6 @@ Item {
         }
     }
 
-    // Caps lock warning
     Row {
         id: capsRow
         anchors {
@@ -224,7 +215,6 @@ Item {
         }
         spacing: 10
 
-        // Username and keyboard layout
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 12
@@ -279,7 +269,6 @@ Item {
             }
         }
 
-        // Password input
         Item {
             id: inputRow
             anchors.horizontalCenter: parent.horizontalCenter
@@ -319,7 +308,6 @@ Item {
         }
     }
 
-    // Key capture
     Item {
         id: keyItem
         anchors.fill: parent
@@ -334,7 +322,6 @@ Item {
         onClicked: keyItem.forceActiveFocus()
     }
 
-    // Battery status (bottom-left)
     Row {
         id: battRow
         anchors {
@@ -376,7 +363,6 @@ Item {
                 layer.textureSize: Qt.size(battRow.sz * 2, battRow.sz * 2)
                 vendorExtensionsEnabled: true
 
-                // track
                 ShapePath {
                     strokeColor: Qt.rgba(1, 1, 1, 0.16)
                     strokeWidth: 3
@@ -392,7 +378,6 @@ Item {
                     }
                 }
 
-                // filled arc
                 ShapePath {
                     strokeColor: battRow.arcColor()
                     strokeWidth: 3
@@ -409,7 +394,6 @@ Item {
                 }
             }
 
-            // charging dot
             Rectangle {
                 visible: BatteryData.charging
                 width: 7
@@ -431,7 +415,6 @@ Item {
         }
     }
 
-    // Power / reboot controls
     Row {
         id: powerRow
         anchors {
@@ -470,7 +453,6 @@ Item {
                 opacity: 0.9
             }
 
-            // Tooltip / confirm label
             Rectangle {
                 visible: mouseArea.containsMouse
                 anchors {

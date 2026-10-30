@@ -2,10 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// GPUs, disks, network traffic, CPU temperature and uptime, sampled by
-// scripts/system-stats.sh every 2 s while running; CPU and memory use come
-// from ResourceUsage. The task manager and the desktop overview each run one
-// while they're shown.
+// GPUs, disks, network, CPU temperature and uptime from scripts/system-stats.sh, every 2 s
 Scope {
     id: root
 
@@ -14,20 +11,19 @@ Scope {
     // Seconds
     property real uptime: 0
     property string netInterface: ""
-    // Bytes per second, -1 until two samples can be compared
+    // Bytes per second, -1 until two samples
     property real downRate: -1
     property real upRate: -1
     // { mount, size, used } in bytes
     property var disks: []
     // °C, -1 without a sensor
     property real cpuTemp: -1
-    // { name, off, usage (0-1), memUsed, memTotal (MiB), temp (°C) }, with -1
-    // for what a GPU doesn't report; an "off" GPU is powered down
+    // { name, off, usage (0-1), memUsed, memTotal (MiB), temp (°C) }, -1 when unknown
     property var gpus: []
 
     property var _lastNet: null
 
-    // Rates shouldn't average over the time it wasn't running
+    // Rates shouldn't average over the stopped time
     onRunningChanged: {
         root._lastNet = null;
         root.downRate = -1;
@@ -57,8 +53,7 @@ Scope {
         return isNaN(n) ? -1 : n;
     }
 
-    // "NVIDIA GeForce RTX 3050" and lspci's "GA106 [Geforce RTX 3050]" both
-    // become "RTX 3050"
+    // "NVIDIA GeForce RTX 3050" and "GA106 [Geforce RTX 3050]" both become "RTX 3050"
     function _gpuName(text: string): string {
         const bracket = text.match(/\[(.+)\]/);
         const name = (bracket ? bracket[1] : text).replace(/^(NVIDIA|AMD)\s+/i, "").replace(/^GeForce\s+/i, "").trim();

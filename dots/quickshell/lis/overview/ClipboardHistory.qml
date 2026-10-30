@@ -5,25 +5,19 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// cliphist history for the launcher. Kept loaded and current (cliphist's
-// database is watched, and `cliphist list` takes a few ms), so the clipboard
-// view opens instantly. Image entries get small thumbnails, made once per
-// entry in the background and kept in a disk cache.
+// cliphist history for the launcher, kept current so the clipboard view opens instantly
 Singleton {
     id: root
 
     readonly property string _cacheHome: Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")
-    // cliphist's default database; only watched for changes, never read
+    // Only watched for changes, never read
     readonly property string dbPath: Quickshell.env("CLIPHIST_DB_PATH") || (root._cacheHome + "/cliphist/db")
     readonly property string thumbDir: root._cacheHome + "/lis/clipthumbs"
 
-    // Newest first. `lines` are `cliphist list` lines ("<id>\t<preview>"),
-    // which views use as model values as-is (unique, cheap to diff);
-    // `search` has each line's lowercased search text. One object, so
-    // bindings never see one updated without the other.
+    // Newest first: `cliphist list` lines and their search text, in one object so they update together
     property var history: ({ lines: [], search: [] })
 
-    // id -> thumbnail url, once the thumbnail is on disk
+    // id -> thumbnail url, once on disk
     property var thumbs: ({})
 
     function idOf(line) {
@@ -54,8 +48,7 @@ Singleton {
         return out
     }
 
-    // Puts an entry back on the clipboard. wl-copy forks and keeps serving
-    // it, so it outlives the launcher (and shell reloads).
+    // wl-copy forks and keeps serving it, so it outlives the launcher
     function copy(line) {
         if (typeof line !== "string") return
         const id = root.idOf(line)
@@ -68,9 +61,7 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", 'id="$1"; shift; cliphist decode "$id" | wl-copy "$@"', "sh", id].concat(type))
     }
 
-    // The launcher calls this at startup and when the clipboard view opens;
-    // the database watch below keeps the history current in between. Cheap,
-    // and a no-op for views when nothing changed.
+    // At startup and when the view opens; the database watch covers the rest
     function refresh() {
         if (listProc.running) root._relist = true
         else listProc.running = true
@@ -98,8 +89,7 @@ Singleton {
         }
     }
 
-    // Each copy writes the database, usually several times in a burst (and
-    // once per wl-paste watcher), so changes are batched
+    // Copies write in bursts, so changes are batched
     FileView {
         path: root.dbPath
         preload: false
@@ -139,13 +129,12 @@ Singleton {
         root._syncThumbs(images)
     }
 
-    // The name carries the image size too, so if ids ever restart (a new
-    // database), a reused id can't pick up a stale thumbnail
+    // Includes the size, so a reused id can't pick up a stale thumbnail
     function _thumbName(id, info) {
         return id + "-" + info.width + "x" + info.height + ".png"
     }
 
-    property string _thumbSet: "\n" // image entries the cache was last synced to
+    property string _thumbSet: "\n" // image entries last synced
     property var _thumbJob: []
     property bool _thumbRerun: false
     property var _thumbsSeen: ({}) // reported by the running job
@@ -178,9 +167,7 @@ Singleton {
         return keys.every(k => root.thumbs[k] === map[k])
     }
 
-    // Args: dir, then id/name pairs (newest first). Makes missing
-    // thumbnails, prints "OK <id> <name>" per thumbnail on disk, and deletes
-    // the ones whose entry left the history.
+    // Args: dir, then id/name pairs; makes missing thumbnails, prints "OK <id> <name>", deletes stale ones
     readonly property string _thumbScript: `
 dir="$1"; shift
 mkdir -p "$dir" || exit 1
@@ -226,7 +213,7 @@ done
         }
 
         onExited: {
-            // Exactly this job's set: drops thumbnails of deleted entries
+            // Exactly this job's set, so deleted entries' thumbnails go
             if (!root._sameThumbs(root._thumbsSeen)) root.thumbs = root._thumbsSeen
             if (root._thumbRerun) {
                 root._thumbRerun = false

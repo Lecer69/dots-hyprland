@@ -5,28 +5,25 @@ import QtQuick.Layouts
 import Quickshell
 import qs.common
 
-// The to-do tasks, sorted into lists: the lists on the left, All tasks
-// first, and the open list's tasks on the right. A task's text wraps, so a
-// long one can be read whole. Dropping a dragged task on a list moves it
-// there, and on All tasks takes it out of its list.
+// Tasks by list: the lists on the left, the open list's tasks on the right; drop a task on a list to move it
 PanelFrame {
     id: root
 
     property bool shown: false
-    // The open list's id, -1 for All tasks
+    // -1 for All tasks
     property real selectedList: -1
     property bool deleteArmed: false
-    // While a task is dragged over the lists: the id of the one under it
+    // While dragging over the lists: the one under it
     property var dropList: null
-    // The lists' top row and the open list's title block share a height, so
-    // the lines under them line up
+    // Shared with the title block so the lines below align
     readonly property int topRowHeight: 52
 
     readonly property var selected: TodoService.lists.find(l => l.id === root.selectedList) ?? null
     readonly property real viewList: root.selected ? root.selectedList : -1
-    // The open list's tasks, starred first
+    // Starred first
     readonly property var tasks: TodoService.listed(root.viewList)
     readonly property int doneCount: root.tasks.filter(t => t.done).length
+    readonly property Item initialFocus: input
 
     title: "To-do"
     subtitle: {
@@ -46,7 +43,7 @@ PanelFrame {
         return list ? (list.name.trim() || "Untitled list") : "";
     }
 
-    // Drops the open list if it was left without a name or tasks
+    // Drops the open list if left without a name or tasks
     function leave(): void {
         const list = root.selected;
         if (list && list.name.trim() === "" && !TodoService.tasks.some(t => t.list === list.id))
@@ -78,7 +75,7 @@ PanelFrame {
             return;
 
         input.text = "";
-        // New tasks go last, like `todo add`, so bring them into view
+        // New tasks go last, so bring them into view
         Qt.callLater(() => {
             column.forceLayout();
             flick.contentY = Math.max(0, flick.contentHeight - flick.height);
@@ -96,7 +93,7 @@ PanelFrame {
         root.select(-1);
     }
 
-    // The id of the list under p (in the panel), null for none
+    // Null for none
     function listAt(p: point): var {
         const q = lists.mapFromItem(root, p.x, p.y);
         if (q.x < 0 || q.y < 0 || q.x > lists.width || q.y > lists.height)
@@ -106,7 +103,7 @@ PanelFrame {
         return row ? row.modelData.id : null;
     }
 
-    // A task moves among the starred ones, or among the rest
+    // Moves among the starred tasks, or among the rest
     function dragStart(task: var, p: point): void {
         const shown = root.tasks;
         const starred = shown.filter(t => t.important).length;
@@ -114,7 +111,7 @@ PanelFrame {
             task.important ? 0 : starred, task.important ? starred - 1 : shown.length - 1);
     }
 
-    // Over the lists, the task stays where it is in its own
+    // Over the lists, the task stays put in its own
     function dragMove(p: point): void {
         root.dropList = root.listAt(p);
         if (root.dropList === null)
@@ -150,7 +147,6 @@ PanelFrame {
         anchors.bottomMargin: 24
         spacing: 24
 
-        // The lists
         ColumnLayout {
             Layout.preferredWidth: 240
             Layout.fillWidth: false
@@ -206,6 +202,7 @@ PanelFrame {
                     id: row
 
                     required property var modelData
+                    required property int index
                     readonly property var tasks: TodoService.listed(row.modelData.id)
                     readonly property int done: row.tasks.filter(t => t.done).length
                     readonly property bool isSelected: row.modelData.id === root.viewList
@@ -214,7 +211,16 @@ PanelFrame {
                     width: ListView.view.width
                     height: 58
                     radius: 8
-                    color: row.isDropTarget ? "#262626" : row.isSelected ? "#1f1f1f" : rowArea.containsMouse ? "#161616" : "transparent"
+                    color: row.isDropTarget ? "#262626"
+                        : row.isSelected ? (row.activeFocus ? "#262626" : "#1f1f1f")
+                        : rowArea.containsMouse || row.activeFocus ? "#161616" : "transparent"
+
+                    activeFocusOnTab: true
+                    Keys.onUpPressed: KeyNav.stepView(row.ListView.view, row.index, false)
+                    Keys.onDownPressed: KeyNav.stepView(row.ListView.view, row.index, true)
+                    Keys.onSpacePressed: root.select(row.modelData.id)
+                    Keys.onReturnPressed: root.select(row.modelData.id)
+                    Keys.onEnterPressed: root.select(row.modelData.id)
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -248,7 +254,6 @@ PanelFrame {
                             }
                         }
 
-                        // The next task to do
                         Text {
                             Layout.fillWidth: true
                             text: row.tasks.find(t => !t.done)?.text ?? (row.tasks.length > 0 ? "All done" : "No tasks")
@@ -276,7 +281,6 @@ PanelFrame {
             }
         }
 
-        // As in the notes panel, along the lists and the tasks
         Rectangle {
             Layout.preferredWidth: 1
             Layout.fillHeight: true
@@ -284,7 +288,6 @@ PanelFrame {
             color: "#262626"
         }
 
-        // The open list
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -302,6 +305,7 @@ PanelFrame {
                     // All tasks can't be renamed
                     readOnly: root.selected === null
                     activeFocusOnPress: !readOnly
+                    activeFocusOnTab: !readOnly
                     text: "All tasks"
                     color: "#ffffff"
                     selectionColor: "#333333"
@@ -340,10 +344,17 @@ PanelFrame {
                     }
 
                     Text {
+                        id: clearLink
+
                         visible: root.doneCount > 0
                         text: "Clear completed"
-                        color: clearArea.containsMouse ? "#dddddd" : "#666666"
+                        color: clearArea.containsMouse || clearLink.activeFocus ? "#dddddd" : "#666666"
                         font.pixelSize: 12
+
+                        activeFocusOnTab: true
+                        Keys.onSpacePressed: TodoService.clearDone(root.viewList)
+                        Keys.onReturnPressed: TodoService.clearDone(root.viewList)
+                        Keys.onEnterPressed: TodoService.clearDone(root.viewList)
 
                         MouseArea {
                             id: clearArea
@@ -365,8 +376,14 @@ PanelFrame {
                             return count === 0 ? "Click again to delete"
                                 : "Click again to delete it and " + count + (count === 1 ? " task" : " tasks");
                         }
-                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse ? "#dddddd" : "#666666"
+                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse || activeFocus ? "#dddddd" : "#666666"
                         font.pixelSize: 12
+
+                        // Like the click, the first press only arms it
+                        activeFocusOnTab: true
+                        Keys.onSpacePressed: root.deleteList()
+                        Keys.onReturnPressed: root.deleteList()
+                        Keys.onEnterPressed: root.deleteList()
 
                         MouseArea {
                             id: deleteArea
@@ -406,9 +423,11 @@ PanelFrame {
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
+                    activeFocusOnTab: true
 
                     Keys.onReturnPressed: root.addTask()
                     Keys.onEnterPressed: root.addTask()
+                    Keys.onDownPressed: KeyNav.step(input, true, "tasks")
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -461,8 +480,6 @@ PanelFrame {
                         width: flick.width
                         spacing: 4
 
-                        // Rows making way for a dragged one, and for tasks
-                        // being added, moved or deleted
                         move: Transition {
                             NumberAnimation { properties: "y"; duration: 150; easing.type: Easing.OutCubic }
                         }
@@ -470,9 +487,7 @@ PanelFrame {
                         Repeater {
                             id: repeater
 
-                            // Keyed, so a task keeps its row through every
-                            // change, and its row moves instead of being
-                            // made again
+                            // Keyed, so a task's row moves instead of being remade
                             model: ScriptModel {
                                 values: reorder.arrange(root.tasks)
                                 objectProp: "id"
@@ -493,13 +508,13 @@ PanelFrame {
                                     id: item
 
                                     width: parent.width
-                                    // Follows the mouse while dragged,
-                                    // wherever the Column has put the row
+                                    // Follows the mouse while dragged
                                     y: wrap.isDragged ? reorder.top - wrap.y : 0
                                     task: wrap.modelData
                                     listName: root.viewList === -1 ? root.listName(wrap.modelData.list) : ""
                                     dragged: wrap.isDragged
                                     dragSpace: root
+                                    above: input
 
                                     onDragStarted: p => root.dragStart(wrap.modelData, p)
                                     onDragMoved: p => root.dragMove(p)

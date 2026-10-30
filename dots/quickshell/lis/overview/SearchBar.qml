@@ -48,7 +48,7 @@ SearchPill {
                 return "../icons/overview/search.svg"
             }
 
-            // Spins in on opening and when the mode changes
+            // Spins in on opening and on mode changes
             onSourceChanged: iconPop.restart()
 
             ParallelAnimation {
@@ -68,15 +68,14 @@ SearchPill {
             verticalAlignment: TextInput.AlignVCenter
             clip: true
 
-            // A caret that glides to each new position, and fades in and out
-            // instead of blinking
+            // A gliding caret that fades instead of blinking
             cursorDelegate: Item {
                 property real lastX: 0
 
                 width: 2
                 visible: input.cursorVisible
 
-                // Start from where the line was drawn, and stay lit while typing
+                // Starts where the line was drawn, lit while typing
                 onXChanged: {
                     caretLine.x += lastX - x
                     lastX = x
@@ -122,7 +121,7 @@ SearchPill {
                 color: "#6b6b6b"
                 font.pixelSize: parent.font.pixelSize
                 verticalAlignment: Text.AlignVCenter
-                // Slides out of the way as typing starts
+                // Slides away as typing starts
                 opacity: input.text === "" ? 1 : 0
                 visible: opacity > 0
                 transform: Translate {
@@ -156,7 +155,6 @@ SearchPill {
         Text {
             readonly property bool shown: input.text !== ""
 
-            // Spins in when there's something to clear
             visible: opacity > 0
             opacity: shown ? 1 : 0
             scale: shown ? 1 : 0.4

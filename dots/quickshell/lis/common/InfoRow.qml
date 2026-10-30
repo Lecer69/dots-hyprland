@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// A label and its value on one line, styled like a UsageMeter without a bar
+// A label and value on one line
 RowLayout {
     id: info
 

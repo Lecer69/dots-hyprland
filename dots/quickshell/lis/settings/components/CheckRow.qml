@@ -2,8 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 
-// A SettingRow-like row with a checkbox in front and a value (e.g. a size)
-// at the end; clicking anywhere on it toggles the box
+// A row with a checkbox and a value; clicking anywhere toggles it
 Item {
     id: root
 
@@ -18,6 +17,22 @@ Item {
     implicitHeight: description !== "" ? 58 : 44
     opacity: enabled ? 1 : 0.4
 
+    function flip(): void {
+        root.checked = !root.checked
+        root.toggled(root.checked)
+    }
+
+    activeFocusOnTab: true
+    Keys.onSpacePressed: root.flip()
+    Keys.onReturnPressed: root.flip()
+    Keys.onEnterPressed: root.flip()
+
+    Rectangle {
+        anchors.fill: parent
+        radius: 8
+        color: root.activeFocus ? "#161616" : "transparent"
+    }
+
     RowLayout {
         anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
         spacing: 12
@@ -29,7 +44,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             color: root.checked ? "#e6e6e6" : "transparent"
             border.width: root.checked ? 0 : 1
-            border.color: area.containsMouse ? "#5a5a5a" : "#3a3a3a"
+            border.color: area.containsMouse || root.activeFocus ? "#5a5a5a" : "#3a3a3a"
 
             Shape {
                 anchors.fill: parent
@@ -85,9 +100,6 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            root.checked = !root.checked
-            root.toggled(root.checked)
-        }
+        onClicked: root.flip()
     }
 }

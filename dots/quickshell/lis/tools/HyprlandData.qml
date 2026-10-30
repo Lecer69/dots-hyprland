@@ -21,8 +21,7 @@ Singleton {
     property var monitors: []
     property var layers: ({})
 
-    // Checked synchronously (tiny file read) so dispatches made during
-    // startup, like the boot lock focusing a monitor, use the right syntax
+    // Read synchronously, so startup dispatches (the boot lock) use the right syntax
     property bool isLuaConfig: false
 
     FileView {
@@ -48,8 +47,7 @@ Singleton {
         return root.windowList.filter(win => win.workspace.id === workspace);
     }
 
-    // Whether a window on the workspace is fullscreen, not just maximized.
-    // A window's fullscreen field holds flags: 1 is maximized, 2 fullscreen.
+    // Fullscreen, not just maximized: fullscreen flags are 1 maximized, 2 fullscreen
     function hasFullscreen(workspace) {
         return root.windowList.some(win => win.workspace.id === workspace && (win.fullscreen & 2) !== 0);
     }
@@ -152,9 +150,7 @@ Singleton {
         }
     }
 
-    // Per-group event names (Hyprland socket2). Deliberately excludes
-    // continuous events like tick / mouse* / *moveloop / screencast, and
-    // title changes, which are applied from the event itself.
+    // Leaves out continuous events (tick, mouse*, moveloop, screencast) and titles
     readonly property var _windowEvents: new Set([
         "openwindow", "closewindow", "movewindow", "movewindowv2", "movewindowortho",
         "changefloatingmode", "fullscreen", "pin", "alterzorder", "activespecial",
@@ -186,8 +182,7 @@ Singleton {
         }
     }
 
-    // windowtitlev2>>ADDRESS,TITLE (address without 0x). Titles can change
-    // many times a second (terminals, players), too often for hyprctl.
+    // Titles change too often for hyprctl, so they're set from the event
     function _setTitle(data) {
         const comma = data.indexOf(",");
         if (comma < 0) return;
@@ -203,8 +198,7 @@ Singleton {
         root.windowByAddress = byAddress;
     }
 
-    // hyprctl prints an error instead of JSON when it can't reach Hyprland
-    // (e.g. mid-reload); the last good data is kept then
+    // hyprctl prints an error instead of JSON mid-reload; keep the last good data
     function _parse(text, what) {
         try {
             return JSON.parse(text);

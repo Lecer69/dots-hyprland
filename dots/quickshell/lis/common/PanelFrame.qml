@@ -1,7 +1,6 @@
 import QtQuick
 
-// Panel surface with the standard header (title, subtitle, ✕); children go
-// in the area under the header
+// Panel surface with the standard header; children go under it
 Rectangle {
     id: root
 

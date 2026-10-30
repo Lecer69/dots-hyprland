@@ -42,7 +42,6 @@ Item {
     implicitWidth: overviewBackground.implicitWidth + WorkspaceOverviewSettings.elevationMargin * 2
     implicitHeight: overviewBackground.implicitHeight + WorkspaceOverviewSettings.elevationMargin * 2
 
-    // Background
     Rectangle {
         id: overviewBackground
         property real padding: WorkspaceOverviewSettings.backgroundPadding

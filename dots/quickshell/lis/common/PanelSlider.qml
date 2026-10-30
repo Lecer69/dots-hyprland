@@ -1,7 +1,6 @@
 import QtQuick
 
-// Full-width slider from 0 to `to`. It doesn't move by itself: it emits
-// moved() and the owner writes the value back
+// Emits moved() and lets the owner write the value back
 Item {
     id: root
 
@@ -14,6 +13,14 @@ Item {
 
     implicitHeight: 20
 
+    function nudge(direction: int): void {
+        root.moved(Math.max(0, Math.min(root.to, root.value + direction * 0.02 * root.to)))
+    }
+
+    activeFocusOnTab: true
+    Keys.onLeftPressed: root.nudge(-1)
+    Keys.onRightPressed: root.nudge(1)
+
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
@@ -25,16 +32,16 @@ Item {
             width: root.ratio * parent.width
             height: parent.height
             radius: parent.radius
-            color: "#bbbbbb"
+            color: root.activeFocus ? "#ffffff" : "#bbbbbb"
         }
     }
 
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         x: root.ratio * (root.width - width)
-        width: 12
-        height: 12
-        radius: 6
+        width: root.activeFocus ? 14 : 12
+        height: width
+        radius: width / 2
         color: "#ffffff"
     }
 
@@ -53,8 +60,7 @@ Item {
         }
         onWheel: wheel => {
             if (wheel.angleDelta.y === 0) return
-            const step = (wheel.angleDelta.y > 0 ? 0.02 : -0.02) * root.to
-            root.moved(Math.max(0, Math.min(root.to, root.value + step)))
+            root.nudge(wheel.angleDelta.y > 0 ? 1 : -1)
         }
     }
 }

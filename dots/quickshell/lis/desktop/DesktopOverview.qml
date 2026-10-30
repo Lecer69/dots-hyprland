@@ -7,10 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.tools
 
-// An overview of the day and the system on an empty workspace: double-click
-// the desktop to open it, and again, or Escape, to close it. It sits on the
-// bottom layer, over the wallpaper and under every window, and closes when
-// the workspace changes or gets a window.
+// Day and system overview on an empty workspace; double-click the desktop to open it
 Scope {
     id: root
 
@@ -50,12 +47,9 @@ Scope {
             readonly property bool empty: win.workspace !== null
                 && !HyprlandData.windowList.some(w => w.workspace?.id === win.workspace.id)
             property bool open: false
-            // The panel stays loaded until it has faded out
+            // Stays loaded until it has faded out
             property bool loaded: false
-            // Hyprland only hands keyboard focus to a layer already on screen
-            // when it turns exclusive, so it is, briefly, on opening. Then
-            // on-demand: focus follows the pointer and clicks as usual, and
-            // stays here while the pointer is over the empty desktop
+            // Briefly exclusive on opening: Hyprland only focuses a mapped layer that turns exclusive
             property bool grabbing: false
 
             onOpenChanged: {
@@ -73,7 +67,7 @@ Scope {
             onEmptyChanged: if (!win.empty) win.open = false
 
             screen: modelData
-            // Only mapped, and taking clicks, on an empty workspace
+            // Only on an empty workspace
             visible: empty
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore

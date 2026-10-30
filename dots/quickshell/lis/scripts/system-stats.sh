@@ -1,11 +1,5 @@
 #!/bin/sh
-# Figures for tools/SystemStats.qml, one per line:
-#   uptime SECONDS
-#   net INTERFACE RX_BYTES TX_BYTES       (the default route's interface)
-#   disk SIZE USED MOUNT                  (bytes)
-#   cputemp MILLIDEGREES
-#   gpu USAGE% MEM_USED MEM_TOTAL TEMP NAME   (MiB, °C; "-" when unknown)
-#   gpu off NAME                          (powered down, so not read)
+# Figures for tools/SystemStats.qml, one per line: uptime, net, disk, cputemp, gpu
 
 read -r up _ < /proc/uptime
 echo "uptime $up"
@@ -31,7 +25,7 @@ gpu_name() {
     lspci -mm -s "$1" 2>/dev/null | awk -F '"' '{ print $6 }'
 }
 
-# Reads a sysfs number, divided by $2; "-" when it can't be read
+# A sysfs number divided by $2, "-" when unreadable
 read_div() {
     v=$(cat "$1" 2>/dev/null | head -n 1)
     if [ -n "$v" ]; then echo $((v / $2)); else echo -; fi
@@ -43,7 +37,7 @@ for card in /sys/class/drm/card*; do
     dev=$card/device
     slot=$(basename "$(readlink -f "$dev")")
 
-    # Reading a GPU that's powered down (a laptop's dGPU) would wake it up
+    # Reading a suspended GPU would wake it
     if [ "$(cat "$dev/power/runtime_status" 2>/dev/null)" = suspended ]; then
         echo "gpu off $(gpu_name "$slot")"
         continue
@@ -56,7 +50,7 @@ for card in /sys/class/drm/card*; do
             awk -F ', ' '{ print "gpu", $1, $2, $3, $4, $5 }'
         ;;
     *)
-        # amdgpu; other drivers (Intel) have no usage counter
+        # amdgpu only; Intel has no usage counter
         [ -r "$dev/gpu_busy_percent" ] || continue
         set -- "$dev"/hwmon/hwmon*/temp1_input
         echo "gpu $(cat "$dev/gpu_busy_percent")" \

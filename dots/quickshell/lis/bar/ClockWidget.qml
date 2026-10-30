@@ -13,8 +13,7 @@ Item {
         ? (SettingsData.s.bar.position === "left" ? -90 : 90)
         : 0
 
-    // Horizontal: content-width row. Vertical: rotated, so the footprint is
-    // swapped (text runs top to bottom, keeping the bar narrow).
+    // Vertical: rotated, so width and height swap
     implicitWidth: root.vertical ? contentHost.height : contentHost.width
     implicitHeight: root.vertical ? contentHost.width : contentHost.height
 

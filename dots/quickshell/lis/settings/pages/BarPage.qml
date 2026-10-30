@@ -62,7 +62,7 @@ ScrollView {
                         if (v === SettingsData.s.bar.workspaceNumbers) delete counts[screenRow.modelData.name]
                         else counts[screenRow.modelData.name] = v
                         SettingsData.s.bar.workspaceNumbersPerMonitor = counts
-                        // Dragging replaced the binding to the setting
+                        // Dragging replaced the binding
                         screenSlider.value = Qt.binding(() => screenRow.count)
                     }
                 }

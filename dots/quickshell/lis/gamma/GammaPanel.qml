@@ -25,6 +25,12 @@ Rectangle {
         id: gammaState
     }
 
+    // Removing a preset rebuilds every cell, so focus returns once they're back
+    function removePreset(index: int, id: real): void {
+        gammaState.removePreset(id)
+        Qt.callLater(() => presetRepeater.itemAt(Math.min(index, presetRepeater.count - 1))?.forceActiveFocus())
+    }
+
     Item {
         id: header
 
@@ -146,7 +152,6 @@ Rectangle {
 
             }
 
-            // Save preset input
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
@@ -168,6 +173,7 @@ Rectangle {
                         font.pixelSize: 13
                         clip: true
                         selectByMouse: true
+                        activeFocusOnTab: true
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
@@ -210,7 +216,6 @@ Rectangle {
 
             }
 
-            // Preset list
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -234,10 +239,19 @@ Rectangle {
                         spacing: root.presetCellSpacing
 
                         Repeater {
+                            id: presetRepeater
+
                             model: gammaState.presets
 
                             delegate: GammaPresetItem {
+                                id: preset
+
                                 required property var modelData
+                                required property int index
+
+                                function focusAt(i: int): void {
+                                    presetRepeater.itemAt(i)?.forceActiveFocus()
+                                }
 
                                 width: (presetGrid.width - presetGrid.spacing * (presetGrid.columns - 1)) / presetGrid.columns
                                 height: root.presetCellHeight
@@ -249,6 +263,12 @@ Rectangle {
                                 saturation: modelData.saturation
                                 onApplyRequested: gammaState.applyPreset(presetId)
                                 onRemoveRequested: gammaState.removePreset(presetId)
+
+                                Keys.onLeftPressed: preset.focusAt(preset.index - 1)
+                                Keys.onRightPressed: preset.focusAt(preset.index + 1)
+                                Keys.onUpPressed: preset.focusAt(preset.index - presetGrid.columns)
+                                Keys.onDownPressed: preset.focusAt(preset.index + presetGrid.columns)
+                                Keys.onDeletePressed: root.removePreset(preset.index, presetId)
                             }
                         }
 
@@ -256,7 +276,6 @@ Rectangle {
 
                 }
 
-                // Empty state
                 Text {
                     anchors.centerIn: parent
                     visible: gammaState.presets.length === 0
@@ -275,7 +294,12 @@ Rectangle {
             Layout.preferredHeight: 28
             Layout.preferredWidth: resetLabel.implicitWidth + 24
             radius: 6
-            color: resetHover.pressed ? "#333333" : resetHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
+            color: resetHover.pressed ? "#333333" : resetHover.containsMouse || activeFocus ? "#2a2a2a" : "#1f1f1f"
+
+            activeFocusOnTab: true
+            Keys.onSpacePressed: gammaState.reset()
+            Keys.onReturnPressed: gammaState.reset()
+            Keys.onEnterPressed: gammaState.reset()
 
             Text {
                 id: resetLabel

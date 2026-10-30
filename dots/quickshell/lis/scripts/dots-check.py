@@ -1,24 +1,7 @@
 #!/usr/bin/env python3
-# Update check for the Dots Updater settings page.
-#
-#   dots-check.py <clone> <repo url>
-#
-# Clones dots-hyprland into <clone>, or fetches it, and prints JSON:
-#
-#   latest     the remote's newest commit
-#   installed  the commit the installed files came from, or null
-#   behind     commits after it (all of them if it's unknown)
-#   commits    those commits, newest first, or the last few when there are
-#              none, each with its changed files
-#   devCheckout  ~/.config/quickshell holds a git checkout, which an update
-#              would delete
-#
-# Nothing records which commit was installed, so it's worked out from the
-# files: the commit whose quickshell and hypr trees differ from
-# ~/.config/quickshell and ~/.config/hypr in the fewest files (the newest one
-# on a tie). Files the user changed show up as `differs`.
-#
-# Exits 1 with {"error": "..."} when the clone can't be fetched.
+# Update check for the Dots Updater page: dots-check.py <clone> <repo url>
+# Fetches dots-hyprland and prints JSON (latest, installed, behind, commits, devCheckout).
+# The installed commit is the one whose files differ least from ~/.config.
 
 import glob
 import json
@@ -26,12 +9,11 @@ import os
 import subprocess
 import sys
 
-# Kept by install.sh's update, so never compared (and never replaced)
+# Kept by install.sh's update, so never compared
 HYPR_PRESERVED = {"custom", "hyprpaper.conf", "monitors.conf", "monitors.lua", "workspaces.conf"}
 
-# Commits looked at when matching the installed files
 MAX_CANDIDATES = 100
-# Commits listed when the installed one is unknown or the latest
+# Listed when the installed commit is unknown or the latest
 RECENT_COMMITS = 10
 MAX_COMMITS = 50
 
@@ -54,7 +36,7 @@ def git(*args, timeout=30, stdin=None):
 def last_line(error):
     lines = (error.stderr or "").strip().splitlines()
     line = lines[-1] if lines else str(error)
-    # What git says for a repo that doesn't exist, and for no network
+    # git's message for a missing repo, and for no network
     if "could not read Username" in line:
         return "Couldn't find " + url
     if "Could not resolve host" in line:
@@ -79,7 +61,7 @@ def sync():
         fail(last_line(e))
 
 
-# A repo path's place under ~/.config, for the files an update installs
+# A repo path's place under ~/.config
 def installed_path(path):
     if path.startswith("dots/quickshell/"):
         return path[len("dots/"):]
@@ -90,7 +72,7 @@ def installed_path(path):
     return None
 
 
-# Whether an update installs a file changed in a commit
+# Whether an update installs this file
 def in_scope(path):
     return installed_path(path) is not None or path.startswith("extra/lis")
 
@@ -114,7 +96,7 @@ def find_installed(latest):
     trees = [(sha, tree(sha)) for sha in candidates]
     known = sorted({key for _, files in trees for key in files})
 
-    # Blob ids of the installed copies of every file any candidate has
+    # Blob ids of the installed copies
     present = [key for key in known if "\n" not in key and os.path.isfile(os.path.join(config, key))]
     blobs = git("hash-object", "--no-filters", "--stdin-paths",
                 stdin="".join(os.path.join(config, key) + "\n" for key in present)).split()
@@ -127,7 +109,7 @@ def find_installed(latest):
         if best is None or differs < best[1]:
             best = (sha, differs, len(files))
 
-    # More than half the files differing isn't an install of that commit
+    # Over half the files differing isn't an install of that commit
     if best is None or best[1] * 2 > best[2]:
         return None, 0
     return best[0], best[1]

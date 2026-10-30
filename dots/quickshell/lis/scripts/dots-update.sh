@@ -1,29 +1,17 @@
 #!/usr/bin/env bash
-# Updates the installed dots for the Dots Updater settings page: the update
-# path of dots-hyprland's install.sh, without its prompts.
-#
-#   dots-update.sh <clone> <commit> <backup 0|1> <shell 0|1>
-#
-# <clone> is the one dots-check.py fetched. For each step this prints
-# "step <name>", then "done <name> [detail]" or "fail <name> <reason>" (and
-# exits 1). Steps: checkout, backup (with <backup> 1), hypr, command, then
-# shell (with <shell> 1) or reload.
-#
-# The shell step only copies the new quickshell config next to the old one;
-# a detached copy of this script (finish) then stops the shell, swaps the
-# config in, reloads Hyprland and starts the shell again, as install.sh does.
-# Its output goes to ~/.cache/lis/dots-update.log.
+# Installs an update for the Dots Updater page: dots-update.sh <clone> <commit> <backup 0|1> <shell 0|1>
+# Prints "step/done/fail <name>" per step; `finish`, run detached, swaps in the new shell config.
 
 set -uo pipefail
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BACKUP_DIR="$HOME/.dots-hyprland-backups"
 LOG="${XDG_CACHE_HOME:-$HOME/.cache}/lis/dots-update.log"
-# The new quickshell config, until finish swaps it in
+# Until finish swaps it in
 STAGED="$CONFIG_DIR/.quickshell-update"
 OLD="$CONFIG_DIR/.quickshell-old"
 
-# Files/dirs inside hypr/ that an update never overwrites
+# Never overwritten by an update
 HYPR_PRESERVE_ITEMS=(custom hyprpaper.conf monitors.conf monitors.lua workspaces.conf)
 
 hypr_is_preserved_item() {
@@ -34,7 +22,7 @@ hypr_is_preserved_item() {
     return 1
 }
 
-#   dots-update.sh finish <short commit> <subject>
+# dots-update.sh finish <short commit> <subject>
 if [[ "${1:-}" == finish ]]; then
     killall qs quickshell
     for _ in $(seq 1 50); do
@@ -42,7 +30,7 @@ if [[ "${1:-}" == finish ]]; then
         sleep 0.1
     done
 
-    # Renames, so a failure leaves the old config in place
+    # Renames, so a failure leaves the old config
     rm -rf "$OLD"
     if mv "$CONFIG_DIR/quickshell" "$OLD" && mv "$STAGED" "$CONFIG_DIR/quickshell"; then
         rm -rf "$OLD"
@@ -53,10 +41,10 @@ if [[ "${1:-}" == finish ]]; then
     fi
 
     hyprctl reload
-    # The shell started by Hyprland has this set; it would lock the screen
+    # Set on the shell Hyprland started; it would lock the screen
     env -u ON_HYPRSTART setsid -f qs -c lis >/dev/null 2>&1 </dev/null
 
-    # Once the new shell is taking notifications
+    # Once the new shell takes notifications
     sleep 3
     timeout 10 notify-send -a "Dots Updater" "Dots updated" "$message"
     exit 0

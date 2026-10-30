@@ -10,8 +10,7 @@ Item {
     property var results: []
     property bool isClipboard: false
     property bool isEmoji: false
-    // Set when an entry is picked, so the highlight flashes while the
-    // launcher closes; the card clears it
+    // The highlight flashes while the launcher closes; the card clears it
     property bool chosen: false
 
     signal activated()
@@ -25,15 +24,13 @@ Item {
     function moveUp() { if (listView.currentIndex > 0) listView.currentIndex-- }
     function moveDown() { if (listView.currentIndex < root.results.length - 1) listView.currentIndex++ }
 
-    // On a new query. Not on every results change: a history update while
-    // open keeps the selection (the view shifts it along with its row).
+    // Only on a new query; history updates keep the selection
     function resetSelection() {
         listView.currentIndex = 0
         listView.positionViewAtBeginning()
     }
 
-    // wl-copy forks and keeps serving the clipboard, so copies outlive the
-    // launcher (and shell reloads)
+    // wl-copy forks, so copies outlive the launcher
     function _doActivate(entry) {
         if (entry?.isMath) {
             Quickshell.execDetached(["wl-copy", "--", entry.result])
@@ -50,9 +47,7 @@ Item {
         root.activated()
     }
 
-    // What the view shows. When the results empty out it keeps the last
-    // rows a moment longer while they fade: an emptied view drops its rows
-    // at once instead of animating them out.
+    // Keeps the last rows a moment while they fade: an emptied view drops them at once
     property var shownResults: []
 
     onResultsChanged: {
@@ -71,7 +66,7 @@ Item {
     }
 
     readonly property int maxHeight: 480
-    // The height the list is headed for; the visible height eases toward it
+    // The visible height eases toward this
     readonly property real targetHeight: results.length > 0 ? Math.min(listView.contentHeight, maxHeight) : 0
 
     implicitHeight: targetHeight
@@ -87,26 +82,19 @@ Item {
             left: parent.left
             right: parent.right
         }
-        // Always the full height, with this item clipping it to the eased
-        // height: every visible row gets its arrive and leave animation, and
-        // the view never resizes while it applies a model change (with
-        // recycled rows, that left removed rows stranded on screen)
+        // Always full height, clipped to the eased height, so the view never resizes mid-change
         height: root.maxHeight
         opacity: root.results.length > 0 ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
-        // Diffs each new result list against the current one, so rows that
-        // stay (filtering, history updates) are kept instead of rebuilt
+        // Diffed, so rows that stay are kept
         model: ScriptModel {
             values: root.shownResults
         }
         spacing: 2
         clip: true
         currentIndex: 0
-        // A few rows past the edges are made ahead of time. Rows aren't
-        // recycled (reuseItems): with the remove transition, a row still
-        // leaving when the next keystroke's results came in could be left
-        // half faded over the new results, taking clicks for its old entry
+        // No reuseItems: a recycled row could stay half faded over new results
         cacheBuffer: 200
 
         flickDeceleration: 3000
@@ -117,7 +105,6 @@ Item {
             width: 0
         }
 
-        // One highlight that slides from row to row
         highlight: Rectangle {
             radius: 8
             color: root.chosen ? "#333333" : "#1f1f1f"
@@ -131,8 +118,7 @@ Item {
         highlightResizeDuration: 140
         highlightResizeVelocity: -1
 
-        // Leaving rows fade out drifting left. A math result only fades, so
-        // it doesn't jump on every keystroke.
+        // Leaving rows drift left; a math result only fades
         remove: Transition {
             id: removeTransition
             ParallelAnimation {
@@ -146,7 +132,6 @@ Item {
             }
         }
 
-        // Rows that stay glide to their new places
         displaced: Transition {
             NumberAnimation { property: "y"; duration: 220; easing.type: Easing.OutCubic }
         }
@@ -160,23 +145,18 @@ Item {
             required property int index
 
             width: listView.width
-            // From the row's own entry rather than the current mode, so rows
-            // still leaving after a mode switch keep their look. Clipboard
-            // lines are "<id>\t<preview>"; emoji lines have no tab.
+            // From the row's entry, not the mode, so leaving rows keep their look
             isClipboard: typeof modelData === "string" && modelData.includes("\t")
             isEmoji: typeof modelData === "string" && !modelData.includes("\t")
             isMath: modelData?.isMath ?? false
             entry: modelData
             highlighted: listView.currentIndex === index
 
-            // A row fading out (index -1) is no longer a result
+            // A row fading out has index -1
             onEntered: if (index >= 0) listView.currentIndex = index
             onChosen: if (index >= 0) root._doActivate(modelData)
 
-            // Arriving rows come in one after another down the list. Done
-            // here, not with an add transition: the view skips that for rows
-            // added to an empty list and for rows the model reports as
-            // inserted then moved.
+            // Here, not in an add transition: the view skips that for an empty list and for moves
             ListView.onAdd: enter(Math.min(index, 10) * 18)
         }
     }

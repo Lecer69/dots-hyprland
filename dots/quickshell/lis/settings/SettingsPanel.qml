@@ -7,6 +7,8 @@ import qs.settings.pages
 
 Rectangle {
     id: root
+    // Up/Down switch pages from here
+    readonly property Item initialFocus: nav
     signal closeRequested
 
     radius: 12
@@ -15,7 +17,7 @@ Rectangle {
     border.color: "#1f1f1f"
     border.width: 1
 
-    // PgUp / PgDn scroll the open page by most of a screen
+    // PgUp / PgDn scroll the page by most of a screen
     function scrollPage(direction) {
         const flick = pager.children[pager.currentIndex].contentItem
         const from = pageScroll.running ? pageScroll.to : flick.contentY
@@ -47,8 +49,22 @@ Rectangle {
         anchors { fill: parent; margins: 12 }
         spacing: 6
 
-        // Sidebar
         ColumnLayout {
+            id: nav
+
+            // Pager order; the bottom pages follow the top ones
+            readonly property var topPages: ["General", "Bar", "Lock", "Idle", "osu!"]
+            readonly property var bottomPages: ["Cleanup", "Dots Updater"]
+
+            function shift(direction: int): void {
+                const count = nav.topPages.length + nav.bottomPages.length
+                pager.currentIndex = (pager.currentIndex + direction + count) % count
+            }
+
+            activeFocusOnTab: true
+            Keys.onUpPressed: nav.shift(-1)
+            Keys.onDownPressed: nav.shift(1)
+
             Layout.preferredWidth: 160
             Layout.fillHeight: true
             spacing: 2
@@ -63,7 +79,7 @@ Rectangle {
             }
 
             Repeater {
-                model: ["General", "Bar", "Lock", "Idle", "osu!", "Cleanup", "Dots Updater"]
+                model: nav.topPages
 
                 NavItem {
                     required property string modelData
@@ -72,11 +88,28 @@ Rectangle {
                     Layout.fillWidth: true
                     label: modelData
                     active: pager.currentIndex === index
+                    focused: nav.activeFocus
                     onClicked: pager.currentIndex = index
                 }
             }
 
             Item { Layout.fillHeight: true }
+
+            Repeater {
+                model: nav.bottomPages
+
+                NavItem {
+                    required property string modelData
+                    required property int index
+                    readonly property int page: nav.topPages.length + index
+
+                    Layout.fillWidth: true
+                    label: modelData
+                    active: pager.currentIndex === page
+                    focused: nav.activeFocus
+                    onClicked: pager.currentIndex = page
+                }
+            }
         }
 
         Rectangle {

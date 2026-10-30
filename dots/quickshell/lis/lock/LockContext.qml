@@ -13,23 +13,20 @@ QtObject {
     signal unlockedWithPassword(string password)
     signal authFailed()
 
-    // Set while the screen is locked
     property bool active: false
 
     property bool authenticating: false
     property string password: ""
     property bool capsLockOn: false
 
-    // Shared by every lock surface (each screen used to spawn its own
-    // processes and poll the layout every 5s)
+    // Shared by every lock surface
     readonly property string userName: Quickshell.env("USER") || "user"
     property string keyboardLayout: "en"
     property string _mainKeyboard: ""
 
     property string _submitted: ""
 
-    // One hyprctl call per lock for layout + caps lock; layout switches
-    // while locked arrive as Hyprland events
+    // One hyprctl call per lock; layout changes arrive as events
     onActiveChanged: {
         if (active) _devicesProc.running = true
     }
@@ -130,7 +127,7 @@ QtObject {
             root.password = ""
     }
 
-    // Password entry, shared by every screen (including blocked ones)
+    // Shared by every screen, blocked ones too
     function handleKey(event) {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             root.submit()

@@ -1,19 +1,14 @@
 import QtQuick
 
-// Drags a row of a Column to a new place. The other rows make way as it
-// passes them, and it settles into its place once dropped. The rows can be
-// of any height. While a drag lasts, the Column's Repeater shows the rows in
-// `order` (see arrange()), and the dragged row's content sits at `top`.
+// Drags a row of a Column (rows of any height) to a new place
 QtObject {
     id: root
 
     required property Column column
     required property Repeater repeater
-    // The values' property that tells them apart
     property string keyProp: "id"
 
-    // While a drag lasts: the rows' keys in their new order, the dragged
-    // row's key, and the top of its content in the column
+    // While dragging: the new key order, the dragged key, its content's top
     property var order: null
     property var key: null
     property real top: 0
@@ -23,7 +18,6 @@ QtObject {
     property int _first: 0
     property int _last: 0
 
-    // The new order, on dropping the row
     signal dropped(var ids)
 
     property NumberAnimation _settle: NumberAnimation {
@@ -34,7 +28,7 @@ QtObject {
         onFinished: root._finish()
     }
 
-    // `values` (objects with a keyProp) in the drag's order
+    // `values` in the drag's order
     function arrange(values: var): var {
         const order = root.order;
         if (!order)
@@ -45,8 +39,7 @@ QtObject {
         return list.concat(values.filter(v => !order.includes(v[prop])));
     }
 
-    // ids: the rows' keys as shown; y: the press, in the column. The row can
-    // move to the places first to last
+    // ids as shown; y is the press in the column; the row moves within first..last
     function start(ids: var, key: var, y: real, first: int, last: int): void {
         root._settle.stop();
         root._finish();
@@ -64,7 +57,7 @@ QtObject {
             return;
 
         root.top = y - root._grab;
-        // The row's place: after every other row whose middle is above its own
+        // After every row whose middle is above its own
         const self = root.order.indexOf(root.key);
         const middle = root.top + root._height(self) / 2;
         let target = 0;
@@ -104,7 +97,7 @@ QtObject {
         return root.repeater.itemAt(i)?.height ?? 0;
     }
 
-    // Where row i sits once the Column is done moving it
+    // Where row i sits once the Column has moved it
     function _slotY(i: int): real {
         let y = 0;
         for (let j = 0; j < i; j++)

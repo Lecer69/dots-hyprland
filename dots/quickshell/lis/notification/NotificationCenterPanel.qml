@@ -4,6 +4,14 @@ import QtQuick.Layouts
 Rectangle {
     id: root
 
+    readonly property Item initialFocus: historyList
+
+    // The current row follows inserts; start from the newest
+    function showNewest(): void {
+        historyList.currentIndex = 0
+        historyList.positionViewAtBeginning()
+    }
+
     signal closeRequested()
 
     radius: 12
@@ -71,11 +79,15 @@ Rectangle {
                 clip: true
                 model: NotificationHistory.model
                 visible: count > 0
+                // Up/Down are the list's own
+                activeFocusOnTab: true
 
                 delegate: NotificationCenterItem {
                     width: historyList.width
                     entry: model
                     onDismissed: NotificationHistory.removeAt(index)
+                    // A row on its way out has index -1
+                    Keys.onDeletePressed: if (index >= 0) NotificationHistory.removeAt(index)
                 }
             }
 
@@ -93,8 +105,13 @@ Rectangle {
             Layout.preferredWidth: clearLabel.implicitWidth + 24
             Layout.preferredHeight: 28
             radius: 6
-            color: clearHover.pressed ? "#333333" : clearHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
+            color: clearHover.pressed ? "#333333" : clearHover.containsMouse || activeFocus ? "#2a2a2a" : "#1f1f1f"
             visible: historyList.count > 0
+
+            activeFocusOnTab: true
+            Keys.onSpacePressed: NotificationHistory.clear()
+            Keys.onReturnPressed: NotificationHistory.clear()
+            Keys.onEnterPressed: NotificationHistory.clear()
 
             Text {
                 id: clearLabel

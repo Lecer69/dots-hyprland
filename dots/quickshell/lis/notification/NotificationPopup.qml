@@ -18,8 +18,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.exclusiveZone: notifModel.count > 0 ? 0 : -1
 
-    // Main monitor: the first landscape screen (portrait ones are side
-    // monitors), else the first one
+    // The first landscape screen (portrait ones are side monitors), else the first
     readonly property var mainScreen: Quickshell.screens.find(s => s.width >= s.height) ?? Quickshell.screens[0]
     property var focusedScreen: null
     screen: SettingsData.s.general.notificationsMainMonitorOnly
@@ -29,13 +28,12 @@ PanelWindow {
     NotificationServer {
         id: server
         keepOnReload: true
-        // Lets apps send buttons (the card shows them)
         actionsSupported: true
 
         Component.onCompleted: console.log("[Notifications] Server registered on D-Bus")
 
         onNotification: (notif) => {
-            // No summary or body: the log would keep message contents
+            // No summary or body: keeps message contents out of the log
             console.log("[Notifications] Received from", notif.appName)
 
             const icon = notif.appIcon
@@ -77,8 +75,7 @@ PanelWindow {
                 else notifModel.remove(0)
             }
 
-            // Kept while its card shows (untracked ones are dropped as soon
-            // as this handler returns, and their app is told "dismissed")
+            // Kept while its card shows; untracked ones are dropped as "dismissed"
             notif.tracked = true
             notifModel.append({ notif: notif })
         }

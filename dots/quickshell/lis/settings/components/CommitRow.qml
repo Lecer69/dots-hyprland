@@ -1,9 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// A commit on the Dots Updater page: its subject, age and size; clicking it
-// opens its message and changed files. Files an update doesn't install
-// (anything but quickshell, hypr and the lis command) are dimmed
+// A commit; clicking it opens its message and files (ones an update doesn't install are dimmed)
 Item {
     id: root
 
@@ -12,7 +10,7 @@ Item {
     property string webUrl: ""
     property string age: ""
     property bool expanded: false
-    // The file list is made the first time it opens
+    // The file list is made on first open
     property bool opened: false
 
     Layout.fillWidth: true
@@ -23,7 +21,7 @@ Item {
         NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
     }
 
-    // "+12 −3", either left out when it's 0
+    // "+12 −3", zero parts left out
     function counts(added, removed) {
         const parts = []
         if (added > 0)
@@ -38,17 +36,24 @@ Item {
         anchors { left: parent.left; right: parent.right; leftMargin: 8; rightMargin: 8 }
         height: 52
         radius: 6
-        color: headerArea.containsMouse ? "#161616" : "transparent"
+        color: headerArea.containsMouse || header.activeFocus ? "#161616" : "transparent"
+
+        function toggle(): void {
+            root.opened = true
+            root.expanded = !root.expanded
+        }
+
+        activeFocusOnTab: true
+        Keys.onSpacePressed: header.toggle()
+        Keys.onReturnPressed: header.toggle()
+        Keys.onEnterPressed: header.toggle()
 
         MouseArea {
             id: headerArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                root.opened = true
-                root.expanded = !root.expanded
-            }
+            onClicked: header.toggle()
         }
 
         RowLayout {

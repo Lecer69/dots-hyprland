@@ -11,7 +11,6 @@ ColumnLayout {
     property bool isActive: false
     property string timeLabel: "0s"
     property string iconName: "application-x-executable"
-    // Visible in the QtQuick scene-graph sense (covers ScrollView clipping/parent visibility too)
     property bool _onScreen: root.visible && root.Window.window && root.Window.window.visible
 
     spacing: 6

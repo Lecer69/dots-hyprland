@@ -8,16 +8,14 @@ import qs.settings.components
 import qs.settings.data
 import qs.settings
 
-// Checks Lecer69/dots-hyprland for new commits when asked, and lists them.
-// Update does what install.sh's update does (scripts/dots-update.sh). The
-// page scrolls; the Update button stays in view below it
+// Checks Lecer69/dots-hyprland for new commits when asked; Update runs scripts/dots-update.sh
 Item {
     id: root
 
-    // What SettingsPanel's PgUp/PgDn scroll, as on the other pages
+    // What SettingsPanel's PgUp/PgDn scroll
     readonly property Item contentItem: scroll.contentItem
 
-    // The settings' StackLayout sizes itself from its pages' implicit size
+    // The StackLayout sizes from its pages' implicit size
     implicitWidth: scroll.implicitWidth
     implicitHeight: scroll.implicitHeight + footer.height
 
@@ -26,7 +24,7 @@ Item {
     // The clone dots-check.py fetches and dots-update.sh installs from
     readonly property string clone: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/lis/dots-hyprland"
 
-    // dots-check.py's last result; null until a check works
+    // Null until a check works
     property var info: null
     property string checkError: ""
     // Unix seconds
@@ -34,13 +32,12 @@ Item {
     property real now: Date.now() / 1000
     readonly property bool checking: checker.running
 
-    // The update's steps by dots-update.sh's names, how many are done, and
-    // the one running
+    // Steps by dots-update.sh's names, how many are done, and the running one
     property var steps: []
     property int stepsDone: 0
     property string currentStep: ""
     property bool updating: false
-    // The update went through and a detached script is restarting the shell
+    // A detached script is restarting the shell
     property bool restarting: false
     property bool confirming: false
     property string status: ""
@@ -156,8 +153,7 @@ Item {
         }
     }
 
-    // dots-update.sh prints "step <name>", then "done <name> [detail]" or
-    // "fail <name> <reason>"
+    // "step <name>", then "done <name> [detail]" or "fail <name> <reason>"
     Process {
         id: updater
 
@@ -370,7 +366,6 @@ Item {
             height: 1
             color: "#262626"
 
-            // How far the update is
             Rectangle {
                 visible: root.updating || root.restarting
                 height: 1
@@ -388,7 +383,7 @@ Item {
             anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter; verticalCenterOffset: 0.5 }
             spacing: 6
 
-            // The first click asks; a second one within 4 s updates
+            // A second click within 4 s updates
             Rectangle {
                 id: updateButton
 

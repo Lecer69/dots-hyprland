@@ -17,6 +17,22 @@ Row {
 
     spacing: 10
 
+    // About 2% of the range, in whole steps
+    readonly property real keyStep: root.stepSize * Math.max(1, Math.round((root.to - root.from) / root.stepSize / 50))
+
+    function nudge(direction: int): void {
+        const raw = root.value + direction * root.keyStep
+        const v = Math.max(root.from, Math.min(root.to, root.from + Math.round((raw - root.from) / root.stepSize) * root.stepSize))
+        if (v !== root.value) {
+            root.value = v
+            root.changed(v)
+        }
+    }
+
+    activeFocusOnTab: true
+    Keys.onLeftPressed: root.nudge(-1)
+    Keys.onRightPressed: root.nudge(1)
+
     Item {
         id: track
         width: 120
@@ -37,12 +53,14 @@ Row {
                 width: track.ratio * parent.width
                 height: parent.height
                 radius: parent.radius
-                color: "#bbbbbb"
+                color: root.activeFocus ? "#ffffff" : "#bbbbbb"
             }
         }
 
         Rectangle {
-            width: 12; height: 12; radius: 6
+            width: root.activeFocus ? 14 : 12
+            height: width
+            radius: width / 2
             anchors.verticalCenter: parent.verticalCenter
             x: track.ratio * (track.width - width)
             color: "#ffffff"

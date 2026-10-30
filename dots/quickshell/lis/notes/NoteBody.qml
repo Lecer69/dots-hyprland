@@ -1,9 +1,6 @@
 import QtQuick
 
-// A note's text, edited as plain text. When it has links, a read-only
-// rich-text copy laid over the editor draws the text with the links colored:
-// the two lay out the same, pixel for pixel, so the editor's own text is left
-// transparent under it. Ctrl+click opens a link.
+// Plain-text editor with a rich-text copy on top that colours links; Ctrl+click opens one
 Item {
     id: root
 
@@ -11,10 +8,10 @@ Item {
     property string placeholder: ""
     readonly property Item editorItem: editor
 
-    // { start, end, url } for each link in the text
+    // { start, end, url } per link
     readonly property var links: root._findLinks(editor.text)
     readonly property bool hasLinks: root.links.length > 0
-    // The link under the mouse, "" for none
+    // "" for none
     readonly property string hoveredLink: hover.hovered ? root._linkAt(hover.point.position.x, hover.point.position.y) : ""
 
     function reset(): void {
@@ -32,8 +29,7 @@ Item {
         let match;
         while ((match = re.exec(text)) !== null) {
             let url = match[0];
-            // Leave out trailing punctuation, and a closing bracket the link
-            // didn't open, as in "(see https://example.com)."
+            // Drop trailing punctuation and an unopened closing bracket
             for (;;) {
                 const last = url[url.length - 1];
                 const open = { ")": "(", "]": "[", "}": "{" }[last];
@@ -59,8 +55,7 @@ Item {
         return '<div style="white-space: pre-wrap">' + html + root._escapeHtml(text.slice(last)) + "</div>";
     }
 
-    // Only over a link's characters, not the empty space after it at a
-    // line's end
+    // Only over a link's characters, not the space after it
     function _linkAt(x: real, y: real): string {
         const pos = editor.positionAt(x, y);
         for (const i of [pos, pos - 1]) {
@@ -75,7 +70,7 @@ Item {
         return "";
     }
 
-    // Keeps the cursor in view while typing
+    // Keeps the cursor in view
     function _ensureVisible(r: rect): void {
         if (flick.contentY >= r.y)
             flick.contentY = r.y;
@@ -96,7 +91,7 @@ Item {
             id: editor
 
             width: flick.width
-            // Clicks anywhere below the text still land in it
+            // Clicks below the text still land in it
             height: Math.max(implicitHeight, flick.height)
             textFormat: TextEdit.PlainText
             wrapMode: TextEdit.Wrap
@@ -108,8 +103,7 @@ Item {
 
             onCursorRectangleChanged: root._ensureVisible(cursorRectangle)
 
-            // The text color is transparent under the overlay, and the
-            // default cursor takes that color
+            // The text colour is transparent, and the default cursor takes it
             cursorDelegate: Rectangle {
                 id: cursor
 
@@ -156,7 +150,7 @@ Item {
             }
         }
 
-        // Draws the text over the editor; disabled, so the mouse goes through
+        // Disabled, so the mouse goes through
         TextEdit {
             width: editor.width
             visible: root.hasLinks

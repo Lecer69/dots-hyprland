@@ -7,8 +7,9 @@ import qs.tools
 Rectangle {
     id: root
 
-    // 0 = today, 1 = this week (specific day selected within the week)
+    // 0 today, 1 this week
     property int viewMode: 0
+    readonly property Item initialFocus: viewTabs
     property var weekDays: []
     property string selectedDayKey: ""
     property var _todaySorted: []
@@ -32,9 +33,16 @@ Rectangle {
 
     signal closeRequested()
 
-    // Cache of per-app static enrichment
-    // Avoids re-hashing color and re-resolving icons every single tick.
+    // Per-app colour and icon, so they aren't resolved every tick
     property var _enrichCache: ({})
+
+    // Past either end: the whole week
+    function stepDay(direction: int): void {
+        const days = root.weekDays.filter(d => d.hasData === true)
+        const i = days.findIndex(d => d.key === root.selectedDayKey)
+        const next = i < 0 ? (direction > 0 ? 0 : days.length - 1) : i + direction
+        root.selectedDayKey = next >= 0 && next < days.length ? days[next].key : ""
+    }
 
     function _staticEnrich(name) {
         var c = root._enrichCache[name];
@@ -91,7 +99,7 @@ Rectangle {
         if (root.viewMode === 0) {
             _todaySorted = _enrich(state.sortedApps(state.todayTotals()));
             _todayDirty = false;
-            _weekDirty = true; // week totals include today, so mark stale
+            _weekDirty = true; // week totals include today
             _daysDirty = true;
         } else {
             _weekSorted = _enrich(state.sortedApps(state.weekTotals()));
@@ -104,7 +112,7 @@ Rectangle {
         if (viewMode === 0 && _todayDirty)
             _refresh();
         else if (viewMode === 1) {
-            selectedDayKey = ""; // default to whole-week summary when switching in
+            selectedDayKey = "";
             if (_weekDirty || _daysDirty)
                 _refresh();
         }
@@ -123,8 +131,7 @@ Rectangle {
         if (!appClass || appClass.length === 0)
             return "application-x-executable";
 
-        // A lookup that throws would abort the whole refresh and leave the
-        // list empty
+        // A throwing lookup would abort the refresh and empty the list
         try {
             return AppSearch.guessIcon(appClass);
         } catch (e) {
@@ -148,7 +155,7 @@ Rectangle {
             if (root.visible)
                 root._refresh();
             else
-                root._todayDirty = root._weekDirty = root._daysDirty = true; // mark stale, rebuild on next show
+                root._todayDirty = root._weekDirty = root._daysDirty = true; // rebuilt on next show
         }
 
         target: state._ticker
@@ -163,7 +170,6 @@ Rectangle {
         target: state
     }
 
-    // header
     Item {
         id: header
 
@@ -202,7 +208,6 @@ Rectangle {
 
     }
 
-    // body
     ColumnLayout {
         anchors.top: header.bottom
         anchors.left: parent.left
@@ -212,9 +217,14 @@ Rectangle {
         anchors.topMargin: 8
         spacing: 14
 
-        // tab toggle
         Row {
+            id: viewTabs
+
             spacing: 4
+
+            activeFocusOnTab: true
+            Keys.onLeftPressed: root.viewMode = 0
+            Keys.onRightPressed: root.viewMode = 1
 
             Repeater {
                 model: ["Today", "This Week"]
@@ -223,7 +233,7 @@ Rectangle {
                     width: tabLabel.implicitWidth + 20
                     height: 28
                     radius: 6
-                    color: root.viewMode === index ? "#262626" : "transparent"
+                    color: root.viewMode === index ? (viewTabs.activeFocus ? "#333333" : "#262626") : "transparent"
 
                     Text {
                         id: tabLabel
@@ -247,11 +257,16 @@ Rectangle {
             }
         }
 
-        // weekday picker (week mode only)
         Item {
+            id: dayPicker
+
             Layout.fillWidth: true
             height: 46
             visible: root.viewMode === 1
+
+            activeFocusOnTab: true
+            Keys.onLeftPressed: root.stepDay(-1)
+            Keys.onRightPressed: root.stepDay(1)
 
             RowLayout {
                 anchors.fill: parent
@@ -268,7 +283,8 @@ Rectangle {
                         radius: 6
                         property bool selected: root.selectedDayKey === modelData.key
                         property bool enabled_: modelData.hasData === true
-                        color: selected ? "#262626" : (dayMa.containsMouse && dayCell.enabled_ ? "#161616" : "transparent")
+                        color: selected ? (dayPicker.activeFocus ? "#333333" : "#262626")
+                            : (dayMa.containsMouse && dayCell.enabled_ ? "#161616" : "transparent")
                         opacity: dayCell.enabled_ ? 1 : 0.35
 
                         Column {
@@ -306,7 +322,6 @@ Rectangle {
             }
         }
 
-        // summer
         RowLayout {
             Layout.fillWidth: true
 
@@ -331,14 +346,13 @@ Rectangle {
             }
 
             Text {
-                // Guard: only call formatTime once state is loaded
+                // formatTime needs the state loaded
                 text: state._loaded ? (state.formatTime(root.totalSecs) + " total") : ""
                 color: "#6b6b6b"
                 font.pixelSize: 12
             }
         }
 
-        // Apps
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -380,7 +394,6 @@ Rectangle {
             }
         }
 
-        // activity app footer
         Item {
             Layout.fillWidth: true
             height: 28

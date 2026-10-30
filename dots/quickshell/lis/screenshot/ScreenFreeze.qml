@@ -5,19 +5,16 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 
-// Holds the screens still while a region is picked for a screenshot
-// (~/.config/hypr/hyprland/scripts/screenshot-region.sh): grim's capture of
-// every screen, shown over each screen. hyprpicker's freeze, which hyprshot
-// uses, draws rotated monitors sideways.
+// Freezes the screens with grim's capture while a region is picked (hyprpicker draws rotated monitors sideways)
 Scope {
     id: root
 
-    // The capture, "" while nothing is frozen
+    // "" while nothing is frozen
     property string path: ""
-    // The script that froze the screens: if it dies, the freeze ends too
+    // If the script dies, the freeze ends
     property int owner: 0
 
-    // grim captures the area of every screen, at the highest scale of them
+    // grim captures every screen at their highest scale
     readonly property real left: Math.min(...Quickshell.screens.map(s => s.x))
     readonly property real top: Math.min(...Quickshell.screens.map(s => s.y))
     readonly property real scale: Math.max(...Quickshell.screens.map(s => s.devicePixelRatio))
@@ -25,7 +22,6 @@ Scope {
     IpcHandler {
         target: "screenshot"
 
-        // path: grim's capture; pid: the script's
         function freeze(path: string, pid: int): void {
             root.owner = pid
             root.path = path
@@ -38,7 +34,7 @@ Scope {
         }
     }
 
-    // Exits once the script does, checking every 0.1s
+    // Exits once the script does
     Process {
         id: watchdog
 
@@ -59,7 +55,6 @@ Scope {
             color: "black"
             WlrLayershell.layer: WlrLayer.Overlay
             // Shown at once: Hyprland's pop-in would show the live screen
-            // under it
             WlrLayershell.namespace: "quickshell:freeze"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             WlrLayershell.exclusiveZone: -1
@@ -71,7 +66,6 @@ Scope {
                 right: true
             }
 
-            // This screen's part of the capture
             Image {
                 anchors.fill: parent
                 source: root.path === "" ? "" : "file://" + root.path

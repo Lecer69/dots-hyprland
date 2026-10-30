@@ -44,7 +44,7 @@ QtObject {
                 DdcMonitorState._edidProc.command = ["sh", "-c",
                     "while [ $# -ge 2 ]; do " +
                     "m=; n=0; " +
-                    // sysfs reports edid as size 0, so grep must read it through a pipe
+                    // sysfs reports edid as size 0, so it's read through a pipe
                     "for f in /sys/class/drm/card*-*/edid; do " +
                     "cat \"$f\" | grep -qaF -- \"$2\" && { m=$(basename $(dirname \"$f\")); n=$((n+1)); }; " +
                     "done; " +

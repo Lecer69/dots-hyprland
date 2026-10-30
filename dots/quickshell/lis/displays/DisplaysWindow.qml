@@ -9,7 +9,7 @@ PanelWindow {
 
     property bool shown: false
 
-    // Hidden while the file chooser is open, which would be under it
+    // Hidden while the file chooser is open
     visible: shown && !displaysPanel.picking
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -23,7 +23,7 @@ PanelWindow {
         right: true
     }
 
-    // Stays open while the new settings wait to be kept or reverted
+    // Stays open while the new settings wait to be kept
     Shortcut {
         sequences: ["Escape"]
         onActivated: if (!displaysPanel.confirming) root.shown = false
@@ -39,7 +39,7 @@ PanelWindow {
         onCloseRequested: if (!displaysPanel.confirming) root.shown = false
     }
 
-    // While a wallpaper is picked, opening the panel again closes the chooser
+    // While picking, opening it again closes the chooser
     function toggle(): void {
         if (displaysPanel.picking) displaysPanel.cancelPick()
         else if (!displaysPanel.confirming) root.shown = !root.shown

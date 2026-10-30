@@ -3,15 +3,13 @@ import QtQuick.Layouts
 import Quickshell
 import qs.tools
 
-// The desktop overview's content: the clock over the dimmed wallpaper, the
-// to-do, system and today cards, and what's playing
+// The desktop overview's content
 Item {
     id: root
 
     required property SystemStats stats
     property bool shown: false
-    // Space the bar keeps, [left, top, right, bottom]; the content centres in
-    // the rest
+    // Space the bar keeps, [left, top, right, bottom]
     property var reserved: [0, 0, 0, 0]
 
     readonly property real cardWidth: Math.min(360, Math.floor((area.width - 64 - 2 * 16) / 3))
@@ -23,7 +21,6 @@ Item {
 
     Component.onCompleted: _ready = true
 
-    // Fades in when created, and out before the overview unloads it
     opacity: root.shown && root._ready ? 1 : 0
 
     Behavior on opacity {

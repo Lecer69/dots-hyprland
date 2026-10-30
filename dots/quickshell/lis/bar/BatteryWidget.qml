@@ -47,7 +47,6 @@ Item {
 
         vendorExtensionsEnabled: true
 
-        // track
         ShapePath {
             strokeColor: Qt.rgba(1, 1, 1, 0.13)
             strokeWidth: 2.5
@@ -63,7 +62,6 @@ Item {
             }
         }
 
-        // filled arc
         ShapePath {
             strokeColor: root.arcColor()
             strokeWidth: 2.5
@@ -80,7 +78,6 @@ Item {
         }
     }
 
-    // charging dot
     Rectangle {
         visible: root.charging && root.available
         width: 6

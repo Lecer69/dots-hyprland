@@ -1,14 +1,14 @@
 import QtQuick
+import qs.common
 
-// A sub goal: drag handle, check, title edited in place (wrapping), and ✕ on
-// hover. Emptying the title removes it.
+// A sub goal; emptying its title removes it
 Rectangle {
     id: root
 
     required property real goalId
     required property var subgoal
     property bool dragged: false
-    // The item the drag positions are given in
+    // The item drag positions are given in
     property Item dragSpace: null
 
     signal dragStarted(real y)
@@ -21,7 +21,21 @@ Rectangle {
 
     height: Math.max(root.band, editor.y * 2 + editor.height)
     radius: 6
-    color: root.dragged ? "#1f1f1f" : "transparent"
+    color: root.dragged || root.activeFocus ? "#1f1f1f" : "transparent"
+
+    readonly property string listRow: "subgoals " + root.goalId
+    activeFocusOnTab: true
+    Keys.onUpPressed: KeyNav.step(root, false)
+    Keys.onDownPressed: KeyNav.step(root, true)
+    Keys.onSpacePressed: GoalsService.toggleSubgoal(root.goalId, root.subgoal.id)
+    Keys.onReturnPressed: editor.forceActiveFocus()
+    Keys.onEnterPressed: editor.forceActiveFocus()
+    Keys.onDeletePressed: {
+        // Focus moves on before the row goes
+        if (!KeyNav.step(root, true))
+            KeyNav.step(root, false);
+        GoalsService.removeSubgoal(root.goalId, root.subgoal.id);
+    }
 
     FontMetrics {
         id: metrics
@@ -33,7 +47,6 @@ Rectangle {
         id: hover
     }
 
-    // Drag handle
     Item {
         width: 18
         height: root.band
@@ -99,7 +112,7 @@ Rectangle {
         selectionColor: "#333333"
         selectedTextColor: "#ffffff"
 
-        // Not bound to the sub goal: a save while typing would move the cursor
+        // Not bound: a save while typing would move the cursor
         Component.onCompleted: text = root.subgoal.title
         onTextChanged: if (activeFocus) GoalsService.editSubgoal(root.goalId, root.subgoal.id, text)
         onActiveFocusChanged: {
@@ -111,7 +124,6 @@ Rectangle {
         Keys.onEnterPressed: root.accepted()
     }
 
-    // Delete
     Item {
         id: remove
 

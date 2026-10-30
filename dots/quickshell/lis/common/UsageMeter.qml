@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// A label and value over a thin bar filled to `value` (0-1)
+// A label and value over a bar filled to `value` (0-1)
 ColumnLayout {
     id: meter
 

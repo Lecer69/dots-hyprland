@@ -45,8 +45,7 @@ PanelWindow {
     function rowFrom(start, asFree) {
         const taken = ({})
         for (const ws of Hyprland.workspaces.values) {
-            // Ids below 1 are special or named workspaces. A new workspace has
-            // no monitor until it's activated an event later, so it stays free
+            // Ids below 1 are special workspaces; a new one has no monitor until activated
             if (ws.id >= 1 && ws.id !== asFree && ws.monitor && ws.monitor !== bar.monitor)
                 taken[ws.id] = true
         }
@@ -229,13 +228,14 @@ PanelWindow {
                     verticalItemAlignment: Qt.AlignVCenter
                     spacing: 10
 
+                    // Only with a laptop battery
                     BatteryWidget {
                         id: batteryWidget
-                        visible: !bar.compact
+                        visible: !bar.compact && available
                     }
 
                     Divider {
-                        visible: !bar.compact && mediaWidget.hasMedia
+                        visible: batteryWidget.visible && mediaWidget.visible
                     }
 
                     MediaWidget {
@@ -245,16 +245,16 @@ PanelWindow {
                     }
 
                     Divider {
-                        visible: !bar.compact && sysTray.count > 0
+                        visible: sysTray.visible && (batteryWidget.visible || mediaWidget.visible)
                     }
 
                     SysTrayWidget {
                         id: sysTray
-                        visible: !bar.compact
+                        visible: count > 0
                         screen: bar.screen
                     }
 
-                    Divider { visible: !bar.compact && sysTray.count > 0 }
+                    Divider { visible: sysTray.visible }
 
                     UtilityButtons { }
 

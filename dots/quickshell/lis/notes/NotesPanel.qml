@@ -3,8 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.common
 
-// Notes with a title and text: the list on the left, newest edit first, and
-// the open note on the right
+// Notes: the list (newest edit first) and the open note
 PanelFrame {
     id: root
 
@@ -12,15 +11,14 @@ PanelFrame {
     property real selectedId: -1
     property string query: ""
     property bool deleteArmed: false
-    // A private note's text shows once it's asked for: opened from the list,
-    // or with Show. The panel opening on it isn't asking
+    // A private note shows once asked for, not just because the panel opened on it
     property bool revealed: false
-    // For the dates, refreshed on opening
+    // Refreshed on opening
     property date now: new Date()
     property bool _loading: false
-    // The search row and the note's title block share a height, so the lines
-    // under them line up
+    // Shared with the title block so the lines below align
     readonly property int topRowHeight: 52
+    readonly property Item initialFocus: searchInput
 
     readonly property var selected: notesState.notes.find(n => n.id === root.selectedId) ?? null
     readonly property bool covered: (root.selected?.private ?? false) && !root.revealed
@@ -54,7 +52,7 @@ PanelFrame {
         id: notesState
     }
 
-    // Saves the open note, and drops it if it was left empty
+    // Saves the open note, and drops it if empty
     function leave(): void {
         notesState.flush();
         const note = root.selected;
@@ -77,7 +75,6 @@ PanelFrame {
         noteBody.reset();
     }
 
-    // Moves the selection through the listed notes
     function step(delta: int): void {
         const list = root.visibleNotes;
         const i = list.findIndex(n => n.id === root.selectedId);
@@ -97,13 +94,13 @@ PanelFrame {
             notesState.edit(root.selectedId, titleInput.text, noteBody.text);
     }
 
-    // Going on to a private note's text shows it
+    // Going to a private note's text shows it
     function focusBody(): void {
         root.revealed = true;
         noteBody.editorItem.forceActiveFocus();
     }
 
-    // Making the open note private leaves its text showing
+    // Leaves the text showing
     function togglePrivate(): void {
         if (!root.selected)
             return;
@@ -131,7 +128,7 @@ PanelFrame {
         return Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
     }
 
-    // "14:30" today, "Mon" this week, "3 Oct" this year, then "3 Oct 2025"
+    // "14:30" today, "Mon" this week, "3 Oct" this year, else "3 Oct 2025"
     function listDate(ms: real): string {
         const d = new Date(ms);
         const days = root._days(ms);
@@ -179,7 +176,6 @@ PanelFrame {
         anchors.bottomMargin: 24
         spacing: 24
 
-        // The list
         ColumnLayout {
             Layout.preferredWidth: 280
             Layout.fillHeight: true
@@ -210,6 +206,7 @@ PanelFrame {
                         font.pixelSize: 13
                         clip: true
                         selectByMouse: true
+                        activeFocusOnTab: true
                         onTextChanged: root.query = text
 
                         Keys.onUpPressed: root.step(-1)
@@ -250,6 +247,18 @@ PanelFrame {
                 spacing: 2
                 boundsBehavior: Flickable.StopAtBounds
 
+                // Up/Down open the next note
+                function step(delta: int): void {
+                    root.step(delta);
+                    list.positionViewAtIndex(root.visibleNotes.findIndex(n => n.id === root.selectedId), ListView.Contain);
+                }
+
+                activeFocusOnTab: true
+                Keys.onUpPressed: list.step(-1)
+                Keys.onDownPressed: list.step(1)
+                Keys.onReturnPressed: root.focusBody()
+                Keys.onEnterPressed: root.focusBody()
+
                 model: ScriptModel {
                     values: root.visibleNotes
                 }
@@ -263,7 +272,7 @@ PanelFrame {
                     width: ListView.view.width
                     height: 58
                     radius: 8
-                    color: row.isSelected ? "#1f1f1f" : rowArea.containsMouse ? "#161616" : "transparent"
+                    color: row.isSelected ? (list.activeFocus ? "#2a2a2a" : "#1f1f1f") : rowArea.containsMouse ? "#161616" : "transparent"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -331,7 +340,6 @@ PanelFrame {
             }
         }
 
-        // As in the settings panel, along the list and the note's text
         Rectangle {
             Layout.preferredWidth: 1
             Layout.fillHeight: true
@@ -339,7 +347,6 @@ PanelFrame {
             color: "#262626"
         }
 
-        // The open note
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -362,6 +369,7 @@ PanelFrame {
                     font.weight: Font.DemiBold
                     clip: true
                     selectByMouse: true
+                    activeFocusOnTab: true
                     onTextEdited: root.edited()
 
                     Keys.onTabPressed: root.focusBody()
@@ -397,11 +405,17 @@ PanelFrame {
 
                     Text {
                         readonly property bool isPrivate: root.selected?.private ?? false
+                        readonly property bool lit: privateArea.containsMouse || activeFocus
 
                         text: isPrivate ? "Private" : "Make private"
-                        color: isPrivate ? (privateArea.containsMouse ? "#ffffff" : "#e6e6e6")
-                            : privateArea.containsMouse ? "#dddddd" : "#666666"
+                        color: isPrivate ? (lit ? "#ffffff" : "#e6e6e6")
+                            : lit ? "#dddddd" : "#666666"
                         font.pixelSize: 12
+
+                        activeFocusOnTab: true
+                        Keys.onSpacePressed: root.togglePrivate()
+                        Keys.onReturnPressed: root.togglePrivate()
+                        Keys.onEnterPressed: root.togglePrivate()
 
                         MouseArea {
                             id: privateArea
@@ -416,8 +430,14 @@ PanelFrame {
 
                     Text {
                         text: root.deleteArmed ? "Click again to delete" : "Delete"
-                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse ? "#dddddd" : "#666666"
+                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse || activeFocus ? "#dddddd" : "#666666"
                         font.pixelSize: 12
+
+                        // Like the click, the first press only arms it
+                        activeFocusOnTab: true
+                        Keys.onSpacePressed: root.deleteSelected()
+                        Keys.onReturnPressed: root.deleteSelected()
+                        Keys.onEnterPressed: root.deleteSelected()
 
                         MouseArea {
                             id: deleteArea
@@ -448,7 +468,7 @@ PanelFrame {
                 onTextChanged: root.edited()
             }
 
-            // In place of a private note's text, until it's asked for
+            // Covers a private note's text until asked for
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -474,7 +494,6 @@ PanelFrame {
             }
         }
 
-        // No note open
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true

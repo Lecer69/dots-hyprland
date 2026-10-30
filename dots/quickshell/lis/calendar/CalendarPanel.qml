@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Rectangle {
     id: root
@@ -71,6 +72,27 @@ Rectangle {
         viewYear = y
     }
 
+    readonly property Item initialFocus: dayGrid
+
+    function selectDay(d: date): void {
+        root.selectedDate = d
+        root.viewYear = d.getFullYear()
+        root.viewMonth = d.getMonth()
+    }
+
+    function moveDays(days: int): void {
+        const d = new Date(root.selectedDate)
+        d.setDate(d.getDate() + days)
+        root.selectDay(d)
+    }
+
+    // The same day, or the month's last day when that's shorter
+    function moveMonths(delta: int): void {
+        const s = root.selectedDate
+        const lastDay = new Date(s.getFullYear(), s.getMonth() + delta + 1, 0).getDate()
+        root.selectDay(new Date(s.getFullYear(), s.getMonth() + delta, Math.min(s.getDate(), lastDay)))
+    }
+
     function goToday(): void {
         const t = new Date()
         today = t
@@ -79,7 +101,7 @@ Rectangle {
         viewMonth = t.getMonth()
     }
 
-    // Refresh "today" highlight at midnight
+    // Moves the "today" highlight at midnight
     Timer {
         interval: 60000
         running: true
@@ -91,8 +113,7 @@ Rectangle {
         }
     }
 
-    // Click shield: absorb clicks on empty panel space so the
-    // backdrop in CalendarWindow doesn't close the window
+    // Click shield, so the backdrop doesn't close the window
     MouseArea {
         anchors.fill: parent
         onClicked: mouse.accepted = true
@@ -145,7 +166,6 @@ Rectangle {
         anchors.topMargin: 8
         spacing: 14
 
-        // Month navigation
         Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 28
@@ -156,11 +176,16 @@ Rectangle {
                 width: 28
                 height: 28
 
+                activeFocusOnTab: true
+                Keys.onSpacePressed: root.shiftMonth(-1)
+                Keys.onReturnPressed: root.shiftMonth(-1)
+                Keys.onEnterPressed: root.shiftMonth(-1)
+
                 Text {
                     anchors.centerIn: parent
                     text: "‹"
                     font.pixelSize: 18
-                    color: prevHover.containsMouse ? "#ffffff" : "#808080"
+                    color: prevHover.containsMouse || parent.activeFocus ? "#ffffff" : "#808080"
                 }
 
                 MouseArea {
@@ -183,13 +208,20 @@ Rectangle {
             }
 
             Rectangle {
+                id: todayButton
+
                 anchors.right: nextBtn.left
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
                 width: todayLabel.implicitWidth + 20
                 height: 28
                 radius: 6
-                color: todayHover.pressed ? "#333333" : todayHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
+                color: todayHover.pressed ? "#333333" : todayHover.containsMouse || todayButton.activeFocus ? "#2a2a2a" : "#1f1f1f"
+
+                activeFocusOnTab: true
+                Keys.onSpacePressed: root.goToday()
+                Keys.onReturnPressed: root.goToday()
+                Keys.onEnterPressed: root.goToday()
 
                 Text {
                     id: todayLabel
@@ -219,11 +251,16 @@ Rectangle {
                 width: 28
                 height: 28
 
+                activeFocusOnTab: true
+                Keys.onSpacePressed: root.shiftMonth(1)
+                Keys.onReturnPressed: root.shiftMonth(1)
+                Keys.onEnterPressed: root.shiftMonth(1)
+
                 Text {
                     anchors.centerIn: parent
                     text: "›"
                     font.pixelSize: 18
-                    color: nextHover.containsMouse ? "#ffffff" : "#808080"
+                    color: nextHover.containsMouse || nextBtn.activeFocus ? "#ffffff" : "#808080"
                 }
 
                 MouseArea {
@@ -237,7 +274,6 @@ Rectangle {
             }
         }
 
-        // Weekday header
         Row {
             Layout.fillWidth: true
             spacing: 4
@@ -261,7 +297,6 @@ Rectangle {
             }
         }
 
-        // Day grid
         Grid {
             id: dayGrid
 
@@ -269,6 +304,26 @@ Rectangle {
             columns: 7
             rowSpacing: 4
             columnSpacing: 4
+
+            // One Tab stop for the whole month
+            activeFocusOnTab: true
+            Keys.onLeftPressed: root.moveDays(-1)
+            Keys.onRightPressed: root.moveDays(1)
+            Keys.onUpPressed: root.moveDays(-7)
+            Keys.onDownPressed: root.moveDays(7)
+            Keys.onReturnPressed: noteInput.forceActiveFocus()
+            Keys.onEnterPressed: noteInput.forceActiveFocus()
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_PageUp)
+                    root.moveMonths(-1)
+                else if (event.key === Qt.Key_PageDown)
+                    root.moveMonths(1)
+                else if (event.key === Qt.Key_T || event.key === Qt.Key_Home)
+                    root.goToday()
+                else
+                    return
+                event.accepted = true
+            }
 
             Repeater {
                 model: root.cells
@@ -282,8 +337,11 @@ Rectangle {
                     height: 44
                     radius: 8
                     color: modelData.isToday ? "#e6e6e6"
-                        : modelData.isSelected ? "#1f1f1f"
+                        : modelData.isSelected ? (dayGrid.activeFocus ? "#2a2a2a" : "#1f1f1f")
                         : cellHover.containsMouse ? "#161616" : "transparent"
+                    // The keyboard's day, even when it's today
+                    border.width: modelData.isSelected && dayGrid.activeFocus ? 1 : 0
+                    border.color: "#6b6b6b"
 
                     Text {
                         anchors.centerIn: parent
@@ -295,7 +353,6 @@ Rectangle {
                             : cell.modelData.inMonth ? "#e6e6e6" : "#4a4a4a"
                     }
 
-                    // Has-notes marker
                     Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
@@ -321,7 +378,6 @@ Rectangle {
             }
         }
 
-        // Selected date + note count
         Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 18
@@ -349,7 +405,6 @@ Rectangle {
             }
         }
 
-        // Notes for the selected date
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -379,7 +434,18 @@ Rectangle {
                             width: notesColumn.width
                             height: Math.max(36, noteText.implicitHeight + 16)
                             radius: 8
-                            color: noteHover.hovered ? "#161616" : "transparent"
+                            color: noteHover.hovered || noteRow.activeFocus ? "#161616" : "transparent"
+
+                            readonly property bool listRow: true
+                            activeFocusOnTab: true
+                            Keys.onUpPressed: KeyNav.step(noteRow, false)
+                            Keys.onDownPressed: KeyNav.step(noteRow, true)
+                            Keys.onSpacePressed: calendarState.toggleYearly(noteRow.modelData.id)
+                            Keys.onDeletePressed: {
+                                if (!KeyNav.step(noteRow, true) && !KeyNav.step(noteRow, false))
+                                    dayGrid.forceActiveFocus()
+                                calendarState.removeNote(noteRow.modelData.id)
+                            }
 
                             HoverHandler {
                                 id: noteHover
@@ -408,12 +474,12 @@ Rectangle {
                                     wrapMode: Text.Wrap
                                 }
 
-                                // Yearly toggle, shown when set or on hover
+                                // Shown when set or on hover
                                 Rectangle {
                                     Layout.preferredWidth: yearlyLabel.implicitWidth + 16
                                     Layout.preferredHeight: 22
                                     radius: 6
-                                    opacity: noteRow.modelData.yearly || noteHover.hovered ? 1 : 0
+                                    opacity: noteRow.modelData.yearly || noteHover.hovered || noteRow.activeFocus ? 1 : 0
                                     color: noteRow.modelData.yearly ? "#262626" : "transparent"
 
                                     Text {
@@ -436,7 +502,6 @@ Rectangle {
                                     }
                                 }
 
-                                // Delete
                                 Item {
                                     Layout.preferredWidth: 26
                                     Layout.preferredHeight: 26
@@ -472,7 +537,6 @@ Rectangle {
             }
         }
 
-        // Add note input
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 36
@@ -494,6 +558,7 @@ Rectangle {
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
+                    activeFocusOnTab: true
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -508,10 +573,18 @@ Rectangle {
                 }
 
                 Rectangle {
+                    id: newYearly
+
                     Layout.preferredWidth: newYearlyLabel.implicitWidth + 16
                     Layout.preferredHeight: 22
                     radius: 6
-                    color: root.newNoteYearly ? "#262626" : "transparent"
+                    color: root.newNoteYearly ? (newYearly.activeFocus ? "#333333" : "#262626")
+                        : newYearly.activeFocus ? "#1f1f1f" : "transparent"
+
+                    activeFocusOnTab: true
+                    Keys.onSpacePressed: root.newNoteYearly = !root.newNoteYearly
+                    Keys.onReturnPressed: root.newNoteYearly = !root.newNoteYearly
+                    Keys.onEnterPressed: root.newNoteYearly = !root.newNoteYearly
 
                     Text {
                         id: newYearlyLabel

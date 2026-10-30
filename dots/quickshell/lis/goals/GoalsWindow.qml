@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.common
 
 PanelWindow {
     id: root
@@ -12,7 +13,7 @@ PanelWindow {
     visible: shown
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
     WlrLayershell.exclusiveZone: -1
 
     anchors {
@@ -22,8 +23,14 @@ PanelWindow {
         right: true
     }
 
-    // A title being typed is saved now, not after the pause
+    // Saves a title being typed now, not after the pause
     onShownChanged: if (!shown) GoalsService.flush()
+
+    PanelKeyboard {
+        id: keyboard
+        open: root.shown
+        initialFocus: panel.initialFocus
+    }
 
     Shortcut {
         sequences: ["Escape"]
@@ -31,6 +38,7 @@ PanelWindow {
     }
 
     GoalsPanel {
+        id: panel
         anchors.centerIn: parent
         width: Math.min(600, parent.width - 80)
         height: Math.min(640, parent.height - 80)

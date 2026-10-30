@@ -2,12 +2,11 @@ pragma Singleton
 
 import Quickshell
 
-// Text for system figures, shared by the task manager and the desktop
-// overview
+// Text for system figures
 Singleton {
     id: root
 
-    // 1024-based: "4.2 MB", "512 MB", "9.8 GB", "426 GB"
+    // 1024-based: "4.2 MB", "512 MB", "9.8 GB"
     function bytes(n: real): string {
         if (!(n >= 0))
             return "–";
@@ -37,7 +36,7 @@ Singleton {
         return minutes + "m";
     }
 
-    // A GPU from SystemStats: "26% · 2.3 GB / 8.0 GB · 53°C", or "Off"
+    // "26% · 2.3 GB / 8.0 GB · 53°C", or "Off"
     function gpu(g: var): string {
         if (g.off)
             return "Off";
@@ -51,11 +50,11 @@ Singleton {
         return parts.join(" · ");
     }
 
-    // SystemStats' traffic: "↓ 1.2 MB/s   ↑ 33 KB/s"
+    // "↓ 1.2 MB/s   ↑ 33 KB/s"
     function network(stats: var): string {
         if (stats.netInterface === "")
             return "Offline";
-        // Until there are two samples to compare
+        // Until there are two samples
         if (stats.downRate < 0)
             return stats.netInterface;
         return "↓ " + root.rate(stats.downRate) + "   ↑ " + root.rate(stats.upRate);

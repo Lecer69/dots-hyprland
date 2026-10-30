@@ -15,6 +15,19 @@ ColumnLayout {
     spacing: 6
     Layout.fillWidth: true
 
+    // Like a drag; releasing the key is the release
+    function stepped(direction: int): real {
+        return Math.round(Math.max(root.from, Math.min(root.to, root.value + direction * 0.02)) * 100) / 100
+    }
+
+    activeFocusOnTab: true
+    Keys.onLeftPressed: root.moved(root.stepped(-1))
+    Keys.onRightPressed: root.moved(root.stepped(1))
+    Keys.onReleased: event => {
+        if ((event.key === Qt.Key_Left || event.key === Qt.Key_Right) && !event.isAutoRepeat)
+            root.released(root.value)
+    }
+
     RowLayout {
         Layout.fillWidth: true
 
@@ -50,7 +63,7 @@ ColumnLayout {
             width: handle.x + handle.width / 2
             height: 3
             radius: 1.5
-            color: "#bbbbbb"
+            color: root.activeFocus ? "#ffffff" : "#bbbbbb"
         }
 
         Rectangle {
@@ -60,9 +73,9 @@ ColumnLayout {
 
             anchors.verticalCenter: parent.verticalCenter
             x: position * (parent.width - width)
-            width: 12
-            height: 12
-            radius: 6
+            width: root.activeFocus ? 14 : 12
+            height: width
+            radius: width / 2
             color: "#ffffff"
         }
 

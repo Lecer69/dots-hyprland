@@ -3,6 +3,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.common
 
 PanelWindow {
     id: root
@@ -11,15 +12,14 @@ PanelWindow {
     property var targetScreen: null
     property var pendingAction: null
 
-    // Stay visible while the buttons animate out
+    // Stays mapped while the buttons fade out
     visible: isOpen || buttonRow.opacity > 0.01
     color: "transparent"
-    // Null (unset) means the primary screen; the bar button sets this
-    // to its own screen on click, so the dialog opens where it was triggered
+    // Null means the primary screen
     screen: root.targetScreen
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: keyboard.mode
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.namespace: "quickshell:power"
 
@@ -30,12 +30,18 @@ PanelWindow {
         right: true
     }
 
+    PanelKeyboard {
+        id: keyboard
+        open: root.isOpen
+        initialFocus: buttonRow
+    }
+
     Shortcut {
         sequences: ["Escape"]
         onActivated: root.isOpen = false
     }
 
-    // Small delay so the close animation is visible before the action runs
+    // Lets the close animation show before the action runs
     Timer {
         id: actionTimer
         interval: 300
@@ -54,7 +60,6 @@ PanelWindow {
         actionTimer.restart()
     }
 
-    // Dim backdrop
     Rectangle {
         anchors.fill: parent
         color: "#000000"
@@ -66,12 +71,15 @@ PanelWindow {
         }
     }
 
-    // Just the buttons, centred
+    // Nothing picked on open, so a stray Enter does nothing
     Row {
         id: buttonRow
 
         anchors.centerIn: parent
         spacing: 36
+
+        Keys.onLeftPressed: exitAction.forceActiveFocus()
+        Keys.onRightPressed: shutdownAction.forceActiveFocus()
 
         opacity: root.isOpen ? 1 : 0
         scale: root.isOpen ? 1 : 0.95
@@ -80,6 +88,8 @@ PanelWindow {
         Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
 
         PowerAction {
+            id: shutdownAction
+
             index: 0
             label: "Shutdown"
             iconSource: "../icons/power.svg"
@@ -104,6 +114,8 @@ PanelWindow {
         }
 
         PowerAction {
+            id: exitAction
+
             index: 3
             label: "Exit"
             iconSource: "../icons/exit.svg"
@@ -121,10 +133,19 @@ PanelWindow {
         property int index: 0
         signal activated()
 
+        readonly property bool lit: mouse.containsMouse || action.activeFocus
+
+        activeFocusOnTab: true
+        Keys.onLeftPressed: action.nextItemInFocusChain(false).forceActiveFocus()
+        Keys.onRightPressed: action.nextItemInFocusChain(true).forceActiveFocus()
+        Keys.onSpacePressed: action.activated()
+        Keys.onReturnPressed: action.activated()
+        Keys.onEnterPressed: action.activated()
+
         width: 128
         height: 128
 
-        // Staggered entrance: fade + slide up, one button after another
+        // Staggered entrance
         readonly property int enterDelay: root.isOpen ? action.index * 60 : 0
 
         opacity: root.isOpen ? 1 : 0
@@ -154,9 +175,9 @@ PanelWindow {
 
             anchors.fill: parent
             radius: width / 2
-            color: mouse.containsMouse ? "#1a1a1a" : "#141414"
+            color: action.lit ? "#1a1a1a" : "#141414"
             border.width: 1
-            border.color: mouse.containsMouse ? action.accent : "#2a2a2a"
+            border.color: action.lit ? action.accent : "#2a2a2a"
 
             Behavior on color { ColorAnimation { duration: 120 } }
             Behavior on border.color { ColorAnimation { duration: 120 } }
@@ -184,13 +205,13 @@ PanelWindow {
                 anchors.fill: actionIcon
                 source: actionIcon
                 colorization: 1.0
-                colorizationColor: mouse.containsMouse ? action.accent : "#bfbfbf"
+                colorizationColor: action.lit ? action.accent : "#bfbfbf"
 
                 Behavior on colorizationColor { ColorAnimation { duration: 120 } }
             }
         }
 
-        // Tooltip label, shown only on hover
+        // Label on hover
         Rectangle {
             anchors {
                 horizontalCenter: parent.horizontalCenter
@@ -203,7 +224,7 @@ PanelWindow {
             color: "#121212"
             border.color: "#2a2a2a"
             border.width: 1
-            opacity: mouse.containsMouse ? 1 : 0
+            opacity: action.lit ? 1 : 0
             visible: opacity > 0.01
 
             Behavior on opacity { NumberAnimation { duration: 120 } }

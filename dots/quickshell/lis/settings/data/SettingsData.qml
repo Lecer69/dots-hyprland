@@ -30,9 +30,7 @@ Singleton {
 
         onLoaded: root._ready = true
 
-        // Only seed when there is no file; writing on any other failure (or
-        // on a timer, as before) could overwrite the user's settings.
-        // Writing creates ~/.config/lis if needed.
+        // Only seed when there's no file; writing on other failures could lose the user's settings
         onLoadFailed: error => {
             if (error !== FileViewError.FileNotFound)
                 return
@@ -41,15 +39,12 @@ Singleton {
             writeAdapter()
         }
 
-        // Block until settings.json is parsed so everything created at
-        // startup (e.g. the boot lock screen) sees the real values instead
-        // of defaults that change a moment later
+        // Blocks until parsed, so things made at startup (the boot lock) see real values
         Component.onCompleted: waitForJob()
 
         JsonAdapter {
             id: adapter
 
-            // General
             property JsonObject general: JsonObject {
                 property bool notificationsEnabled: true
                 property bool enableIdleInhibitedByDefault: false
@@ -59,7 +54,6 @@ Singleton {
                 property string colorScheme: 'expressive'
             }
 
-            // Bar
             property JsonObject bar: JsonObject {
                 property string position: "top"
                 property string pillColor: "#c30f0f0f"
@@ -75,8 +69,7 @@ Singleton {
                 property bool showColorPicker: true
                 property bool showScreenshot: true
                 property int workspaceNumbers: 10
-                // Screens that show their own number of workspaces, by
-                // screen name; the rest use workspaceNumbers
+                // Screen name -> its own workspace count; others use workspaceNumbers
                 property var workspaceNumbersPerMonitor: ({})
                 property string workspaceStyle: "numbers"
                 property bool onlyAccessibleWorkspaces: false
@@ -84,13 +77,11 @@ Singleton {
                 property bool workspaceIconTint: true
             }
 
-            // Tracking
             property JsonObject tracking: JsonObject {
                 property bool wellbeingEnabled: true
                 property bool internetUsageEnabled: true
             }
 
-            // Workspace Overview
             property JsonObject workspaceOverview: JsonObject {
                 property int rows: 2
                 property int columns: 5
@@ -100,7 +91,6 @@ Singleton {
                 property bool centerIcons: false
             }
 
-            // Lock Screen
             property JsonObject lockScreen: JsonObject {
                 property bool enableBlur: false
                 property int blurSize: 15
@@ -110,33 +100,31 @@ Singleton {
                 property bool muteMicOnLock: true
            }
 
-            // Hypridle timers in minutes (hypridle/HypridleService.qml turns
-            // these into its config)
+            // Minutes
             property JsonObject hypridle: JsonObject {
                 property int lockTimeout: 5
                 property int screenOffTimeout: 10
                 property int suspendTimeout: 15
             }
 
-            // osu!
             property JsonObject osu: JsonObject {
                 property bool disableNotifications: true
                 property bool backdropOtherMonitors: false
                 property real backdropOpacity: 0.6
                 property string backdropColor: "#000000"
-                // How long the backdrop takes to fade in or out, in ms
+                // ms
                 property int backdropFadeDuration: 400
             }
 
-            // Cleanup page (~/.config/hypr/hyprland/scripts/cleanup.sh)
+            // ~/.config/hypr/hyprland/scripts/cleanup.sh
             property JsonObject cleanup: JsonObject {
-                // Cached versions of each package the pacman cache keeps
+                // Package versions the pacman cache keeps
                 property int pacmanKeep: 2
-                // Ticked items, by cleanup.sh's item names
+                // cleanup.sh item names
                 property var selected: ["pacman", "coredumps", "yay", "thumbnails", "crashes"]
             }
 
-            // Dots Updater page (scripts/dots-update.sh)
+            // scripts/dots-update.sh
             property JsonObject dotsUpdater: JsonObject {
                 // Zip hypr and quickshell into ~/.dots-hyprland-backups first
                 property bool backup: true

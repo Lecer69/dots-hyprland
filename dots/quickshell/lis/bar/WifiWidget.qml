@@ -7,8 +7,7 @@ Item {
     implicitWidth: icon.width
     implicitHeight: icon.height
 
-    // NetworkManager state over D-Bus, updated as it changes (it used to
-    // run nmcli every 5s in every bar)
+    // NetworkManager over D-Bus: nothing to poll
     readonly property string _iconName: {
         const devices = Networking.devices.values
         if (devices.some(d => d.type === DeviceType.Wired && d.connected)) return "ethernet"

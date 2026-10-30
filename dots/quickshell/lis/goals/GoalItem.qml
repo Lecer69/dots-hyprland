@@ -4,17 +4,17 @@ import QtQuick
 import Quickshell
 import qs.common
 
-// A goal: drag handle, check, title, how many sub goals are done, and a bar
-// for it. Clicking it opens it: the title can then be edited, and the sub
-// goals are listed under it, with a field to add more.
+// A goal; clicking it opens the title for editing and its sub goals
 Rectangle {
     id: root
 
     required property var goal
     property bool expanded: false
     property bool dragged: false
-    // The item the drag positions are given in
+    // The item drag positions are given in
     property Item dragSpace: null
+    // Gets the keyboard on Up from the first goal
+    property Item above: null
 
     signal toggleExpanded()
     signal dragStarted(real y)
@@ -23,10 +23,9 @@ Rectangle {
 
     readonly property int total: root.goal.subgoals.length
     readonly property int doneSubgoals: root.goal.subgoals.filter(s => s.done).length
-    // A goal is deleted on the second click
     property bool deleteArmed: false
     readonly property real band: 44
-    // Left edge of the title, and of the sub goals' checks
+    // Left edge of the title and of the sub goals' checks
     readonly property real textX: 64
 
     function addSubgoal(): void {
@@ -34,9 +33,34 @@ Rectangle {
             addInput.text = "";
     }
 
+    // The first call arms it, the second deletes
+    function remove(): void {
+        if (!root.deleteArmed) {
+            root.deleteArmed = true;
+            disarm.restart();
+            return;
+        }
+        if (root.activeFocus && !KeyNav.step(root, true) && !KeyNav.step(root, false) && root.above)
+            root.above.forceActiveFocus();
+        GoalsService.remove(root.goal.id);
+    }
+
     height: header.height + (root.expanded ? subgoals.height : 0)
     radius: 8
-    color: root.dragged ? "#1f1f1f" : (root.expanded || hover.hovered) ? "#161616" : "transparent"
+    color: root.dragged || (root.activeFocus && root.expanded) ? "#1f1f1f"
+        : (root.expanded || hover.hovered || root.activeFocus) ? "#161616" : "transparent"
+
+    readonly property string listRow: "goals"
+    activeFocusOnTab: true
+    Keys.onUpPressed: {
+        if (!KeyNav.step(root, false) && root.above)
+            root.above.forceActiveFocus();
+    }
+    Keys.onDownPressed: KeyNav.step(root, true)
+    Keys.onSpacePressed: GoalsService.toggle(root.goal.id)
+    Keys.onReturnPressed: root.toggleExpanded()
+    Keys.onEnterPressed: root.toggleExpanded()
+    Keys.onDeletePressed: root.remove()
 
     FontMetrics {
         id: metrics
@@ -61,14 +85,12 @@ Rectangle {
         width: parent.width
         height: (bar.visible ? bar.y + bar.height : title.y + title.height) + title.y
 
-        // Clicking the row opens and closes it
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: root.toggleExpanded()
         }
 
-        // Drag handle
         Item {
             x: 8
             width: 18
@@ -102,7 +124,6 @@ Rectangle {
             }
         }
 
-        // Check
         Rectangle {
             x: 36
             y: (root.band - height) / 2
@@ -139,7 +160,7 @@ Rectangle {
             selectionColor: "#333333"
             selectedTextColor: "#ffffff"
 
-            // Not bound to the goal: a save while typing would move the cursor
+            // Not bound: a save while typing would move the cursor
             Component.onCompleted: text = root.goal.title
             onTextChanged: if (activeFocus) GoalsService.edit(root.goal.id, text)
 
@@ -171,7 +192,6 @@ Rectangle {
                 font.pixelSize: 12
             }
 
-            // Open / close
             Item {
                 width: 26
                 height: parent.height
@@ -198,7 +218,6 @@ Rectangle {
                 }
             }
 
-            // Delete
             Item {
                 width: 26
                 height: parent.height
@@ -216,19 +235,11 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (root.deleteArmed) {
-                            GoalsService.remove(root.goal.id);
-                        } else {
-                            root.deleteArmed = true;
-                            disarm.restart();
-                        }
-                    }
+                    onClicked: root.remove()
                 }
             }
         }
 
-        // How many sub goals are done
         Rectangle {
             id: bar
 
@@ -253,7 +264,6 @@ Rectangle {
         }
     }
 
-    // The sub goals, once open
     Column {
         id: subgoals
 
@@ -275,7 +285,7 @@ Rectangle {
             Repeater {
                 id: subRepeater
 
-                // Keyed, so a sub goal keeps its row when the goal changes
+                // Keyed, so a sub goal keeps its row
                 model: ScriptModel {
                     values: subReorder.arrange(root.goal.subgoals)
                     objectProp: "id"
@@ -314,7 +324,6 @@ Rectangle {
             }
         }
 
-        // Add a sub goal
         Item {
             width: parent.width
             height: 30
@@ -341,6 +350,7 @@ Rectangle {
                 font.pixelSize: 13
                 clip: true
                 selectByMouse: true
+                activeFocusOnTab: true
 
                 Keys.onReturnPressed: root.addSubgoal()
                 Keys.onEnterPressed: root.addSubgoal()

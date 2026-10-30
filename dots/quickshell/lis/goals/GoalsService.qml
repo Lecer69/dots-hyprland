@@ -5,18 +5,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The goals panel's goals and their sub goals, kept in
-// ~/.config/lis/goals.json. Typing in a title is saved once it pauses,
-// everything else right away, and anything waiting when the shell quits or
-// reloads.
+// Goals in ~/.config/lis/goals.json; titles save when typing pauses, the rest right away
 Singleton {
     id: root
 
-    // { id: real, title: string, done: bool, created: real,
-    //   subgoals: [{ id: real, title: string, done: bool }] } in the user's
-    // order
+    // { id, title, done, created, subgoals: [{ id, title, done }] }, in the user's order
     property var goals: []
-    // Open goals first, then the done ones, each in the user's order
     readonly property var sorted: root.goals.filter(g => !g.done).concat(root.goals.filter(g => g.done))
     readonly property int doneCount: root.goals.filter(g => g.done).length
 
@@ -24,8 +18,7 @@ Singleton {
     property bool _dirty: false
     property real _lastId: 0
 
-    // Atomic writes (temp file + rename), done before setText returns, so
-    // the save on shutdown or reload completes too
+    // Atomic writes, done before setText returns, so a save on quit completes
     FileView {
         id: store
 
@@ -52,12 +45,12 @@ Singleton {
         try {
             parsed = JSON.parse(text);
         } catch (e) {
-            // Left as it is: nothing is saved over a file that didn't parse
+            // Nothing is saved over a file that didn't parse
             console.warn("[goals] goals.json isn't valid JSON, so nothing will be saved:", e);
             return;
         }
         const ids = [0];
-        // An entry written by hand may have no id
+        // Entries written by hand may have no id
         let missing = 0;
         const idOf = item => Number(item.id) || -(++missing);
         const valid = item => typeof item?.title === "string";
@@ -72,7 +65,7 @@ Singleton {
         root._loaded = true;
     }
 
-    // Unique, also for goals made in the same millisecond
+    // Unique even within a millisecond
     function _newId(): real {
         root._lastId = Math.max(Date.now(), root._lastId + 1);
         return root._lastId;
@@ -105,7 +98,7 @@ Singleton {
         store.setText(JSON.stringify(root.goals));
     }
 
-    // New goals go after the open ones. Returns the new goal's id, -1 for none
+    // After the open goals; returns the id, -1 for none
     function add(title: string): real {
         const clean = root._clean(title);
         if (clean === "" || !root._loaded)
@@ -116,7 +109,7 @@ Singleton {
         return id;
     }
 
-    // For every keystroke: saved once the typing pauses
+    // Saved once the typing pauses
     function edit(id: real, title: string): void {
         root._set(root.goals.map(g => g.id === id ? Object.assign({}, g, { title: root._clean(title) }) : g), true);
     }
@@ -129,13 +122,12 @@ Singleton {
         root._set(root.goals.filter(g => g.id !== id), false);
     }
 
-    // ids: the goals in their new order
     function order(ids: var): void {
         const list = ids.map(id => root.goals.find(g => g.id === id)).filter(g => g !== undefined);
         root._set(list.concat(root.goals.filter(g => !ids.includes(g.id))), false);
     }
 
-    // Returns the new sub goal's id, -1 for none
+    // Returns the id, -1 for none
     function addSubgoal(goalId: real, title: string): real {
         const clean = root._clean(title);
         if (clean === "" || !root.goals.some(g => g.id === goalId))

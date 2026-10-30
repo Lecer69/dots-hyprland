@@ -78,13 +78,11 @@ Variants {
                 readonly property color cRed:      "#f38ba8"
                 readonly property color cYellow:   "#f9e2af"
 
-                // Dim overlay
                 Rectangle {
                     anchors.fill: parent
                     color: '#7f000000'
                 }
 
-                // Centred card
                 Rectangle {
                     id: card
                     anchors.centerIn: parent
@@ -105,7 +103,6 @@ Variants {
                         }
                         spacing: 14
 
-                        // Title row
                         Row {
                             spacing: 10
                             width: parent.width
@@ -136,7 +133,6 @@ Variants {
                             }
                         }
 
-                        // Main message
                         Text {
                             width: parent.width
                             text: win.flow ? win.flow.message : ""
@@ -146,7 +142,6 @@ Variants {
                             visible: text.length > 0
                         }
 
-                        // Supplementary message
                         Text {
                             width: parent.width
                             text: win.flow ? win.flow.supplementaryMessage : ""
@@ -156,7 +151,6 @@ Variants {
                             visible: text.length > 0
                         }
 
-                        // Identity picker
                         Column {
                             width: parent.width
                             spacing: 6
@@ -212,7 +206,6 @@ Variants {
                             }
                         }
 
-                        // Password field
                         Column {
                             width: parent.width
                             spacing: 6
@@ -255,7 +248,6 @@ Variants {
                             }
                         }
 
-                        // Auth failed
                         Row {
                             spacing: 6
                             visible: win.flow ? win.flow.failed : false
@@ -277,7 +269,6 @@ Variants {
                             }
                         }
 
-                        // Buttons
                         Row {
                             anchors.right: parent.right
                             spacing: 8
@@ -347,7 +338,6 @@ Variants {
                     }
                 }
 
-                // Key capture
                 Item {
                     id: keyItem
                     anchors.fill: parent

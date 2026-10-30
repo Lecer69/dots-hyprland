@@ -15,9 +15,7 @@ Rectangle {
 
     default property alias content: contentItem.data
 
-    // Drawn over the fill rather than as the Rectangle's own border, which
-    // cuts the fill away under it: a see-through border then tints the
-    // pill's edge instead of showing the desktop behind
+    // Over the fill, not as the border, so a see-through border doesn't show the desktop
     Rectangle {
         anchors.fill: parent
         radius: parent.radius

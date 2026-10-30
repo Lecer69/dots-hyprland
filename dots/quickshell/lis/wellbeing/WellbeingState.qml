@@ -50,7 +50,7 @@ QtObject {
             if (root.activeApp !== "") {
                 var t = root.sessionTotals;
                 t[root.activeApp] = (t[root.activeApp] || 0) + 1;
-                root.sessionTotals = t; // reassign to trigger change signal
+                root.sessionTotals = t; // reassigned to notify
                 root.currentSessionSecs = t[root.activeApp];
             } else {
                 root.currentSessionSecs = 0;
@@ -62,8 +62,7 @@ QtObject {
         }
     }
 
-    // Atomic writes (temp file + rename), done before setText returns, so
-    // the flush on shutdown or reload completes too
+    // Atomic writes, done before setText returns, so a save on quit completes
     property FileView _store: FileView {
         path: Quickshell.env("HOME") + "/.config/lis/wellbeing.json"
         blockWrites: true
@@ -107,7 +106,7 @@ QtObject {
         return out;
     }
 
-    // Returns totals for one specific calendar day (yyyy-MM-dd key)
+    // Totals for one day ("yyyy-MM-dd")
     function dayTotals(dayKey) {
         if (dayKey === todayKey)
             return todayTotals();
@@ -116,10 +115,10 @@ QtObject {
         };
     }
 
-    // Returns the 7 dates of the current week
+    // The current week's 7 dates
     function weekDays() {
         var now = new Date();
-        var dow = now.getDay(); // 0 = Sunday .. 6 = Saturday
+        var dow = now.getDay(); // 0 = Sunday
         var mondayOffset = (dow === 0) ? -6 : (1 - dow);
         var monday = new Date(now);
         monday.setDate(monday.getDate() + mondayOffset);
@@ -193,7 +192,7 @@ QtObject {
         snap = Object.assign({}, snap);
         snap[root.todayKey] = day;
 
-        // prune >35 days
+        // Keep 35 days
         var cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - 35);
         for (var k in snap) {

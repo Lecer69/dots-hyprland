@@ -10,7 +10,7 @@ Rectangle {
     property var entry
 
     radius: 8
-    color: itemHover.containsMouse ? "#161616" : "transparent"
+    color: itemHover.containsMouse || root.activeFocus ? "#161616" : "transparent"
     implicitHeight: rowLayout.implicitHeight + 20
 
     MouseArea {

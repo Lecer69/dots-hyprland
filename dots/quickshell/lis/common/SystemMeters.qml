@@ -2,8 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.tools
 
-// CPU, memory, each GPU and disk, and network traffic, in `columns` columns
-// of equal width
+// CPU, memory, GPUs, disks and network, in `columns` equal columns
 GridLayout {
     id: root
 
@@ -13,7 +12,7 @@ GridLayout {
     columnSpacing: 24
     rowSpacing: 14
 
-    // Cells share the width by these equal preferred widths
+    // Equal preferred widths share the space
     UsageMeter {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
@@ -31,7 +30,7 @@ GridLayout {
         valueText: Format.bytes(ResourceUsage.memoryUsed * 1024) + " / " + Format.bytes(ResourceUsage.memoryTotal * 1024)
     }
 
-    // By count, so the meters stay (and animate) as the figures change
+    // By count, so the meters stay as the figures change
     Repeater {
         model: root.stats.gpus.length
 

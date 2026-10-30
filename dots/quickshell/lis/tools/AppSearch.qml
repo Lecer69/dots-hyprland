@@ -42,7 +42,7 @@ Singleton {
         }
     ]
 
-    // Deduped list to fix double icons
+    // Deduped, or icons show twice
     readonly property list<DesktopEntry> list: Array.from(DesktopEntries.applications.values)
         .filter((app, index, self) => 
             index === self.findIndex((t) => (
@@ -60,7 +60,7 @@ Singleton {
         entry: a
     }))
 
-    function fuzzyQuery(search: string): var { // Idk why list<DesktopEntry> doesn't work
+    function fuzzyQuery(search: string): var { // list<DesktopEntry> doesn't work here
         if (root.sloppySearch) {
             const results = list.map(obj => ({
                 entry: obj,
@@ -100,8 +100,7 @@ Singleton {
     function guessIcon(str) {
         if (!str || str.length == 0) return "image-missing";
 
-        // hardcoded fixes, when those apps' entries are installed (and
-        // loaded); otherwise the guesses below take over
+        // Hardcoded fixes when those apps' entries are installed
         if (str === "v2rayN" || str === "v2rayN-bin" || str === "xray") {
             const icon = DesktopEntries.byId("v2rayN-bin")?.icon
             if (icon) return icon
@@ -119,15 +118,12 @@ Singleton {
             }
         }
 
-        // Quickshell's desktop entry lookup
         const entry = DesktopEntries.byId(str);
         if (entry) return entry.icon;
 
-        // Normal substitutions
         if (substitutions[str]) return substitutions[str];
         if (substitutions[str.toLowerCase()]) return substitutions[str.toLowerCase()];
 
-        // Regex substitutions
         for (let i = 0; i < regexSubstitutions.length; i++) {
             const substitution = regexSubstitutions[i];
             const replacedName = str.replace(
@@ -137,11 +133,9 @@ Singleton {
             if (replacedName != str) return replacedName;
         }
 
-        // Icon exists -> return as is
         if (iconExists(str)) return str;
 
 
-        // Simple guesses
         const lowercased = str.toLowerCase();
         if (iconExists(lowercased)) return lowercased;
 
@@ -160,7 +154,6 @@ Singleton {
         const heuristicEntry = DesktopEntries.heuristicLookup(str);
         if (heuristicEntry && iconExists(heuristicEntry.icon)) return heuristicEntry.icon;
 
-        // Search in desktop entries
         const iconSearchResults = Fuzzy.go(str, preppedIcons, {
             all: true,
             key: "name"
@@ -178,7 +171,6 @@ Singleton {
             if (iconExists(guess)) return guess;
         }
 
-        // Give up
         return "application-x-executable";
     }
 }

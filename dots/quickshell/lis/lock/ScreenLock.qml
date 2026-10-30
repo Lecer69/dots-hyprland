@@ -15,12 +15,10 @@ QtObject {
     property bool isLocked: false
     signal lockedChanged()
 
-    // Pre-blurred wallpaper disk cache (instant lock, re-blurs on wallpaper update)
+    // Pre-blurred wallpaper cache, for an instant lock
     property WallpaperBlurCache _blurCache: WallpaperBlurCache {}
 
-    // monitor -> wallpaper. hyprpaper.conf is read synchronously, since at
-    // boot the lock shows before hyprpaper is even running; hyprpaper's
-    // live state takes precedence once it answers (runtime changes).
+    // monitor -> wallpaper; read from hyprpaper.conf at boot, from hyprpaper once it answers
     property var _confWallpapers: ({})
     property string _confFallback: ""
     property var _liveWallpapers: ({})
@@ -35,10 +33,7 @@ QtObject {
 
     property bool _initialized: false
 
-    // Everything the first lock needs, without spawning a process: settings
-    // (loaded synchronously by SettingsData), wallpapers (conf file) and
-    // the cached blur (stamp files). Called from lock() too, since the boot
-    // lock can run before this object's onCompleted.
+    // What the first lock needs, without spawning a process; lock() calls it too, as it can run first
     function _init() {
         if (root._initialized) return
         root._initialized = true
@@ -48,8 +43,7 @@ QtObject {
 
     Component.onCompleted: root._init()
 
-    // Primes (sync) and validates (background) the blur for every screen
-    // that will show a lock surface, so the next lock is instant
+    // Primes and validates the blur for every locked screen
     function _warmBlurCache() {
         const ls = SettingsData.s.lockScreen
         if (!ls.enableBlur) return
@@ -66,7 +60,7 @@ QtObject {
         }
     }
 
-    // Re-warm after settings/screen changes settle (sliders fire per step)
+    // After settings or screens settle
     property Timer _warmDebounce: Timer {
         interval: 1500
         onTriggered: root._warmBlurCache()
@@ -90,7 +84,7 @@ QtObject {
         blockLoading: true
         printErrors: false
         watchChanges: true
-        // The displays panel writes it once hyprpaper shows a new wallpaper
+        // The displays panel writes it when the wallpaper changes
         onFileChanged: {
             reload()
             root._hyprpaperQuery.running = true
@@ -98,7 +92,7 @@ QtObject {
         onLoaded: root._parseHyprpaperConf()
     }
 
-    // Reads `source = ...` includes of hyprpaper.conf
+    // Reads hyprpaper.conf's `source = ...` includes
     property FileView _includeReader: FileView {
         blockAllReads: true
         printErrors: false
@@ -186,11 +180,11 @@ QtObject {
         const map = {}
         const lines = (text || "").split("\n")
         for (let i = 0; i < lines.length; i++) {
-            // "MONITOR: /path" (current hyprpaper) or "MONITOR = /path" (older)
+            // "MONITOR: /path", or "MONITOR = /path" in older hyprpaper
             const m = lines[i].trim().match(/^([^\s=:]+)\s*[:=]\s*(\/.*)$/)
             if (m) map[m[1]] = m[2].trim()
         }
-        // Not running yet (boot) or nothing active: keep using the conf
+        // Not running yet: keep the conf
         if (Object.keys(map).length === 0) return
         if (JSON.stringify(map) === JSON.stringify(root._liveWallpapers)) return
         root._liveWallpapers = map
@@ -208,18 +202,14 @@ QtObject {
         }
     }
 
-    // Mic is muted while locked; only restored on unlock if we were
-    // the ones who muted it (a mic muted before locking stays muted).
+    // Only unmuted on unlock if the lock muted it
     property bool _micMutedByLock: false
 
     property PwObjectTracker _micTracker: PwObjectTracker {
         objects: [Pipewire.defaultAudioSource]
     }
 
-    // Re-mute whenever the mic comes back unmuted while locked: covers
-    // the startup lock (Pipewire not bound yet, and the node's initial
-    // param sync overwrites a mute written right as it becomes ready)
-    // and a source that appears or changes while locked.
+    // Re-mute whenever the mic comes back unmuted while locked (Pipewire can undo it at startup)
     property bool _micReady: Pipewire.defaultAudioSource?.ready ?? false
     on_MicReadyChanged: root._muteMic()
 
@@ -245,9 +235,7 @@ QtObject {
         if (audio) audio.muted = false
     }
 
-    // At boot hyprpaper is started here, once the lock covers every screen,
-    // not by Hyprland: started alongside the shell, it showed the wallpapers
-    // for as long as the shell took to load
+    // At boot the lock starts hyprpaper once it covers every screen, so no wallpaper shows first
     property bool _wallpaperPending: false
 
     function _startWallpaper(confirmed) {
@@ -277,8 +265,7 @@ QtObject {
         root.isLocked = true
         root._muteMic()
 
-        // Picks up wallpapers changed at runtime (hyprctl hyprpaper ...);
-        // the surfaces show the known blur meanwhile and swap if it differs
+        // Picks up runtime wallpaper changes; the known blur shows meanwhile
         if (SettingsData.s.lockScreen.enableBlur) {
             _hyprpaperQuery.running = true
         }
@@ -315,8 +302,7 @@ QtObject {
         }
     }
 
-    // The password goes through stdin: on a command line any local user
-    // could read it, and a shell would mangle quotes, $ or backticks
+    // Through stdin: a command line is readable by any local user
     property Process _keyringUnlock: Process {
         property string password: ""
 
@@ -335,15 +321,12 @@ QtObject {
         id: _wlLock
         locked: false
 
-        // Hyprland has confirmed every screen shows a lock surface
+        // Every screen shows a lock surface
         onSecureChanged: if (secure) root._startWallpaper(true)
 
         onLockedChanged: {
             if (!locked && root.isLocked) {
-                // Compositor tore down the lock out from under us
-                // (e.g. another lock client grabbed it, or a race
-                // with unlock). Keep our flag in sync so lock()
-                // stays callable and doesn't re-enter while stale.
+                // The compositor ended the lock (another client, or a race); keep isLocked in sync
                 root.isLocked = false
                 root._restoreMic()
                 root.lockedChanged()
@@ -363,7 +346,7 @@ QtObject {
                 visible: lockSurfaceRoot.blockThisScreen
                 color: "black"
 
-                // Typing still works if this screen holds keyboard focus
+                // Typing works if this screen has focus
                 focus: visible
                 Keys.onPressed: (event) => lockCtx.handleKey(event)
 
@@ -373,8 +356,7 @@ QtObject {
                 }
             }
 
-            // Blocked screens get no lock surface at all (it used to be
-            // created hidden: image load, timers, battery polling)
+            // Blocked screens get no lock surface
             Loader {
                 anchors.fill: parent
                 active: !lockSurfaceRoot.blockThisScreen

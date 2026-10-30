@@ -6,14 +6,25 @@ Text {
     id: root
 
     property string sha: ""
-    // The repo's page, https://github.com/<owner>/<repo>
+    // https://github.com/<owner>/<repo>
     property string webUrl: ""
+
+    readonly property bool lit: area.containsMouse || root.activeFocus
+
+    function open(): void {
+        Quickshell.execDetached(["xdg-open", root.webUrl + "/commit/" + root.sha])
+    }
 
     text: sha !== "" ? sha.slice(0, 7) : "–"
     font.family: "JetBrainsMono Nerd Font"
     font.pixelSize: 12
-    font.underline: area.containsMouse
-    color: area.containsMouse ? "#e6e6e6" : "#808080"
+    font.underline: root.lit
+    color: root.lit ? "#e6e6e6" : "#808080"
+
+    activeFocusOnTab: root.sha !== ""
+    Keys.onReturnPressed: root.open()
+    Keys.onEnterPressed: root.open()
+    Keys.onSpacePressed: root.open()
 
     MouseArea {
         id: area
@@ -21,6 +32,6 @@ Text {
         enabled: root.sha !== ""
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: Quickshell.execDetached(["xdg-open", root.webUrl + "/commit/" + root.sha])
+        onClicked: root.open()
     }
 }

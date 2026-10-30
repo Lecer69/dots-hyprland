@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Services.Mpris
 import qs.media
 
-// The playing track, else the last one paused, with its controls
+// The playing track, else the last one paused
 Rectangle {
     id: root
 
