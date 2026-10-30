@@ -17,6 +17,3 @@ hl.env("XDG_MENU_PREFIX", "plasma-")
 -- Cursor
 hl.env("XCURSOR_SIZE", "24")
 hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
-
--- Virtual environment
-hl.env("ILLOGICAL_IMPULSE_VIRTUAL_ENV", home_dir .. "/.local/state/quickshell/.venv")

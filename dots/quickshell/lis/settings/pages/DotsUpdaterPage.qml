@@ -86,6 +86,7 @@ Item {
     function stepLabel(name) {
         switch (name) {
         case "checkout": return "Getting " + (root.latest?.short ?? "the commit")
+        case "packages": return "Checking packages"
         case "backup": return "Backing up"
         case "hypr": return "Updating the Hyprland config"
         case "command": return "Installing the lis command"
@@ -106,7 +107,7 @@ Item {
         const shell = SettingsData.s.dotsUpdater.updateShell
         const backup = SettingsData.s.dotsUpdater.backup
         root.status = ""
-        root.steps = ["checkout"].concat(backup ? ["backup"] : [], ["hypr", "command", shell ? "shell" : "reload"])
+        root.steps = ["checkout", "packages"].concat(backup ? ["backup"] : [], ["hypr", "command", shell ? "shell" : "reload"])
         root.stepsDone = 0
         root.currentStep = ""
         root.updating = true
@@ -114,7 +115,8 @@ Item {
         updater.target = root.latest.short
         updater.failure = ""
         updater.backupPath = ""
-        updater.command = ["bash", Quickshell.shellPath("scripts/dots-update.sh"), root.clone, root.latest.sha, backup ? "1" : "0", shell ? "1" : "0"]
+        updater.missing = ""
+        updater.command =["bash", Quickshell.shellPath("scripts/dots-update.sh"), root.clone, root.latest.sha, backup ? "1" : "0", shell ? "1" : "0"]
         updater.running = true
     }
 
@@ -161,6 +163,8 @@ Item {
         property string target: ""
         property string failure: ""
         property string backupPath: ""
+        // Packages the new commit needs that aren't installed
+        property string missing: ""
 
         stdout: SplitParser {
             onRead: line => {
@@ -172,6 +176,8 @@ Item {
                     root.stepsDone++
                     if (parts[1] === "backup" && detail.endsWith(".zip"))
                         updater.backupPath = detail
+                    else if (parts[1] === "packages")
+                        updater.missing = detail
                 } else if (parts[0] === "fail") {
                     updater.failure = root.stepLabel(parts[1]) + " failed: " + detail
                 }
@@ -198,6 +204,7 @@ Item {
             }
             if (code === 0)
                 root.status = "Updated to " + updater.target + (backup !== "" ? " · " + backup : "")
+                    + (updater.missing !== "" ? "\nMissing packages: " + updater.missing : "")
             else
                 root.status = updater.failure || "The update failed"
             root.check()
@@ -433,11 +440,14 @@ Item {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.min(implicitWidth, footer.width - 32)
                 visible: text !== ""
                 text: root.blocked && !root.updating && !root.restarting
                     ? root.info.devCheckout + " is a git checkout · turn off Update Shell to update the rest"
                     : root.status
                 textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: 12
                 color: "#6b6b6b"
             }

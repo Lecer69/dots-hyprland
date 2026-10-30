@@ -1,0 +1,4 @@
+# Packages from the Arch repos that install.sh offers one by one. Same format
+# as pacman.txt.
+
+code

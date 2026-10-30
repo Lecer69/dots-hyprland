@@ -1,0 +1,9 @@
+# Packages from the AUR, built with yay or paru. Same format as pacman.txt.
+
+bibata-cursor-theme-bin
+darkly-bin                     # Qt widget style
+wl-gammactl-rust               # gamma panel
+python-materialyoucolor
+kde-material-you-colors        # KDE colors from the theme color
+breeze-plus                    # icon theme kde-material-you-colors sets
+ttf-google-sans-flex-variable  # font for fuzzel, GTK 4 and hyprlock

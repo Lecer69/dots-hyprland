@@ -1,0 +1,99 @@
+# Packages from the Arch repos. One per line; # starts a comment.
+# install.sh installs them, and install.sh --update and the shell's updater
+# check for missing ones, so a new dependency goes here.
+
+# System
+base
+base-devel                   # building AUR packages
+git
+polkit                       # pkexec, and the shell's polkit agent
+pacman-contrib               # paccache, for the cleanup page
+reflector                    # lis mirrors
+power-profiles-daemon        # power profiles on the battery panel
+networkmanager               # the shell's network panel, nmcli
+ufw
+gnome-keyring                # secrets, started with Hyprland
+xdg-user-dirs
+sddm
+xorg-server
+
+# Hyprland
+hyprland
+hypridle
+hyprlock                     # its PAM file is the shell's lock screen login
+hyprpaper                    # wallpapers, started by the shell
+hyprpicker                   # color picker on the bar
+xorg-xwayland
+xdg-desktop-portal
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+xdg-desktop-portal-kde       # file chooser
+quickshell                   # the shell (quickshell-git counts too)
+qt6-5compat                  # Qt5Compat.GraphicalEffects in the shell
+snixembed                    # tray icons for XEmbed apps
+
+# Audio, Bluetooth and displays
+pipewire
+pipewire-alsa
+pipewire-audio
+pipewire-jack
+pipewire-pulse
+easyeffects                  # started with Hyprland
+pavucontrol-qt               # volume mixer
+playerctl                    # media keys
+bc                           # seeking on the next-track key
+bluez
+bluez-utils
+bluedevil
+bluez-qt
+brightnessctl
+ddcutil                      # external monitor brightness
+ydotool                      # keybinds
+
+# Screenshots, clipboard and launchers
+grim
+slurp
+imagemagick                  # cropping region screenshots
+jq                           # screenshot and cleanup scripts
+wl-clipboard
+cliphist                     # clipboard history
+fuzzel                       # emoji picker
+wtype                        # emoji picker, typing the emoji
+libnotify                    # notify-send
+
+# Theming
+matugen
+adw-gtk-theme                # the GTK theme install.sh sets
+breeze
+breeze-icons
+qt5-wayland
+python-gobject               # wallpaper picker (scripts/pick-image.py)
+plasma-desktop
+plasma-nm
+systemsettings
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+ttf-jetbrains-mono-nerd      # the shell's font
+ttf-dejavu
+
+# Apps and tools
+kitty
+fish
+starship                     # fish prompt
+eza                          # fish's ls
+ncdu                         # fish's h
+fastfetch
+dolphin
+ark
+gwenview
+mpv
+btop                         # task manager
+neovim
+nano
+nethogs                      # internet usage panel
+ffmpeg                       # lis compress
+7zip                         # lis 7z
+zip                          # backups and the updater
+unzip
+gamemode

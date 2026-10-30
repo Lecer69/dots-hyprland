@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # Installs an update for the Dots Updater page: dots-update.sh <clone> <commit> <backup 0|1> <shell 0|1>
 # Prints "step/done/fail <name>" per step; `finish`, run detached, swaps in the new shell config.
+# install.sh --update runs it too: with - as the commit, for its own files as they are, and with
+# DOTS_UPDATE_WAIT=1, so finish runs before this exits and a failed swap fails the shell step.
 
 set -uo pipefail
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BACKUP_DIR="$HOME/.dots-hyprland-backups"
+# Older backups are deleted
+BACKUP_KEEP=10
 LOG="${XDG_CACHE_HOME:-$HOME/.cache}/lis/dots-update.log"
 # Until finish swaps it in
 STAGED="$CONFIG_DIR/.quickshell-update"
@@ -22,7 +26,7 @@ hypr_is_preserved_item() {
     return 1
 }
 
-# dots-update.sh finish <short commit> <subject>
+# dots-update.sh finish <short commit> <subject> [missing packages]; exits 1 if the swap failed
 if [[ "${1:-}" == finish ]]; then
     killall qs quickshell
     for _ in $(seq 1 50); do
@@ -32,13 +36,17 @@ if [[ "${1:-}" == finish ]]; then
 
     # Renames, so a failure leaves the old config
     rm -rf "$OLD"
-    if mv "$CONFIG_DIR/quickshell" "$OLD" && mv "$STAGED" "$CONFIG_DIR/quickshell"; then
+    if { [[ ! -e "$CONFIG_DIR/quickshell" && ! -L "$CONFIG_DIR/quickshell" ]] || mv "$CONFIG_DIR/quickshell" "$OLD"; } \
+        && mv "$STAGED" "$CONFIG_DIR/quickshell"; then
         rm -rf "$OLD"
-        message="Now on $2 · $3"
+        message="Now on $2${3:+ · $3}"
+        status=0
     else
-        [[ -e "$CONFIG_DIR/quickshell" ]] || mv "$OLD" "$CONFIG_DIR/quickshell"
+        [[ -e "$CONFIG_DIR/quickshell" || ! -e "$OLD" ]] || mv "$OLD" "$CONFIG_DIR/quickshell"
         message="Couldn't replace ~/.config/quickshell, see ${LOG/#$HOME/\~}"
+        status=1
     fi
+    [[ -n "${4:-}" ]] && message+=$'\n'"Missing packages: $4"
 
     hyprctl reload
     # Set on the shell Hyprland started; it would lock the screen
@@ -47,7 +55,7 @@ if [[ "${1:-}" == finish ]]; then
     # Once the new shell takes notifications
     sleep 3
     timeout 10 notify-send -a "Dots Updater" "Dots updated" "$message"
-    exit 0
+    exit "$status"
 fi
 
 clone="$1"
@@ -70,16 +78,57 @@ fail() {
     exit 1
 }
 
+# Deletes all but the newest $BACKUP_KEEP backups. Only touches files named like
+# the ones made here and by install.sh, which sort oldest first
+prune_backups() {
+    local LC_ALL=C
+    local -a backups
+    shopt -s nullglob
+    backups=("$BACKUP_DIR"/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9].zip)
+    shopt -u nullglob
+    local excess=$(( ${#backups[@]} - BACKUP_KEEP ))
+    (( excess > 0 )) && rm -f -- "${backups[@]:0:excess}"
+    return 0
+}
+
 step checkout
 if [[ "$shell" == 1 ]]; then
     for path in "$CONFIG_DIR/quickshell" "$CONFIG_DIR"/quickshell/*; do
         [[ -e "$path/.git" ]] && fail "${path/#$HOME/\~} is a git checkout, which the update would delete"
     done
 fi
-[[ -d "$clone/.git" ]] || fail "No clone at ${clone/#$HOME/\~}, check for updates first"
-git -C "$clone" reset --quiet --hard "$commit" || fail "Couldn't check out ${commit:0:7}"
-[[ -d "$dots" ]] || fail "${commit:0:7} has no dots folder"
-step_done "${commit:0:7}"
+if [[ "$commit" == - ]]; then
+    # install.sh's own files, as they are
+    rev=HEAD
+    [[ -d "$dots" ]] || fail "No dots folder in ${clone/#$HOME/\~}"
+    short="$(git -C "$clone" rev-parse --short HEAD 2>/dev/null)" || short="local files"
+else
+    rev="$commit"
+    [[ -d "$clone/.git" ]] || fail "No clone at ${clone/#$HOME/\~}, check for updates first"
+    git -C "$clone" reset --quiet --hard "$commit" || fail "Couldn't check out ${commit:0:7}"
+    [[ -d "$dots" ]] || fail "${commit:0:7} has no dots folder"
+    short="${commit:0:7}"
+fi
+step_done "$short"
+
+# What this commit's package lists have that isn't installed. install.sh offers
+# to install it; the Dots Updater page shows it
+step packages
+packages=()
+for list in "$clone/packages/pacman.txt" "$clone/packages/aur.txt"; do
+    [[ -f "$list" ]] || continue
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        read -ra words <<<"${line%%#*}"
+        packages+=("${words[@]}")
+    done <"$list"
+done
+missing=""
+if [[ ${#packages[@]} -gt 0 ]] && command -v pacman >/dev/null 2>&1; then
+    # pacman -T prints the names no installed package provides
+    missing="$(pacman -T "${packages[@]}" | tr '\n' ' ')"
+    missing="${missing% }"
+fi
+step_done "$missing"
 
 if [[ "$backup" == 1 ]]; then
     step backup
@@ -101,6 +150,7 @@ if [[ "$backup" == 1 ]]; then
             rm -f "$zip_path"
             fail "Couldn't create ${zip_path/#$HOME/\~}"
         fi
+        prune_backups
         step_done "${zip_path/#$HOME/\~}"
     fi
 fi
@@ -140,12 +190,17 @@ fi
 
 if [[ "$shell" == 1 ]]; then
     step shell
-    [[ -d "$dots/quickshell" ]] || fail "${commit:0:7} has no quickshell config"
+    [[ -d "$dots/quickshell" ]] || fail "$short has no quickshell config"
     rm -rf "$STAGED" && cp -r "$dots/quickshell" "$STAGED" || fail "Couldn't copy the new shell"
 
-    subject="$(git -C "$clone" log -1 --format=%s "$commit")"
+    subject="$(git -C "$clone" log -1 --format=%s "$rev" 2>/dev/null)"
     mkdir -p "$(dirname "$LOG")"
-    setsid -f bash "$0" finish "${commit:0:7}" "$subject" >"$LOG" 2>&1 </dev/null
+    if [[ "${DOTS_UPDATE_WAIT:-0}" == 1 ]]; then
+        bash "$0" finish "$short" "$subject" "$missing" >"$LOG" 2>&1 </dev/null \
+            || fail "Couldn't replace ~/.config/quickshell, see ${LOG/#$HOME/\~}"
+    else
+        setsid -f bash "$0" finish "$short" "$subject" "$missing" >"$LOG" 2>&1 </dev/null
+    fi
     step_done
 else
     step reload

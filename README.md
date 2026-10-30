@@ -16,16 +16,16 @@ cd dots-hyprland
 bash install.sh
 ```
 
-Choose the **install** option from the menu.
+Choose the **install** option from the menu, or run `bash install.sh --install`. It asks all its questions first, then installs on its own. `bash install.sh --help` lists the other options, like `--yes` to install without any questions. The packages it installs are listed in `packages/`, and the output of each run is saved to `~/.cache/dots-hyprland/install.log`.
 
 ## Updating
 
 ```bash
 cd dots-hyprland
-git stash && git pull && bash install.sh
+git stash && git pull && bash install.sh --update
 ```
 
-Choose the **update** option from the menu, or you can try the updater in the settings.
+It also offers to install packages that newer versions of the dots need. You can also try the updater in the settings, which tells you about missing packages but doesn't install them.
 
 ## Screenshots
 

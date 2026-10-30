@@ -26,7 +26,6 @@ case "$1" in
         esac
 
         kde-material-you-colors -d --color "$color" -sv "$sv_num"
-        deactivate
         ;;
     7z)
         [ "$#" -ne 3 ] && exit 1
