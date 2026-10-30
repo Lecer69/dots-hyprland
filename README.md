@@ -6,7 +6,12 @@ My personal Hyprland dotfiles using quickshell. (fast and lightweight)
   <img src="preview/screenshot.png" width="100%" />
 </p>
 
+<details>
+<summary><b>▶ Watch the video preview</b></summary>
+
 https://github.com/user-attachments/assets/e4b28459-381c-448e-9042-47d1eca1bd22
+
+</details>
 
 > ## 🔴 THIS ONLY WORKS ON ARCH BASED DISTROS 🔴
 > ### This setup is built exclusively for **Arch Linux AND Arch-based distros** and will **NOT** work on any other distribution.
@@ -21,7 +26,7 @@ Everything here is one Quickshell config (`lis`), so there's no separate bar, la
 ### Shell
 
 - **Bar**: can sit on any edge of the screen. Workspaces show as dots or numbers, and you can hide the ones that belong to other screens. The clock, color picker, screenshot, game mode, Bluetooth and network buttons can each be turned off. The pills have their own color, border and blur, and tray and workspace icons can be tinted with the accent color.
-- **Launcher** (`Super + Tab`): fuzzy app search. Start with `:` for clipboard history (`Super + V`) or `;` for emojis (`Super + .`).
+- **Launcher** (`Super + Tab`): app search. Start with `:` for clipboard history (`Super + V`) or `;` for emojis (`Super + .`).
 - **Workspace overview** (`Alt + Tab`): live previews of your workspaces in a grid, with configurable rows, columns, scale and order.
 - **Widget overlay** (`Super + J`): a big clock with your to-dos, system stats, today's screen time, data used and calendar notes, and what's playing.
 - **Media player**: colors from the album art, an animated background, an audio visualizer, a seek bar and shuffle/repeat.
@@ -73,7 +78,7 @@ While you play, notifications can be turned off and the other monitors fade to d
 
 ### Also included
 
-Configs for fish, kitty, fastfetch, btop, mpv and fuzzel.
+Configs for fish, kitty, fastfetch, btop and mpv.
 
 ## Installation
 
@@ -99,3 +104,4 @@ It also offers to install packages that newer versions of the dots need. You can
 - [Quickshell](https://quickshell.org/) — the toolkit that makes this whole shell possible
 - [end-4's dots-hyprland](https://github.com/end-4/dots-hyprland) — inspiration for this setup
 - [Wallpaper](https://donmai.moe/posts/6470635) — wallpaper by naokomama
+- [Wallpaper on preview](https://www.pixiv.net/en/artworks/147357244) — wallpaper preview by MISSILE228
