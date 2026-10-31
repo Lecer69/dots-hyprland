@@ -9,7 +9,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // { id, text, done, important, list (-1 for none) }, in the user's order
+    // { id, text, description, done, important, list (-1 for none) }, in the user's order
     property var tasks: []
     // { id, name }, in creation order
     property var lists: []
@@ -68,7 +68,8 @@ Singleton {
         root.lists = root._validLists(parsed.lists);
         root._lastId = Math.max(0, ...root.lists.map(l => l.id), ...parsed.tasks.map(t => Number(t?.id) || 0));
         root.tasks = parsed.tasks.filter(t => typeof t?.text === "string").map(t =>
-            root._task(Number(t.id) > 0 ? Number(t.id) : root._newId(), t.text, !!t.done, !!t.important, Number(t.list)));
+            root._task(Number(t.id) > 0 ? Number(t.id) : root._newId(), t.text,
+                typeof t.description === "string" ? t.description : "", !!t.done, !!t.important, Number(t.list)));
         root._loaded = true;
     }
 
@@ -80,14 +81,14 @@ Singleton {
         root._lastId = Math.max(0, ...root.lists.map(l => l.id));
 
         const fromPanel = (Array.isArray(old) ? old : []).filter(t => typeof t?.text === "string" && root._clean(t.text) !== "")
-            .map(t => root._task(root._newId(), root._clean(t.text), !!t.done, !!t.important, -1));
+            .map(t => root._task(root._newId(), root._clean(t.text), "", !!t.done, !!t.important, -1));
         const fromCli = [];
         for (const line of root._cliText().split(/\r?\n/)) {
             // Like the CLI: other lines, and ones of 5 characters or fewer, are skipped
             const mark = line.slice(0, 4);
             const text = line.slice(4);
             if (line.length > 5 && (mark === "[ ] " || mark === "[*] ") && !fromPanel.some(t => t.text === text))
-                fromCli.push(root._task(root._newId(), text, mark === "[*] ", important.includes(text), Number(assigned[text])));
+                fromCli.push(root._task(root._newId(), text, "", mark === "[*] ", important.includes(text), Number(assigned[text])));
         }
         root.tasks = fromPanel.concat(fromCli);
         root._loaded = true;
@@ -114,10 +115,11 @@ Singleton {
             .map(l => ({ id: Number(l.id), name: l.name }));
     }
 
-    function _task(id: real, text: string, done: bool, important: bool, list: real): var {
+    function _task(id: real, text: string, description: string, done: bool, important: bool, list: real): var {
         return {
             id: id,
             text: text,
+            description: description,
             done: done,
             important: important,
             list: root.lists.some(l => l.id === list) ? list : -1
@@ -171,8 +173,15 @@ Singleton {
         if (clean === "" || !root._loaded)
             return false;
 
-        root._set(root.tasks.concat([root._task(root._newId(), clean, false, false, list)]));
+        root._set(root.tasks.concat([root._task(root._newId(), clean, "", false, false, list)]));
         return true;
+    }
+
+    // Saved once the typing pauses
+    function setDescription(id: real, description: string): void {
+        root.tasks = root.tasks.map(t => t.id === id ? Object.assign({}, t, { description: description }) : t);
+        root._dirty = true;
+        saveTimer.restart();
     }
 
     function toggleDone(id: real): void {

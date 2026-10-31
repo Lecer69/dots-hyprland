@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Shapes
 import qs.tools
 import qs.settings.data
+import qs.common
 
 Item {
     id: root
@@ -17,7 +18,7 @@ Item {
     readonly property real r: sz * 0.5 - 1.75
 
     readonly property real load: ResourceUsage.memoryUsedPercentage || 0
-    readonly property color arcColor: load < 0.55 ? "#89b4fa" : load < 0.8 ? "#f9e2af" : "#f38ba8"
+    readonly property color arcColor: load < 0.55 ? Theme.adapt("#89b4fa") : load < 0.8 ? Theme.adapt("#f9e2af") : Theme.adapt("#f38ba8")
 
     property real animatedSweep: load * 360
     property bool _snapSweep: false
@@ -33,7 +34,7 @@ Item {
         root._snapSweep = false
     }
 
-    Image {
+    Icon {
         id: iconImg
         visible: root.vertical
         x: (root.sz - width) / 2
@@ -65,7 +66,7 @@ Item {
             vendorExtensionsEnabled: true
 
             ShapePath {
-                strokeColor: Qt.rgba(1, 1, 1, 0.13)
+                strokeColor: Theme.adapt(Qt.rgba(1, 1, 1, 0.13))
                 strokeWidth: 2.5
                 fillColor: "transparent"
                 capStyle: ShapePath.FlatCap
@@ -100,7 +101,7 @@ Item {
             text: Math.round(root.load * 100)
             font.pixelSize: 7
             font.weight: Font.Medium
-            color: '#acacac'
+            color: Theme.adapt("#acacac")
         }
     }
 
@@ -111,7 +112,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 6
 
-        Image {
+        Icon {
             source: "../icons/memory.svg"
             width: 16
             height: 16
@@ -122,7 +123,7 @@ Item {
 
         Text {
             font.pixelSize: 13
-            color: '#acacac'
+            color: Theme.adapt("#acacac")
             anchors.verticalCenter: parent.verticalCenter
 
             text: Math.round(root.load * 100) + "%"

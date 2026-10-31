@@ -18,14 +18,14 @@ ColumnLayout {
             Layout.fillWidth: true
             text: meter.label
             elide: Text.ElideRight
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 12
             font.weight: Font.Medium
         }
 
         Text {
             text: meter.valueText
-            color: "#999999"
+            color: Theme.adapt("#999999")
             font.pixelSize: 12
         }
     }
@@ -34,13 +34,13 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 3
         radius: 1.5
-        color: "#2a2a2a"
+        color: Theme.adapt("#2a2a2a")
 
         Rectangle {
             width: parent.width * Math.max(0, Math.min(1, meter.value))
             height: parent.height
             radius: parent.radius
-            color: "#bbbbbb"
+            color: Theme.adapt("#bbbbbb")
 
             Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         }

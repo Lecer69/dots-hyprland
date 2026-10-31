@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Item {
     id: row
@@ -68,7 +69,7 @@ Item {
         anchors.fill: parent
         radius: 8
         opacity: row.appear
-        color: hov.containsMouse && !row.highlighted ? "#161616" : "transparent"
+        color: hov.containsMouse && !row.highlighted ? Theme.hover : "transparent"
         Behavior on color { ColorAnimation { duration: 120 } }
     }
 
@@ -92,7 +93,7 @@ Item {
         Text {
             visible: row.isMath
             text: " ="
-            color: "#808080"
+            color: Theme.adapt("#808080")
             font.pixelSize: 14
             Layout.alignment: Qt.AlignVCenter
         }
@@ -147,7 +148,7 @@ Item {
         Text {
             visible: row.isClipboard && !row.isImage
             text: "·"
-            color: "#4a4a4a"
+            color: Theme.adapt("#4a4a4a")
             font.pixelSize: 18
             Layout.alignment: Qt.AlignVCenter
         }
@@ -159,7 +160,7 @@ Item {
             Layout.preferredHeight: 60
             Layout.alignment: Qt.AlignVCenter
             radius: 6
-            color: "#161616"
+            color: Theme.hover
             clip: true
 
             Image {
@@ -180,7 +181,7 @@ Item {
                 anchors.centerIn: parent
                 visible: row.thumbUrl === ""
                 text: "…"
-                color: "#4a4a4a"
+                color: Theme.adapt("#4a4a4a")
                 font.pixelSize: 18
             }
         }
@@ -198,7 +199,7 @@ Item {
 
             // Clipboard text may look like markup
             textFormat: Text.PlainText
-            color: row.isMath ? "#ffffff" : row.isImage ? "#999999" : row.highlighted ? "#ffffff" : "#e6e6e6"
+            color: row.isMath ? Theme.adapt("#ffffff") : row.isImage ? Theme.adapt("#999999") : row.highlighted ? Theme.adapt("#ffffff") : Theme.text
             Behavior on color { ColorAnimation { duration: 140 } }
             font.pixelSize: row.isMath ? 15 : row.isImage ? 12 : 13
             font.weight: row.isMath ? Font.DemiBold : Font.Normal
@@ -217,7 +218,7 @@ Item {
 
             visible: info !== ""
             text: info
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 12
             Layout.alignment: Qt.AlignVCenter
         }

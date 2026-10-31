@@ -14,6 +14,8 @@ LOG="${XDG_CACHE_HOME:-$HOME/.cache}/lis/dots-update.log"
 # Until finish swaps it in
 STAGED="$CONFIG_DIR/.quickshell-update"
 OLD="$CONFIG_DIR/.quickshell-old"
+# The commit last installed in full, a hint for dots-check.py
+RECORD="${XDG_STATE_HOME:-$HOME/.local/state}/lis/dots-commit"
 
 # Never overwritten by an update
 HYPR_PRESERVE_ITEMS=(custom hyprpaper.conf monitors.conf monitors.lua workspaces.conf)
@@ -26,9 +28,9 @@ hypr_is_preserved_item() {
     return 1
 }
 
-# dots-update.sh finish <short commit> <subject> [missing packages]; exits 1 if the swap failed
+# dots-update.sh finish <commit> <short commit> <subject> [missing packages]; exits 1 if the swap failed
 if [[ "${1:-}" == finish ]]; then
-    killall qs quickshell
+    killall -q qs quickshell
     for _ in $(seq 1 50); do
         pgrep -x 'qs|quickshell' >/dev/null || break
         sleep 0.1
@@ -39,14 +41,19 @@ if [[ "${1:-}" == finish ]]; then
     if { [[ ! -e "$CONFIG_DIR/quickshell" && ! -L "$CONFIG_DIR/quickshell" ]] || mv "$CONFIG_DIR/quickshell" "$OLD"; } \
         && mv "$STAGED" "$CONFIG_DIR/quickshell"; then
         rm -rf "$OLD"
-        message="Now on $2${3:+ · $3}"
+        if [[ -n "$2" ]]; then
+            mkdir -p "${RECORD%/*}" && echo "$2" >"$RECORD"
+        else
+            rm -f "$RECORD"
+        fi
+        message="Now on $3${4:+ · $4}"
         status=0
     else
         [[ -e "$CONFIG_DIR/quickshell" || ! -e "$OLD" ]] || mv "$OLD" "$CONFIG_DIR/quickshell"
         message="Couldn't replace ~/.config/quickshell, see ${LOG/#$HOME/\~}"
         status=1
     fi
-    [[ -n "${4:-}" ]] && message+=$'\n'"Missing packages: $4"
+    [[ -n "${5:-}" ]] && message+=$'\n'"Missing packages: $5"
 
     hyprctl reload
     # Set on the shell Hyprland started; it would lock the screen
@@ -101,13 +108,16 @@ if [[ "$commit" == - ]]; then
     # install.sh's own files, as they are
     rev=HEAD
     [[ -d "$dots" ]] || fail "No dots folder in ${clone/#$HOME/\~}"
-    short="$(git -C "$clone" rev-parse --short HEAD 2>/dev/null)" || short="local files"
+    sha="$(git -C "$clone" rev-parse HEAD 2>/dev/null)" || sha=""
+    short="${sha:0:7}"
+    [[ -n "$short" ]] || short="local files"
 else
     rev="$commit"
     [[ -d "$clone/.git" ]] || fail "No clone at ${clone/#$HOME/\~}, check for updates first"
     git -C "$clone" reset --quiet --hard "$commit" || fail "Couldn't check out ${commit:0:7}"
     [[ -d "$dots" ]] || fail "${commit:0:7} has no dots folder"
-    short="${commit:0:7}"
+    sha="$(git -C "$clone" rev-parse HEAD)"
+    short="${sha:0:7}"
 fi
 step_done "$short"
 
@@ -196,10 +206,10 @@ if [[ "$shell" == 1 ]]; then
     subject="$(git -C "$clone" log -1 --format=%s "$rev" 2>/dev/null)"
     mkdir -p "$(dirname "$LOG")"
     if [[ "${DOTS_UPDATE_WAIT:-0}" == 1 ]]; then
-        bash "$0" finish "$short" "$subject" "$missing" >"$LOG" 2>&1 </dev/null \
+        bash "$0" finish "$sha" "$short" "$subject" "$missing" >"$LOG" 2>&1 </dev/null \
             || fail "Couldn't replace ~/.config/quickshell, see ${LOG/#$HOME/\~}"
     else
-        setsid -f bash "$0" finish "$short" "$subject" "$missing" >"$LOG" 2>&1 </dev/null
+        setsid -f bash "$0" finish "$sha" "$short" "$subject" "$missing" >"$LOG" 2>&1 </dev/null
     fi
     step_done
 else

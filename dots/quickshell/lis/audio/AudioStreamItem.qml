@@ -41,13 +41,14 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 12
 
-        Image {
+        Icon {
             Layout.preferredWidth: 16
             Layout.preferredHeight: 16
             sourceSize: Qt.size(32, 32)
             mipmap: true
             fillMode: Image.PreserveAspectFit
             source: root.iconPath !== "" ? root.iconPath : "../icons/" + (root.input ? "mic-on" : "speaker-high") + ".svg"
+            tint: root.iconPath === ""
             opacity: root.muted ? 0.3 : muteArea.containsMouse ? 1 : root.iconPath !== "" ? 0.9 : 0.6
 
             MouseArea {
@@ -65,7 +66,7 @@ ColumnLayout {
             Layout.preferredWidth: Math.min(implicitWidth, 200)
             elide: Text.ElideRight
             text: root.appName
-            color: root.muted ? "#6b6b6b" : "#e6e6e6"
+            color: root.muted ? Theme.textDim : Theme.text
             font.pixelSize: 13
         }
 
@@ -73,13 +74,13 @@ ColumnLayout {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: root.mediaName
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 12
         }
 
         Text {
             text: root.muted ? "Muted" : Math.round(root.volume * 100) + "%"
-            color: "#999999"
+            color: Theme.adapt("#999999")
             font.pixelSize: 12
         }
     }

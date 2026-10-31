@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
+import qs.common
 
 Rectangle {
     id: root
@@ -10,7 +11,7 @@ Rectangle {
     property var entry
 
     radius: 8
-    color: itemHover.containsMouse || root.activeFocus ? "#161616" : "transparent"
+    color: itemHover.containsMouse || root.activeFocus ? Theme.hover : "transparent"
     implicitHeight: rowLayout.implicitHeight + 20
 
     MouseArea {
@@ -80,14 +81,14 @@ Rectangle {
             width: 32
             height: 32
             radius: 16
-            color: "#1f1f1f"
+            color: Theme.border
             Layout.alignment: Qt.AlignVCenter
             visible: iconImage.status !== Image.Ready && hintImage.status !== Image.Ready
 
             Text {
                 anchors.centerIn: parent
                 text: (root.entry.appName ?? "?").charAt(0).toUpperCase()
-                color: "#999999"
+                color: Theme.adapt("#999999")
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }
@@ -103,7 +104,7 @@ Rectangle {
 
                 Text {
                     text: root.entry.appName ?? ""
-                    color: "#808080"
+                    color: Theme.adapt("#808080")
                     font.pixelSize: 11
                     font.weight: Font.Medium
                     Layout.fillWidth: true
@@ -112,14 +113,14 @@ Rectangle {
 
                 Text {
                     text: root.entry.time ?? ""
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 11
                 }
             }
 
             Text {
                 text: root.entry.summary ?? ""
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 13
                 font.weight: Font.Medium
                 elide: Text.ElideRight
@@ -136,7 +137,7 @@ Rectangle {
                     .trim()
 
                 text: cleaned
-                color: "#999999"
+                color: Theme.adapt("#999999")
                 font.pixelSize: 12
                 elide: Text.ElideRight
                 maximumLineCount: 2
@@ -155,7 +156,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: "✕"
-                color: closeHover.containsMouse ? "#dddddd" : "#666666"
+                color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                 font.pixelSize: 11
             }
 

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 // A commit; clicking it opens its message and files (ones an update doesn't install are dimmed)
 Item {
@@ -25,9 +26,9 @@ Item {
     function counts(added, removed) {
         const parts = []
         if (added > 0)
-            parts.push("<font color='#a6e3a1'>+" + added + "</font>")
+            parts.push("<font color='" + Theme.adapt("#a6e3a1") + "'>+" + added + "</font>")
         if (removed > 0)
-            parts.push("<font color='#e06c6c'>−" + removed + "</font>")
+            parts.push("<font color='" + Theme.adapt("#e06c6c") + "'>−" + removed + "</font>")
         return parts.join(" ")
     }
 
@@ -36,7 +37,7 @@ Item {
         anchors { left: parent.left; right: parent.right; leftMargin: 8; rightMargin: 8 }
         height: 52
         radius: 6
-        color: headerArea.containsMouse || header.activeFocus ? "#161616" : "transparent"
+        color: headerArea.containsMouse || header.activeFocus ? Theme.hover : "transparent"
 
         function toggle(): void {
             root.opened = true
@@ -63,7 +64,7 @@ Item {
             Text {
                 text: "›"
                 font.pixelSize: 15
-                color: "#6b6b6b"
+                color: Theme.textDim
                 rotation: root.expanded ? 90 : 0
                 Layout.preferredWidth: 8
                 Layout.alignment: Qt.AlignVCenter
@@ -83,7 +84,7 @@ Item {
                     text: root.commit.subject ?? ""
                     textFormat: Text.PlainText
                     font.pixelSize: 13
-                    color: "#e6e6e6"
+                    color: Theme.text
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
@@ -94,7 +95,7 @@ Item {
                         + "&nbsp;&nbsp;" + root.counts(root.commit.added, root.commit.removed)
                     textFormat: Text.StyledText
                     font.pixelSize: 12
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
@@ -125,7 +126,7 @@ Item {
                     textFormat: Text.PlainText
                     wrapMode: Text.Wrap
                     font.pixelSize: 12
-                    color: "#808080"
+                    color: Theme.adapt("#808080")
                     Layout.fillWidth: true
                     Layout.leftMargin: 34
                     Layout.rightMargin: 16
@@ -149,14 +150,14 @@ Item {
                             text: modelData.status
                             font.family: "JetBrainsMono Nerd Font"
                             font.pixelSize: 11
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             Layout.preferredWidth: 8
                         }
                         Text {
                             text: modelData.path
                             textFormat: Text.PlainText
                             font.pixelSize: 12
-                            color: "#b3b3b3"
+                            color: Theme.adapt("#b3b3b3")
                             elide: Text.ElideMiddle
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
@@ -173,7 +174,7 @@ Item {
                     visible: (root.commit.files ?? []).some(file => !file.inScope)
                     text: "Dimmed files aren't installed by an update"
                     font.pixelSize: 11
-                    color: "#4a4a4a"
+                    color: Theme.adapt("#4a4a4a")
                     Layout.leftMargin: 34
                     Layout.topMargin: 4
                 }

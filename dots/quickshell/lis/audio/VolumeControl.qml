@@ -21,7 +21,7 @@ RowLayout {
         event.accepted = true
     }
 
-    Image {
+    Icon {
         Layout.preferredWidth: 16
         Layout.preferredHeight: 16
         sourceSize: Qt.size(16, 16)
@@ -60,7 +60,7 @@ RowLayout {
         Layout.preferredWidth: 36
         horizontalAlignment: Text.AlignRight
         text: Math.round(root.volume * 100) + "%"
-        color: "#999999"
+        color: Theme.adapt("#999999")
         font.pixelSize: 12
     }
 }

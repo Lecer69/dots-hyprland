@@ -4,6 +4,7 @@ import QtQuick.Controls
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
+import qs.common
 
 Item {
     id: root
@@ -71,10 +72,9 @@ Item {
         return root.alpha < 1.0 ? "#" + toHex(Math.round(root.alpha * 255)) + rgb : "#" + rgb
     }
 
+    // The owner writes it back; setting value here would break its binding
     function commit() {
-        const hex = hsvToHex()
-        root.value = hex
-        root.selected(hex)
+        root.selected(hsvToHex())
     }
 
     Component.onCompleted: hexToHsv(root.value)
@@ -87,7 +87,7 @@ Item {
         width: row.implicitWidth + 16
         height: 28
         radius: 6
-        color: mouseArea.containsMouse || popup.opened || trigger.activeFocus ? "#1c1c1c" : "transparent"
+        color: mouseArea.containsMouse || popup.opened || trigger.activeFocus ? Theme.adapt("#1c1c1c") : "transparent"
 
         // Opened from the keyboard: straight into the hex field, focus back here after
         property bool openedByKeys: false
@@ -114,7 +114,7 @@ Item {
                 radius: 4
                 anchors.verticalCenter: parent.verticalCenter
                 color: root.value
-                border.color: "#33ffffff"
+                border.color: Theme.adapt("#33ffffff")
                 border.width: 1
             }
 
@@ -122,7 +122,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.value.toUpperCase()
                 font.pixelSize: 12
-                color: "#999999"
+                color: Theme.adapt("#999999")
             }
         }
 
@@ -146,9 +146,9 @@ Item {
         modal: false
 
         background: Rectangle {
-            color: "#161616"
+            color: Theme.hover
             radius: 10
-            border.color: "#242424"
+            border.color: Theme.adapt("#242424")
             border.width: 1
             layer.enabled: true
         }
@@ -285,7 +285,7 @@ Item {
                         GradientStop { position: 0.0; color: "#00000000" }
                         GradientStop { position: 1.0; color: Qt.hsva(root.hue / 360, root.sat, root.val2, 1) }
                     }
-                    border.color: "#22ffffff"
+                    border.color: Theme.adapt("#22ffffff")
                     border.width: 1
                 }
 
@@ -323,7 +323,7 @@ Item {
                     width: 28; height: 28
                     radius: 6
                     color: root.value
-                    border.color: "#33ffffff"
+                    border.color: Theme.adapt("#33ffffff")
                     border.width: 1
                 }
 
@@ -331,7 +331,7 @@ Item {
                     Layout.fillWidth: true
                     height: 28
                     radius: 6
-                    color: "#1f1f1f"
+                    color: Theme.border
 
                     TextInput {
                         id: hexField
@@ -340,7 +340,7 @@ Item {
                         anchors.rightMargin: 10
                         verticalAlignment: TextInput.AlignVCenter
                         text: root.value.toUpperCase()
-                        color: "#eeffffff"
+                        color: Theme.adapt("#eeffffff")
                         font.pixelSize: 12
                         selectByMouse: true
                         maximumLength: 9
@@ -362,7 +362,7 @@ Item {
                     visible: root.defaultValue !== "" && root.value.toLowerCase() !== root.defaultValue.toLowerCase()
                     text: "Reset"
                     font.pixelSize: 12
-                    color: resetArea.containsMouse ? "#dddddd" : "#999999"
+                    color: resetArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#999999")
 
                     MouseArea {
                         id: resetArea
@@ -390,7 +390,7 @@ Item {
                         width: 20; height: 20
                         radius: 5
                         color: modelData
-                        border.color: root.value.toLowerCase() === modelData.toLowerCase() ? "#ffffff" : "#22ffffff"
+                        border.color: root.value.toLowerCase() === modelData.toLowerCase() ? Theme.adapt("#ffffff") : Theme.adapt("#22ffffff")
                         border.width: root.value.toLowerCase() === modelData.toLowerCase() ? 2 : 1
 
                         MouseArea {

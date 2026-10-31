@@ -253,7 +253,7 @@ Item {
                     Text {
                         text: root.headline
                         font { pixelSize: 15; weight: Font.DemiBold }
-                        color: "#ffffff"
+                        color: Theme.adapt("#ffffff")
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
@@ -262,7 +262,7 @@ Item {
                             : "github.com/" + root.repo + (root.checkedAt > 0 ? " · checked " + root.ago(root.checkedAt) : "")
                         textFormat: Text.PlainText
                         font.pixelSize: 12
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
@@ -371,13 +371,13 @@ Item {
         Rectangle {
             anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
             height: 1
-            color: "#262626"
+            color: Theme.adapt("#262626")
 
             Rectangle {
                 visible: root.updating || root.restarting
                 height: 1
                 width: parent.width * (root.restarting ? 1 : root.stepsDone / Math.max(1, root.steps.length))
-                color: "#e6e6e6"
+                color: Theme.text
 
                 Behavior on width {
                     NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
@@ -402,10 +402,10 @@ Item {
                 width: updateLabel.implicitWidth + 24
                 radius: 6
                 opacity: usable || root.updating || root.restarting ? 1 : 0.4
-                color: !usable ? "#1f1f1f"
-                     : updateArea.pressed ? "#333333"
-                     : updateArea.containsMouse ? "#2a2a2a"
-                     : "#1f1f1f"
+                color: !usable ? Theme.border
+                     : updateArea.pressed ? Theme.adapt("#333333")
+                     : updateArea.containsMouse ? Theme.adapt("#2a2a2a")
+                     : Theme.border
 
                 Text {
                     id: updateLabel
@@ -416,7 +416,7 @@ Item {
                         : root.confirming ? "Click again to " + updateButton.verb.split(" ")[0].toLowerCase()
                         : updateButton.verb + " " + (root.latest?.short ?? "")
                     font { pixelSize: 12; weight: Font.Medium }
-                    color: "#e6e6e6"
+                    color: Theme.text
                 }
 
                 MouseArea {
@@ -449,7 +449,7 @@ Item {
                 wrapMode: Text.Wrap
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: 12
-                color: "#6b6b6b"
+                color: Theme.textDim
             }
         }
     }

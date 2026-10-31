@@ -14,8 +14,8 @@ Rectangle {
     Layout.fillWidth: true
     height: 52
     radius: 8
-    color: selected ? (root.activeFocus ? "#262626" : "#1f1f1f")
-        : (hover.containsMouse || root.activeFocus ? "#161616" : "transparent")
+    color: selected ? (root.activeFocus ? Theme.adapt("#262626") : Theme.border)
+        : (hover.containsMouse || root.activeFocus ? Theme.hover : "transparent")
 
     readonly property bool listRow: true
     activeFocusOnTab: true
@@ -35,7 +35,7 @@ Rectangle {
             width: 8
             height: 8
             radius: 4
-            color: root.selected ? "#e6e6e6" : "#3a3a3a"
+            color: root.selected ? Theme.text : Theme.adapt("#3a3a3a")
             Layout.alignment: Qt.AlignVCenter
         }
 
@@ -45,14 +45,14 @@ Rectangle {
 
             Text {
                 text: root.label
-                color: root.selected ? "#ffffff" : "#e6e6e6"
+                color: root.selected ? Theme.adapt("#ffffff") : Theme.text
                 font.pixelSize: 13
             }
 
             Text {
                 visible: root.description.length > 0
                 text: root.description
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap

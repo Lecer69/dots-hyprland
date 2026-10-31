@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Rectangle {
     id: root
@@ -7,9 +8,9 @@ Rectangle {
     signal closeRequested()
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     readonly property int presetColumns: 2
@@ -44,7 +45,7 @@ Rectangle {
             text: "Display"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -53,7 +54,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: "✕"
             font.pixelSize: 12
-            color: closeHover.containsMouse ? "#dddddd" : "#666666"
+            color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: closeHover
@@ -139,14 +140,14 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: "Presets"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
 
                 Text {
                     text: gammaState.presets.length > 0 ? gammaState.presets.length : ""
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                 }
 
@@ -156,7 +157,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
                 radius: 8
-                color: "#161616"
+                color: Theme.hover
 
                 RowLayout {
                     anchors.fill: parent
@@ -169,7 +170,7 @@ Rectangle {
 
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
-                        color: "#e6e6e6"
+                        color: Theme.text
                         font.pixelSize: 13
                         clip: true
                         selectByMouse: true
@@ -178,7 +179,7 @@ Rectangle {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Save current as preset…"
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 13
                             visible: input.text.length === 0
                         }
@@ -196,7 +197,7 @@ Rectangle {
                     Text {
                         text: "+"
                         font.pixelSize: 16
-                        color: addHover.containsMouse ? "#ffffff" : "#808080"
+                        color: addHover.containsMouse ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
 
                         MouseArea {
                             id: addHover
@@ -280,7 +281,7 @@ Rectangle {
                     anchors.centerIn: parent
                     visible: gammaState.presets.length === 0
                     text: "No presets yet"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 13
                 }
 
@@ -294,7 +295,7 @@ Rectangle {
             Layout.preferredHeight: 28
             Layout.preferredWidth: resetLabel.implicitWidth + 24
             radius: 6
-            color: resetHover.pressed ? "#333333" : resetHover.containsMouse || activeFocus ? "#2a2a2a" : "#1f1f1f"
+            color: resetHover.pressed ? Theme.adapt("#333333") : resetHover.containsMouse || activeFocus ? Theme.adapt("#2a2a2a") : Theme.border
 
             activeFocusOnTab: true
             Keys.onSpacePressed: gammaState.reset()
@@ -306,7 +307,7 @@ Rectangle {
 
                 anchors.centerIn: parent
                 text: "Reset to defaults"
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }

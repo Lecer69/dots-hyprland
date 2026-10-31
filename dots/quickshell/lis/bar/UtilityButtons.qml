@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import qs.settings.data
+import qs.common
 
 Grid {
     id: root
@@ -26,7 +27,7 @@ Grid {
             width: 16
             height: 16
 
-            Image {
+            Icon {
                 anchors.centerIn: parent
                 width: 16
                 height: 16
@@ -63,7 +64,7 @@ Grid {
             width: 16
             height: 16
 
-            Image {
+            Icon {
                 anchors.centerIn: parent
                 width: 16
                 height: 16
@@ -96,7 +97,7 @@ Grid {
             width: 16
             height: 16
 
-            Image {
+            Icon {
                 anchors.centerIn: parent
                 width: 16
                 height: 16
@@ -130,7 +131,7 @@ Grid {
 
             property bool toggled: false
 
-            Image {
+            Icon {
                 anchors.centerIn: parent
                 width: 16
                 height: 16
@@ -182,7 +183,7 @@ Grid {
             width: 16
             height: 16
 
-            Image {
+            Icon {
                 anchors.centerIn: parent
                 width: 16
                 height: 16
@@ -209,7 +210,7 @@ Grid {
             width: 16
             height: 16
 
-            Image {
+            Icon {
                 anchors.centerIn: parent
                 width: 16
                 height: 16

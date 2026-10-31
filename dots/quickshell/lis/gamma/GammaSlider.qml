@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 ColumnLayout {
     id: root
@@ -33,14 +34,14 @@ ColumnLayout {
 
         Text {
             text: root.label
-            color: "#e6e6e6"
+            color: Theme.text
             font.pixelSize: 13
             Layout.fillWidth: true
         }
 
         Text {
             text: root.value.toFixed(2)
-            color: "#999999"
+            color: Theme.adapt("#999999")
             font.pixelSize: 12
         }
 
@@ -55,7 +56,7 @@ ColumnLayout {
             width: parent.width
             height: 3
             radius: 1.5
-            color: "#2a2a2a"
+            color: Theme.adapt("#2a2a2a")
         }
 
         Rectangle {
@@ -63,7 +64,7 @@ ColumnLayout {
             width: handle.x + handle.width / 2
             height: 3
             radius: 1.5
-            color: root.activeFocus ? "#ffffff" : "#bbbbbb"
+            color: root.activeFocus ? Theme.adapt("#ffffff") : Theme.adapt("#bbbbbb")
         }
 
         Rectangle {
@@ -76,7 +77,7 @@ ColumnLayout {
             width: root.activeFocus ? 14 : 12
             height: width
             radius: width / 2
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         MouseArea {

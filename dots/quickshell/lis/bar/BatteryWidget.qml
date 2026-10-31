@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Shapes
 import Quickshell
 import qs.tools
+import qs.common
 
 Item {
     id: root
@@ -18,11 +19,11 @@ Item {
     readonly property real r: sz * 0.5 - 1.75
 
     function arcColor() {
-        if (root.percent == -100) return '#4a4a4a'
-        if (root.charging) return "#a6e3a1"
-        if (root.percent <= 10) return "#f38ba8"
-        if (root.percent <= 30) return "#fab387"
-        return "#89b4fa"
+        if (root.percent == -100) return Theme.adapt("#4a4a4a")
+        if (root.charging) return Theme.adapt("#a6e3a1")
+        if (root.percent <= 10) return Theme.adapt("#f38ba8")
+        if (root.percent <= 30) return Theme.adapt("#fab387")
+        return Theme.adapt("#89b4fa")
     }
 
     property real animatedSweep: percent * 3.6
@@ -48,7 +49,7 @@ Item {
         vendorExtensionsEnabled: true
 
         ShapePath {
-            strokeColor: Qt.rgba(1, 1, 1, 0.13)
+            strokeColor: Theme.adapt(Qt.rgba(1, 1, 1, 0.13))
             strokeWidth: 2.5
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap

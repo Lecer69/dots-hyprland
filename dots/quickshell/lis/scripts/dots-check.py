@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Update check for the Dots Updater page: dots-check.py <clone> <repo url>
 # Fetches dots-hyprland and prints JSON (latest, installed, behind, commits, devCheckout).
-# The installed commit is the one whose files differ least from ~/.config.
+# The installed commit is the one whose files differ least from the installed copies,
+# the one dots-update.sh recorded when it matches as well.
 
 import glob
 import json
@@ -11,6 +12,8 @@ import sys
 
 # Kept by install.sh's update, so never compared
 HYPR_PRESERVED = {"custom", "hyprpaper.conf", "monitors.conf", "monitors.lua", "workspaces.conf"}
+# What an update installs, as git pathspecs
+SCOPE = ["dots/quickshell", "dots/hypr", "extra/lis"] + [":(exclude)dots/hypr/" + name for name in sorted(HYPR_PRESERVED)]
 
 MAX_CANDIDATES = 100
 # Listed when the installed commit is unknown or the latest
@@ -18,7 +21,9 @@ RECENT_COMMITS = 10
 MAX_COMMITS = 50
 
 clone, url = sys.argv[1], sys.argv[2]
-config = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+home = os.path.expanduser("~")
+config = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
+record = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.join(home, ".local/state"), "lis/dots-commit")
 env = dict(os.environ, GIT_TERMINAL_PROMPT="0", LC_ALL="C")
 
 
@@ -61,25 +66,27 @@ def sync():
         fail(last_line(e))
 
 
-# A repo path's place under ~/.config
+# Where an update installs a repo path
 def installed_path(path):
     if path.startswith("dots/quickshell/"):
-        return path[len("dots/"):]
+        return os.path.join(config, path[len("dots/"):])
     if path.startswith("dots/hypr/"):
         if path[len("dots/hypr/"):].split("/", 1)[0] in HYPR_PRESERVED:
             return None
-        return path[len("dots/"):]
+        return os.path.join(config, path[len("dots/"):])
+    if path == "extra/lis" or path.startswith("extra/lis/"):
+        return os.path.join(home, ".local/bin", path[len("extra/"):])
     return None
 
 
 # Whether an update installs this file
 def in_scope(path):
-    return installed_path(path) is not None or path.startswith("extra/lis")
+    return installed_path(path) is not None
 
 
 def tree(sha):
     files = {}
-    for entry in git("ls-tree", "-r", "-z", sha, "--", "dots/quickshell", "dots/hypr").split("\0"):
+    for entry in git("ls-tree", "-r", "-z", sha, "--", "dots/quickshell", "dots/hypr", "extra/lis").split("\0"):
         if not entry:
             continue
         meta, path = entry.split("\t", 1)
@@ -90,16 +97,28 @@ def tree(sha):
     return files
 
 
-def find_installed(latest):
-    candidates = git("rev-list", "--max-count=" + str(MAX_CANDIDATES), latest,
-                     "--", "dots/quickshell", "dots/hypr").split()
+# The commit dots-update.sh last installed, if it's in latest's history
+def recorded(latest):
+    try:
+        with open(record) as f:
+            sha = git("rev-parse", "--verify", "--quiet", f.read().strip() + "^{commit}").strip()
+        git("merge-base", "--is-ancestor", sha, latest)
+        return sha
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def find_installed(latest, hint):
+    candidates = git("rev-list", "--max-count=" + str(MAX_CANDIDATES), latest, "--", *SCOPE).split()
+    # First, so it wins a tie
+    if hint:
+        candidates = [hint] + [sha for sha in candidates if sha != hint]
     trees = [(sha, tree(sha)) for sha in candidates]
     known = sorted({key for _, files in trees for key in files})
 
     # Blob ids of the installed copies
-    present = [key for key in known if "\n" not in key and os.path.isfile(os.path.join(config, key))]
-    blobs = git("hash-object", "--no-filters", "--stdin-paths",
-                stdin="".join(os.path.join(config, key) + "\n" for key in present)).split()
+    present = [key for key in known if "\n" not in key and os.path.isfile(key)]
+    blobs = git("hash-object", "--no-filters", "--stdin-paths", stdin="".join(key + "\n" for key in present)).split()
     installed = dict(zip(present, blobs))
 
     best = None
@@ -160,13 +179,21 @@ sync()
 
 try:
     latest = git("rev-parse", "origin/HEAD").strip()
-    installed, differs = find_installed(latest)
+    hint = recorded(latest)
+    installed, differs = find_installed(latest, hint)
     if installed:
-        behind = int(git("rev-list", "--count", "--no-merges", installed + ".." + latest))
+        # Only commits an update would install count, so a README change doesn't
+        pending = git("rev-list", "--reverse", "--no-merges", installed + ".." + latest, "--", *SCOPE).split()
+        behind = len(pending)
+        # Without the record, shown as the newest commit with the same files, likely the one updated to
+        newest = (git("rev-list", "--parents", "-n", "1", pending[0]).split()[1:2] if pending else [latest]) or [installed]
+        if installed != hint and not int(git("rev-list", "--count", newest[0] + ".." + installed)) \
+                and not int(git("rev-list", "--count", installed + ".." + newest[0], "--", *SCOPE)):
+            installed = newest[0]
     else:
         behind = int(git("rev-list", "--count", "--no-merges", latest))
     if installed and behind > 0:
-        listed = commits("--max-count=" + str(MAX_COMMITS), installed + ".." + latest)
+        listed = commits("--max-count=" + str(MAX_COMMITS), "--full-diff", installed + ".." + latest, "--", *SCOPE)
     else:
         listed = commits("--max-count=" + str(RECENT_COMMITS), latest)
 except subprocess.CalledProcessError as e:

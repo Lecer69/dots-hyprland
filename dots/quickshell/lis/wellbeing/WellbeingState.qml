@@ -3,11 +3,12 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.settings.data
+import qs.common
 
 QtObject {
     id: root
 
-    readonly property var _palette: ["#89b4fa", "#a6e3a1", "#f9e2af", "#cba6f7", "#f38ba8", "#94e2d5", "#fab387", "#89dceb"]
+    readonly property var _palette: [Theme.adapt("#89b4fa"), Theme.adapt("#a6e3a1"), Theme.adapt("#f9e2af"), Theme.adapt("#cba6f7"), Theme.adapt("#f38ba8"), Theme.adapt("#94e2d5"), Theme.adapt("#fab387"), Theme.adapt("#89dceb")]
 
     readonly property bool enabled: SettingsData.s.tracking.wellbeingEnabled
     property string activeApp: ""
@@ -174,7 +175,7 @@ QtObject {
     }
 
     function appColor(name) {
-        if (!name || name.length === 0) return "#89b4fa"
+        if (!name || name.length === 0) return Theme.adapt("#89b4fa")
         var hash = 0
         for (var i = 0; i < name.length; i++)
             hash = (hash * 31 + name.charCodeAt(i)) & 0x7fffffff

@@ -1,5 +1,6 @@
 import QtQuick
 import qs.settings.data
+import qs.common
 
 Rectangle {
     id: barPill
@@ -11,7 +12,7 @@ Rectangle {
     property bool vertical: false
 
     radius: 14
-    color: SettingsData.s.bar.pillColor
+    color: Theme.light ? SettingsData.s.bar.pillColorLight : SettingsData.s.bar.pillColor
 
     default property alias content: contentItem.data
 
@@ -21,7 +22,7 @@ Rectangle {
         radius: parent.radius
         color: "transparent"
         border.width: SettingsData.s.bar.pillBorderWidth
-        border.color: SettingsData.s.bar.pillBorderColor
+        border.color: Theme.light ? SettingsData.s.bar.pillBorderColorLight : SettingsData.s.bar.pillBorderColor
         visible: border.width > 0
     }
 

@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.SystemTray
 import qs.settings.data
+import qs.common
 
 Item {
     id: root
@@ -45,7 +46,7 @@ Item {
                     id: hoverBg
                     anchors.fill: parent
                     radius: 5
-                    color: "#ffffff"
+                    color: Theme.adapt("#ffffff")
                     opacity: 0
                     Behavior on opacity { NumberAnimation { duration: 120 } }
                 }
@@ -73,7 +74,7 @@ Item {
                         layer.smooth: true
                         layer.effect: MultiEffect {
                             colorization: 1.0
-                            colorizationColor: "#e8e8e8"
+                            colorizationColor: Theme.appIconTint
                         }
                     }
 
@@ -82,7 +83,7 @@ Item {
                         width: 6
                         height: 6
                         radius: 3
-                        color: "#666666"
+                        color: Theme.adapt("#666666")
                         visible: trayIcon.status !== Image.Ready
                     }
                 }

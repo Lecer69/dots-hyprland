@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.common
 
 PopupWindow {
     id: root
@@ -31,8 +32,8 @@ PopupWindow {
 
         anchors.fill: parent
         radius: 8
-        color: "#161616"
-        border.color: "#242424"
+        color: Theme.hover
+        border.color: Theme.adapt("#242424")
         border.width: 1
 
         opacity: root.shown ? 1 : 0
@@ -46,7 +47,7 @@ PopupWindow {
 
             anchors.centerIn: parent
             text: root.text
-            color: "#e6e6e6"
+            color: Theme.text
             font.pixelSize: 12
         }
     }

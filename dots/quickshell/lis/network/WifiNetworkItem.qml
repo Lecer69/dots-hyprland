@@ -73,8 +73,8 @@ Rectangle {
 
     implicitHeight: column.implicitHeight + 16
     radius: 8
-    color: root.expanded && root.activeFocus ? "#1f1f1f"
-        : root.expanded || rowArea.containsMouse || root.activeFocus ? "#161616" : "transparent"
+    color: root.expanded && root.activeFocus ? Theme.border
+        : root.expanded || rowArea.containsMouse || root.activeFocus ? Theme.hover : "transparent"
 
     readonly property bool listRow: true
     activeFocusOnTab: true
@@ -135,7 +135,7 @@ Rectangle {
                 anchors.fill: parent
                 spacing: 12
 
-                Image {
+                Icon {
                     Layout.preferredWidth: 16
                     Layout.preferredHeight: 16
                     source: "../icons/" + root.iconName() + ".svg"
@@ -148,12 +148,12 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.network.name
                     elide: Text.ElideRight
-                    color: root.network.connected ? "#ffffff" : "#e6e6e6"
+                    color: root.network.connected ? Theme.adapt("#ffffff") : Theme.text
                     font.pixelSize: 13
                     font.weight: root.network.connected ? Font.Medium : Font.Normal
                 }
 
-                Image {
+                Icon {
                     Layout.preferredWidth: 12
                     Layout.preferredHeight: 12
                     visible: root.secured
@@ -166,7 +166,7 @@ Rectangle {
                 Text {
                     visible: text !== ""
                     text: root.statusText
-                    color: root.failure !== "" ? "#e06c6c" : "#6b6b6b"
+                    color: root.failure !== "" ? Theme.adapt("#e06c6c") : Theme.textDim
                     font.pixelSize: 12
                 }
             }
@@ -182,7 +182,7 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 text: {
                     if (root.unsupported) return "Enterprise networks aren't supported here"

@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import qs.settings.data
+import qs.common
 
 // Now playing; music players get the cover-coloured shader look, everything else the plain one
 Item {
@@ -31,7 +32,7 @@ Item {
         return root.musicPlayers.some(m => names.some(n => n.includes(m)))
     }
     // The cover's colour, or plain grey
-    readonly property color accent: root.fancy ? palette.accent : "#e6e6e6"
+    readonly property color accent: root.fancy ? palette.accent : Theme.text
 
     // The bass, smoothed
     property real energy: spectrum.bass
@@ -60,6 +61,11 @@ Item {
         if (s === MprisLoopState.None) root.player.loopState = MprisLoopState.Playlist
         else if (s === MprisLoopState.Playlist) root.player.loopState = MprisLoopState.Track
         else root.player.loopState = MprisLoopState.None
+    }
+
+    // The cover backdrop stays dark in light mode
+    function tone(c): color {
+        return root.fancy ? c : Theme.adapt(c)
     }
 
     // A focused button takes Space for itself
@@ -103,9 +109,9 @@ Item {
 
         anchors.fill: parent
         radius: root.fancy ? 14 : 12
-        color: root.fancy ? "#0c0c0c" : "#0f0f0f"
+        color: root.fancy ? "#0c0c0c" : Theme.panel
         border.width: 1
-        border.color: root.fancy ? "#1affffff" : "#1f1f1f"
+        border.color: root.fancy ? "#1affffff" : Theme.border
 
         // Click shield
         MouseArea {
@@ -194,7 +200,7 @@ Item {
                     width: 5
                     height: 5
                     radius: 2.5
-                    color: root.playing ? root.accent : "#80ffffff"
+                    color: root.playing ? root.accent : root.tone("#80ffffff")
 
                     SequentialAnimation on opacity {
                         running: root.playing && root.shown
@@ -212,13 +218,13 @@ Item {
                     font.pixelSize: 11
                     font.weight: Font.Medium
                     font.letterSpacing: 0.4
-                    color: "#b3ffffff"
+                    color: root.tone("#b3ffffff")
                 }
 
                 Text {
                     text: "✕"
                     font.pixelSize: 11
-                    color: closeArea.containsMouse ? "#ffffff" : "#80ffffff"
+                    color: closeArea.containsMouse ? root.tone("#ffffff") : root.tone("#80ffffff")
 
                     MouseArea {
                         id: closeArea
@@ -279,7 +285,7 @@ Item {
                     ClippingRectangle {
                         anchors.fill: parent
                         radius: 10
-                        color: "#1affffff"
+                        color: root.tone("#1affffff")
 
                         Image {
                             id: cover
@@ -300,7 +306,7 @@ Item {
                             visible: cover.status !== Image.Ready
                             text: "♪"
                             font.pixelSize: 28
-                            color: "#4dffffff"
+                            color: root.tone("#4dffffff")
                         }
                     }
 
@@ -335,7 +341,7 @@ Item {
                             text: root.player ? (root.player.trackTitle || "Unknown Title") : ""
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
-                            color: "#ffffff"
+                            color: root.tone("#ffffff")
                         }
 
                         Text {
@@ -345,7 +351,7 @@ Item {
                             text: root.player ? (root.player.trackArtist || "") : ""
                             font.pixelSize: 12
                             font.weight: Font.Medium
-                            color: root.fancy ? Qt.lighter(palette.accent, 1.25) : "#999999"
+                            color: root.fancy ? Qt.lighter(palette.accent, 1.25) : root.tone("#999999")
                         }
 
                         Text {
@@ -354,7 +360,7 @@ Item {
                             visible: text !== ""
                             text: root.player ? (root.player.trackAlbum || "") : ""
                             font.pixelSize: 11
-                            color: "#80ffffff"
+                            color: root.tone("#80ffffff")
                         }
                     }
 
@@ -431,7 +437,7 @@ Item {
                         width: parent.width
                         height: seekBlock.hot ? 5 : 3.5
                         radius: height / 2
-                        color: "#26ffffff"
+                        color: root.tone("#26ffffff")
                         opacity: seekBlock.seekable ? 1 : 0.4
 
                         Behavior on height { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
@@ -444,8 +450,8 @@ Item {
                             width: seekBlock.length > 0 ? parent.width * Math.min(1, seekBlock.displayPos / seekBlock.length) : 0
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
-                                GradientStop { position: 0.0; color: root.fancy ? Qt.darker(root.accent, 1.3) : "#bbbbbb" }
-                                GradientStop { position: 1.0; color: root.fancy ? Qt.lighter(root.accent, 1.15) : "#bbbbbb" }
+                                GradientStop { position: 0.0; color: root.fancy ? Qt.darker(root.accent, 1.3) : root.tone("#bbbbbb") }
+                                GradientStop { position: 1.0; color: root.fancy ? Qt.lighter(root.accent, 1.15) : root.tone("#bbbbbb") }
                             }
 
                             Behavior on width {
@@ -458,7 +464,7 @@ Item {
                             width: 12
                             height: 12
                             radius: 6
-                            color: "#ffffff"
+                            color: root.tone("#ffffff")
                             border.width: 2.5
                             border.color: root.accent
                             anchors.verticalCenter: parent.verticalCenter
@@ -509,7 +515,7 @@ Item {
                     text: root.formatTime(seekBlock.displayPos)
                     font.pixelSize: 10
                     font.features: ({ "tnum": 1 })
-                    color: "#b3ffffff"
+                    color: root.tone("#b3ffffff")
                 }
 
                 Text {
@@ -519,7 +525,7 @@ Item {
                     text: seekBlock.length > 0 ? root.formatTime(seekBlock.length) : "--:--"
                     font.pixelSize: 10
                     font.features: ({ "tnum": 1 })
-                    color: "#80ffffff"
+                    color: root.tone("#80ffffff")
                 }
             }
 
@@ -535,10 +541,10 @@ Item {
                     icon: "shuffle"
                     active: !!(root.player && root.player.shuffle)
                     enabled: !!(root.player && root.player.canShuffle)
-                    activeColor: "#1fffffff"
-                    hoverColor: "#1affffff"
-                    iconColor: "#b3ffffff"
-                    activeIconColor: root.fancy ? root.accent : "#ffffff"
+                    activeColor: root.tone("#1fffffff")
+                    hoverColor: root.tone("#1affffff")
+                    iconColor: root.tone("#b3ffffff")
+                    activeIconColor: root.fancy ? root.accent : root.tone("#ffffff")
                     onClicked: root.player.shuffle = !root.player.shuffle
                 }
 
@@ -547,8 +553,8 @@ Item {
                     iconSize: 15
                     icon: "prev"
                     enabled: !!(root.player && root.player.canGoPrevious)
-                    hoverColor: "#1affffff"
-                    iconColor: "#e6ffffff"
+                    hoverColor: root.tone("#1affffff")
+                    iconColor: root.tone("#e6ffffff")
                     onClicked: root.player.previous()
                 }
 
@@ -561,7 +567,7 @@ Item {
                     useAlt: root.playing
                     enabled: !!(root.player && root.player.canTogglePlaying)
                     accentColor: root.accent
-                    accentIconColor: "#0c0c0c"
+                    accentIconColor: root.tone("#0c0c0c")
                     transform: Scale {
                         origin.x: 24.5
                         origin.y: 24.5
@@ -576,8 +582,8 @@ Item {
                     iconSize: 15
                     icon: "next"
                     enabled: !!(root.player && root.player.canGoNext)
-                    hoverColor: "#1affffff"
-                    iconColor: "#e6ffffff"
+                    hoverColor: root.tone("#1affffff")
+                    iconColor: root.tone("#e6ffffff")
                     onClicked: root.player.next()
                 }
 
@@ -589,10 +595,10 @@ Item {
                     useAlt: !!(root.player && root.player.loopState === MprisLoopState.Track)
                     active: !!(root.player && root.player.loopState !== MprisLoopState.None)
                     enabled: !!(root.player && root.player.canLoop)
-                    activeColor: "#1fffffff"
-                    hoverColor: "#1affffff"
-                    iconColor: "#b3ffffff"
-                    activeIconColor: root.fancy ? root.accent : "#ffffff"
+                    activeColor: root.tone("#1fffffff")
+                    hoverColor: root.tone("#1affffff")
+                    iconColor: root.tone("#b3ffffff")
+                    activeIconColor: root.fancy ? root.accent : root.tone("#ffffff")
                     onClicked: root.cycleLoop()
                 }
             }
@@ -605,7 +611,7 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 text: "Nothing playing"
                 font.pixelSize: 12
-                color: "#80ffffff"
+                color: root.tone("#80ffffff")
             }
         }
     }

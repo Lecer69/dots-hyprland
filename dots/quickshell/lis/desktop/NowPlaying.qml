@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
 import qs.media
+import qs.common
 
 // The playing track, else the last one paused
 Rectangle {
@@ -14,8 +15,8 @@ Rectangle {
 
     implicitHeight: 56
     radius: 12
-    color: "#0f0f0f"
-    border.color: "#1f1f1f"
+    color: Theme.panel
+    border.color: Theme.border
     border.width: 1
 
     // Keeps clicks from the desktop behind
@@ -63,7 +64,7 @@ Rectangle {
             Layout.fillWidth: true
             text: root.player?.trackTitle || "Unknown title"
             elide: Text.ElideRight
-            color: "#e6e6e6"
+            color: Theme.text
             font.pixelSize: 13
         }
 
@@ -71,7 +72,7 @@ Rectangle {
             Layout.maximumWidth: root.width / 3
             text: root.player?.trackArtist ?? ""
             elide: Text.ElideRight
-            color: "#999999"
+            color: Theme.adapt("#999999")
             font.pixelSize: 12
         }
     }

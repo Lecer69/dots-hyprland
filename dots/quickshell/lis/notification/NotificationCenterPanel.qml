@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Rectangle {
     id: root
@@ -15,9 +16,9 @@ Rectangle {
     signal closeRequested()
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     Item {
@@ -33,7 +34,7 @@ Rectangle {
             text: "Notifications"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -42,7 +43,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: "✕"
             font.pixelSize: 12
-            color: closeHover.containsMouse ? "#dddddd" : "#666666"
+            color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: closeHover
@@ -94,7 +95,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: "No notifications"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 13
                 visible: historyList.count === 0
             }
@@ -105,7 +106,7 @@ Rectangle {
             Layout.preferredWidth: clearLabel.implicitWidth + 24
             Layout.preferredHeight: 28
             radius: 6
-            color: clearHover.pressed ? "#333333" : clearHover.containsMouse || activeFocus ? "#2a2a2a" : "#1f1f1f"
+            color: clearHover.pressed ? Theme.adapt("#333333") : clearHover.containsMouse || activeFocus ? Theme.adapt("#2a2a2a") : Theme.border
             visible: historyList.count > 0
 
             activeFocusOnTab: true
@@ -118,7 +119,7 @@ Rectangle {
 
                 anchors.centerIn: parent
                 text: "Clear all"
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }

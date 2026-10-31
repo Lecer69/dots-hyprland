@@ -2,6 +2,7 @@ import QtQuick
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
+import qs.common
 
 Rectangle {
     id: root
@@ -13,17 +14,17 @@ Rectangle {
 
     implicitHeight: 32
     radius: 6
-    color: active ? (focused ? "#2a2a2a" : "#1f1f1f")
-         : hoverArea.containsMouse ? "#161616"
+    color: active ? (focused ? Theme.adapt("#2a2a2a") : Theme.border)
+         : hoverArea.containsMouse ? Theme.hover
          : "transparent"
 
     Text {
         anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
         text: root.label
         font.pixelSize: 13
-        color: root.active ? "#ffffff"
-             : hoverArea.containsMouse ? "#cccccc"
-             : "#808080"
+        color: root.active ? Theme.adapt("#ffffff")
+             : hoverArea.containsMouse ? Theme.adapt("#cccccc")
+             : Theme.adapt("#808080")
     }
 
     MouseArea {

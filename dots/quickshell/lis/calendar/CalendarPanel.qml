@@ -8,9 +8,9 @@ Rectangle {
     signal closeRequested()
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     readonly property var monthNames: ["January","February","March","April","May","June","July","August","September","October","November","December"]
@@ -132,7 +132,7 @@ Rectangle {
             text: "Calendar"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -141,7 +141,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: "✕"
             font.pixelSize: 12
-            color: closeHover.containsMouse ? "#dddddd" : "#666666"
+            color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: closeHover
@@ -185,7 +185,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "‹"
                     font.pixelSize: 18
-                    color: prevHover.containsMouse || parent.activeFocus ? "#ffffff" : "#808080"
+                    color: prevHover.containsMouse || parent.activeFocus ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
                 }
 
                 MouseArea {
@@ -204,7 +204,7 @@ Rectangle {
                 text: root.monthLabel
                 font.pixelSize: 14
                 font.weight: Font.DemiBold
-                color: "#e6e6e6"
+                color: Theme.text
             }
 
             Rectangle {
@@ -216,7 +216,7 @@ Rectangle {
                 width: todayLabel.implicitWidth + 20
                 height: 28
                 radius: 6
-                color: todayHover.pressed ? "#333333" : todayHover.containsMouse || todayButton.activeFocus ? "#2a2a2a" : "#1f1f1f"
+                color: todayHover.pressed ? Theme.adapt("#333333") : todayHover.containsMouse || todayButton.activeFocus ? Theme.adapt("#2a2a2a") : Theme.border
 
                 activeFocusOnTab: true
                 Keys.onSpacePressed: root.goToday()
@@ -228,7 +228,7 @@ Rectangle {
 
                     anchors.centerIn: parent
                     text: "Today"
-                    color: "#e6e6e6"
+                    color: Theme.text
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
@@ -260,7 +260,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "›"
                     font.pixelSize: 18
-                    color: nextHover.containsMouse || nextBtn.activeFocus ? "#ffffff" : "#808080"
+                    color: nextHover.containsMouse || nextBtn.activeFocus ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
                 }
 
                 MouseArea {
@@ -291,7 +291,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: parent.modelData
                         font.pixelSize: 11
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                     }
                 }
             }
@@ -336,12 +336,12 @@ Rectangle {
                     width: (dayGrid.width - 6 * dayGrid.columnSpacing) / 7
                     height: 44
                     radius: 8
-                    color: modelData.isToday ? "#e6e6e6"
-                        : modelData.isSelected ? (dayGrid.activeFocus ? "#2a2a2a" : "#1f1f1f")
-                        : cellHover.containsMouse ? "#161616" : "transparent"
+                    color: modelData.isToday ? Theme.text
+                        : modelData.isSelected ? (dayGrid.activeFocus ? Theme.adapt("#2a2a2a") : Theme.border)
+                        : cellHover.containsMouse ? Theme.hover : "transparent"
                     // The keyboard's day, even when it's today
                     border.width: modelData.isSelected && dayGrid.activeFocus ? 1 : 0
-                    border.color: "#6b6b6b"
+                    border.color: Theme.textDim
 
                     Text {
                         anchors.centerIn: parent
@@ -349,8 +349,8 @@ Rectangle {
                         font.pixelSize: 13
                         font.weight: cell.modelData.isToday ? Font.DemiBold : Font.Normal
                         color: cell.modelData.isToday
-                            ? "#0f0f0f"
-                            : cell.modelData.inMonth ? "#e6e6e6" : "#4a4a4a"
+                            ? Theme.panel
+                            : cell.modelData.inMonth ? Theme.text : Theme.adapt("#4a4a4a")
                     }
 
                     Rectangle {
@@ -362,8 +362,8 @@ Rectangle {
                         radius: 2
                         visible: calendarState.hasNotes(cell.modelData.date)
                         color: cell.modelData.isToday
-                            ? "#0f0f0f"
-                            : cell.modelData.inMonth ? "#808080" : "#3a3a3a"
+                            ? Theme.panel
+                            : cell.modelData.inMonth ? Theme.adapt("#808080") : Theme.adapt("#3a3a3a")
                     }
 
                     MouseArea {
@@ -389,7 +389,7 @@ Rectangle {
                     + root.selectedDate.getDate() + " "
                     + root.monthNames[root.selectedDate.getMonth()] + " "
                     + root.selectedDate.getFullYear()
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }
@@ -400,7 +400,7 @@ Rectangle {
                 text: root.selectedNotes.length > 0
                     ? root.selectedNotes.length + (root.selectedNotes.length === 1 ? " note" : " notes")
                     : ""
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
             }
         }
@@ -434,7 +434,7 @@ Rectangle {
                             width: notesColumn.width
                             height: Math.max(36, noteText.implicitHeight + 16)
                             radius: 8
-                            color: noteHover.hovered || noteRow.activeFocus ? "#161616" : "transparent"
+                            color: noteHover.hovered || noteRow.activeFocus ? Theme.hover : "transparent"
 
                             readonly property bool listRow: true
                             activeFocusOnTab: true
@@ -461,7 +461,7 @@ Rectangle {
                                     Layout.preferredWidth: 6
                                     Layout.preferredHeight: 6
                                     radius: 3
-                                    color: "#808080"
+                                    color: Theme.adapt("#808080")
                                 }
 
                                 Text {
@@ -469,7 +469,7 @@ Rectangle {
 
                                     Layout.fillWidth: true
                                     text: noteRow.modelData.text
-                                    color: "#e6e6e6"
+                                    color: Theme.text
                                     font.pixelSize: 13
                                     wrapMode: Text.Wrap
                                 }
@@ -480,7 +480,7 @@ Rectangle {
                                     Layout.preferredHeight: 22
                                     radius: 6
                                     opacity: noteRow.modelData.yearly || noteHover.hovered || noteRow.activeFocus ? 1 : 0
-                                    color: noteRow.modelData.yearly ? "#262626" : "transparent"
+                                    color: noteRow.modelData.yearly ? Theme.adapt("#262626") : "transparent"
 
                                     Text {
                                         id: yearlyLabel
@@ -488,8 +488,8 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: "Yearly"
                                         font.pixelSize: 11
-                                        color: noteRow.modelData.yearly ? "#ffffff"
-                                             : yearlyHover.containsMouse ? "#cccccc" : "#808080"
+                                        color: noteRow.modelData.yearly ? Theme.adapt("#ffffff")
+                                             : yearlyHover.containsMouse ? Theme.adapt("#cccccc") : Theme.adapt("#808080")
                                     }
 
                                     MouseArea {
@@ -510,7 +510,7 @@ Rectangle {
                                         anchors.centerIn: parent
                                         text: "✕"
                                         font.pixelSize: 11
-                                        color: delHover.containsMouse ? "#dddddd" : "#666666"
+                                        color: delHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                                     }
 
                                     MouseArea {
@@ -532,7 +532,7 @@ Rectangle {
                 anchors.centerIn: parent
                 visible: root.selectedNotes.length === 0
                 text: "No notes for this day"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 13
             }
         }
@@ -541,7 +541,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 36
             radius: 8
-            color: "#161616"
+            color: Theme.hover
 
             RowLayout {
                 anchors.fill: parent
@@ -554,7 +554,7 @@ Rectangle {
 
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
-                    color: "#e6e6e6"
+                    color: Theme.text
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
@@ -563,7 +563,7 @@ Rectangle {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Add a note…"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                         visible: noteInput.text.length === 0
                     }
@@ -578,8 +578,8 @@ Rectangle {
                     Layout.preferredWidth: newYearlyLabel.implicitWidth + 16
                     Layout.preferredHeight: 22
                     radius: 6
-                    color: root.newNoteYearly ? (newYearly.activeFocus ? "#333333" : "#262626")
-                        : newYearly.activeFocus ? "#1f1f1f" : "transparent"
+                    color: root.newNoteYearly ? (newYearly.activeFocus ? Theme.adapt("#333333") : Theme.adapt("#262626"))
+                        : newYearly.activeFocus ? Theme.border : "transparent"
 
                     activeFocusOnTab: true
                     Keys.onSpacePressed: root.newNoteYearly = !root.newNoteYearly
@@ -592,8 +592,8 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Yearly"
                         font.pixelSize: 11
-                        color: root.newNoteYearly ? "#ffffff"
-                             : newYearlyHover.containsMouse ? "#cccccc" : "#808080"
+                        color: root.newNoteYearly ? Theme.adapt("#ffffff")
+                             : newYearlyHover.containsMouse ? Theme.adapt("#cccccc") : Theme.adapt("#808080")
                     }
 
                     MouseArea {
@@ -609,7 +609,7 @@ Rectangle {
                 Text {
                     text: "+"
                     font.pixelSize: 16
-                    color: addHover.containsMouse ? "#ffffff" : "#808080"
+                    color: addHover.containsMouse ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
 
                     MouseArea {
                         id: addHover

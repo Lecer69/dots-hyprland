@@ -8,6 +8,7 @@ import qs.notification
 import qs.tools
 import qs.settings.data
 import qs.media
+import qs.common
 
 PanelWindow {
     id: bar
@@ -121,7 +122,7 @@ PanelWindow {
                 verticalItemAlignment: Qt.AlignVCenter
                 spacing: 10
 
-                Image {
+                Icon {
                     visible: !bar.compact
                     source: "../icons/arch-symbolic.svg"
                     width: 16
@@ -148,7 +149,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-                        Image {
+                        Icon {
                             anchors.verticalCenter: parent.verticalCenter
                             width: 14
                             height: 14
@@ -169,7 +170,7 @@ PanelWindow {
                         text: ToplevelManager.activeToplevel?.title ?? ("Desktop - Workspace " + (bar.monitor?.activeWorkspace?.id ?? "?"))
                         font.pixelSize: 14
                         font.weight: Font.Medium
-                        color: "#bdbdbd"
+                        color: Theme.adapt("#bdbdbd")
                     }
                 }
 
@@ -179,7 +180,7 @@ PanelWindow {
                     elide: Text.ElideRight
                     text: ToplevelManager.activeToplevel?.appId ?? ""
                     font.pixelSize: 11
-                    color: '#909090'
+                    color: Theme.adapt("#909090")
                 }
             }
         }
@@ -292,7 +293,7 @@ PanelWindow {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        Image {
+                        Icon {
                             id: settingsIcon
 
                             width: 16

@@ -2,6 +2,7 @@ import QtQuick
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
+import qs.common
 
 Row {
     id: root
@@ -46,13 +47,13 @@ Row {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: 3; radius: 1.5
-            color: "#2a2a2a"
+            color: Theme.adapt("#2a2a2a")
 
             Rectangle {
                 width: track.ratio * parent.width
                 height: parent.height
                 radius: parent.radius
-                color: root.activeFocus ? "#ffffff" : "#bbbbbb"
+                color: root.activeFocus ? Theme.adapt("#ffffff") : Theme.adapt("#bbbbbb")
             }
         }
 
@@ -62,7 +63,7 @@ Row {
             radius: width / 2
             anchors.verticalCenter: parent.verticalCenter
             x: track.ratio * (track.width - width)
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         MouseArea {
@@ -105,6 +106,6 @@ Row {
         horizontalAlignment: Text.AlignRight
         text: root.value + root.suffix
         font.pixelSize: 12
-        color: "#999999"
+        color: Theme.adapt("#999999")
     }
 }

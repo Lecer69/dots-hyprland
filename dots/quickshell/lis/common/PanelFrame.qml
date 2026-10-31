@@ -12,9 +12,9 @@ Rectangle {
     signal closeRequested()
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     Item {
@@ -32,7 +32,7 @@ Rectangle {
             text: root.title
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -44,7 +44,7 @@ Rectangle {
             elide: Text.ElideRight
             text: root.subtitle
             font.pixelSize: 12
-            color: "#6b6b6b"
+            color: Theme.textDim
         }
 
         Text {
@@ -55,7 +55,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: "✕"
             font.pixelSize: 12
-            color: closeHover.containsMouse ? "#dddddd" : "#666666"
+            color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: closeHover

@@ -489,7 +489,7 @@ done
             Layout.preferredHeight: 352
             Layout.minimumHeight: 160
             radius: 8
-            color: "#131313"
+            color: Theme.adapt("#131313")
 
             Repeater {
                 model: root.monitors
@@ -509,7 +509,7 @@ done
                     width: size.w * canvas.factor
                     height: size.h * canvas.factor
                     radius: 6
-                    color: tile.isSelected ? "#262626" : "#1c1c1c"
+                    color: tile.isSelected ? Theme.adapt("#262626") : Theme.adapt("#1c1c1c")
                     z: tileArea.drag.active ? 1 : 0
 
                     // Cropped like hyprpaper's cover fit, dimmed so the name reads
@@ -549,7 +549,7 @@ done
                         radius: tile.radius
                         color: "transparent"
                         border.width: 1
-                        border.color: tile.isSelected ? "#e6e6e6" : "#2e2e2e"
+                        border.color: tile.isSelected ? Theme.text : Theme.adapt("#2e2e2e")
                     }
 
                     Column {
@@ -559,7 +559,7 @@ done
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: tile.modelData.name
-                            color: tile.isSelected ? "#ffffff" : "#999999"
+                            color: tile.isSelected ? Theme.adapt("#ffffff") : Theme.adapt("#999999")
                             font.pixelSize: 12
                             font.weight: Font.Medium
                         }
@@ -567,7 +567,7 @@ done
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: tile.modelData.mode.split("@")[0].replace("x", "×")
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 11
                         }
                     }
@@ -607,14 +607,14 @@ done
                     width: offLabel.implicitWidth + 20
                     height: 28
                     radius: 6
-                    color: index === root.selected ? "#262626" : "transparent"
+                    color: index === root.selected ? Theme.adapt("#262626") : "transparent"
 
                     Text {
                         id: offLabel
 
                         anchors.centerIn: parent
                         text: parent.modelData.name + " (off)"
-                        color: parent.index === root.selected ? "#ffffff" : "#808080"
+                        color: parent.index === root.selected ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
                         font.pixelSize: 12
                     }
 
@@ -639,7 +639,7 @@ done
 
                 Text {
                     text: root.current ? root.current.name : ""
-                    color: "#e6e6e6"
+                    color: Theme.text
                     font.pixelSize: 13
                     font.weight: Font.Medium
                 }
@@ -648,7 +648,7 @@ done
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                     text: root.current ? root.current.description : ""
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                 }
 
@@ -735,7 +735,7 @@ done
 
                         Text {
                             text: "Variable refresh rate"
-                            color: "#e6e6e6"
+                            color: Theme.text
                             font.pixelSize: 13
                         }
                     }
@@ -755,7 +755,7 @@ done
 
                         Text {
                             text: "10-bit color"
-                            color: "#e6e6e6"
+                            color: Theme.text
                             font.pixelSize: 13
                         }
                     }
@@ -778,7 +778,7 @@ done
                         Rectangle {
                             anchors.fill: parent
                             radius: 6
-                            color: "#161616"
+                            color: Theme.hover
                         }
 
                         Image {
@@ -823,7 +823,7 @@ done
                             elide: Text.ElideMiddle
                             text: thumb.path !== "" ? root.wallpaperName(thumb.path) : "No wallpaper"
                             textFormat: Text.PlainText
-                            color: thumb.path !== "" ? "#e6e6e6" : "#6b6b6b"
+                            color: thumb.path !== "" ? Theme.text : Theme.textDim
                             font.pixelSize: 13
                         }
 
@@ -833,7 +833,7 @@ done
                             elide: Text.ElideRight
                             text: root.wallpaperError
                             textFormat: Text.PlainText
-                            color: "#e06c6c"
+                            color: Theme.adapt("#e06c6c")
                             font.pixelSize: 12
                         }
                     }
@@ -857,7 +857,7 @@ done
                 elide: Text.ElideRight
                 text: root.confirming ? "Keep these settings? Reverting in " + root.countdown + "s"
                     : root.changed ? "Changes not applied yet" : ""
-                color: root.confirming ? "#e6e6e6" : "#6b6b6b"
+                color: root.confirming ? Theme.text : Theme.textDim
                 font.pixelSize: 12
             }
 
@@ -890,7 +890,7 @@ done
     }
 
     component SettingLabel: Text {
-        color: "#6b6b6b"
+        color: Theme.textDim
         font.pixelSize: 12
         font.weight: Font.Medium
     }

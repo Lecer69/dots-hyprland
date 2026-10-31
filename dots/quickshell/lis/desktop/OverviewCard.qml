@@ -1,4 +1,5 @@
 import QtQuick
+import qs.common
 
 // A desktop overview card: title row, optional link (`action`), children under it
 Rectangle {
@@ -13,8 +14,8 @@ Rectangle {
     signal actionClicked()
 
     radius: 12
-    color: "#0f0f0f"
-    border.color: "#1f1f1f"
+    color: Theme.panel
+    border.color: Theme.border
     border.width: 1
 
     // Keeps clicks, including the closing double-click, from the desktop
@@ -37,7 +38,7 @@ Rectangle {
             text: root.title
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -49,7 +50,7 @@ Rectangle {
             elide: Text.ElideRight
             text: root.subtitle
             font.pixelSize: 12
-            color: "#6b6b6b"
+            color: Theme.textDim
         }
 
         Text {
@@ -60,7 +61,7 @@ Rectangle {
             anchors.baseline: titleText.baseline
             text: root.action
             font.pixelSize: 12
-            color: actionArea.containsMouse ? "#dddddd" : "#666666"
+            color: actionArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: actionArea

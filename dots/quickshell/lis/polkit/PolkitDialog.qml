@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import Quickshell.Services.Polkit
 import Quickshell.Widgets
 import QtQuick
+import qs.common
 
 Variants {
     id: root
@@ -69,18 +70,18 @@ Variants {
 
                 Component.onCompleted: keyItem.forceActiveFocus()
 
-                readonly property color cBg:      '#080808'
-                readonly property color cOverlay0: "#6c7086"
-                readonly property color cOverlay1: "#7f849c"
-                readonly property color cSubtext0: "#a6adc8"
-                readonly property color cText:     "#cdd6f4"
-                readonly property color cMauve:    "#cba6f7"
-                readonly property color cRed:      "#f38ba8"
-                readonly property color cYellow:   "#f9e2af"
+                readonly property color cBg:      Theme.adapt("#080808")
+                readonly property color cOverlay0: Theme.adapt("#6c7086")
+                readonly property color cOverlay1: Theme.adapt("#7f849c")
+                readonly property color cSubtext0: Theme.adapt("#a6adc8")
+                readonly property color cText:     Theme.adapt("#cdd6f4")
+                readonly property color cMauve:    Theme.adapt("#cba6f7")
+                readonly property color cRed:      Theme.adapt("#f38ba8")
+                readonly property color cYellow:   Theme.adapt("#f9e2af")
 
                 Rectangle {
                     anchors.fill: parent
-                    color: '#7f000000'
+                    color: "#7f000000"
                 }
 
                 Rectangle {
@@ -169,7 +170,7 @@ Variants {
                                     width: col.width
                                     height: 36
                                     radius: 14
-                                    color: (win.flow && win.flow.selectedIdentity === modelData) ? "#1acba6f7" : "#88000000"
+                                    color: (win.flow && win.flow.selectedIdentity === modelData) ? Theme.adapt("#1acba6f7") : Theme.adapt("#88000000")
 
                                     Row {
                                         anchors {
@@ -225,7 +226,7 @@ Variants {
                             Rectangle {
                                 width: parent.width; height: 40
                                 radius: 14
-                                color: "#88000000"
+                                color: Theme.adapt("#88000000")
 
                                 Text {
                                     anchors {
@@ -275,7 +276,7 @@ Variants {
 
                             Rectangle {
                                 width: 86; height: 34; radius: 14
-                                color: cancelMa.containsMouse ? "#22ffffff" : "#00000000"
+                                color: cancelMa.containsMouse ? Theme.adapt("#22ffffff") : "#00000000"
 
                                 Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -309,7 +310,7 @@ Variants {
                                 Text {
                                     anchors.centerIn: parent
                                     text: (win.flow && win.flow.isResponseRequired) ? "Authenticate" : "OK"
-                                    color: "#1e1e2e"
+                                    color: Theme.adapt("#1e1e2e")
                                     font {
                                         pixelSize: 13
                                         weight: 600

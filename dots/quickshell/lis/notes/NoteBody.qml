@@ -1,4 +1,5 @@
 import QtQuick
+import qs.common
 
 // Plain-text editor with a rich-text copy on top that colours links; Ctrl+click opens one
 Item {
@@ -49,7 +50,7 @@ Item {
         let last = 0;
         for (const link of links) {
             html += root._escapeHtml(text.slice(last, link.start))
-                + '<span style="color: #89b4fa">' + root._escapeHtml(text.slice(link.start, link.end)) + "</span>";
+                + '<span style="color: ' + Theme.adapt("#89b4fa") + '">' + root._escapeHtml(text.slice(link.start, link.end)) + "</span>";
             last = link.end;
         }
         return '<div style="white-space: pre-wrap">' + html + root._escapeHtml(text.slice(last)) + "</div>";
@@ -97,9 +98,9 @@ Item {
             wrapMode: TextEdit.Wrap
             selectByMouse: true
             font.pixelSize: 14
-            color: root.hasLinks ? "transparent" : "#e6e6e6"
-            selectedTextColor: root.hasLinks ? "transparent" : "#ffffff"
-            selectionColor: "#333333"
+            color: root.hasLinks ? "transparent" : Theme.text
+            selectedTextColor: root.hasLinks ? "transparent" : Theme.adapt("#ffffff")
+            selectionColor: Theme.adapt("#333333")
 
             onCursorRectangleChanged: root._ensureVisible(cursorRectangle)
 
@@ -110,7 +111,7 @@ Item {
                 property bool blinkOn: true
 
                 width: 2
-                color: "#e6e6e6"
+                color: Theme.text
                 visible: editor.cursorVisible
                 opacity: cursor.blinkOn ? 1 : 0
 
@@ -159,14 +160,14 @@ Item {
             textFormat: TextEdit.RichText
             wrapMode: TextEdit.Wrap
             font: editor.font
-            color: "#e6e6e6"
+            color: Theme.text
             text: root.hasLinks ? root._html(editor.text, root.links) : ""
         }
 
         Text {
             visible: editor.text.length === 0
             text: root.placeholder
-            color: "#4a4a4a"
+            color: Theme.adapt("#4a4a4a")
             font: editor.font
         }
     }

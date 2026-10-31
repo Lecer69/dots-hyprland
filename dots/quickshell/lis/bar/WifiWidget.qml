@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Networking
+import qs.common
 
 Item {
     id: root
@@ -24,7 +25,7 @@ Item {
         return "wifi-5b"
     }
 
-    Image {
+    Icon {
         id: icon
         source: "../icons/" + root._iconName + ".svg"
         width: 18

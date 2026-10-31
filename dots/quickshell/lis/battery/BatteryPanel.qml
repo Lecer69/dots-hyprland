@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Rectangle {
     id: root
@@ -9,9 +10,9 @@ Rectangle {
     readonly property real contentHeight: header.height + 8 + content.implicitHeight + 24
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     // The active profile, so Up/Down move on from it
@@ -39,7 +40,7 @@ Rectangle {
             text: state.available ? "Battery" : "Power"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -48,7 +49,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: "✕"
             font.pixelSize: 12
-            color: closeHover.containsMouse ? "#dddddd" : "#666666"
+            color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: closeHover
@@ -91,12 +92,12 @@ Rectangle {
                     spacing: 2
                     Text {
                         text: "Status"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                     }
                     Text {
                         text: state.statusText
-                        color: "#e6e6e6"
+                        color: Theme.text
                         font.pixelSize: 13
                     }
                 }
@@ -105,12 +106,12 @@ Rectangle {
                     spacing: 2
                     Text {
                         text: "Health"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                     }
                     Text {
                         text: state.healthAvailable ? state.health + "% of design capacity" : "Unavailable"
-                        color: "#e6e6e6"
+                        color: Theme.text
                         font.pixelSize: 13
                     }
                 }
@@ -119,7 +120,7 @@ Rectangle {
 
         Text {
             text: "Power profile"
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 12
             font.weight: Font.Medium
             Layout.topMargin: state.available ? 8 : 0
@@ -158,7 +159,7 @@ Rectangle {
         Text {
             visible: !state.profileAvailable
             text: "power-profiles-daemon not detected"
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 11
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 8

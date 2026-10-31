@@ -1,12 +1,13 @@
 import QtQuick
 import qs.settings.data
+import qs.common
 
 Item {
     id: root
     property bool vertical: false
 
-    property color timeColor: '#cdcdcd'
-    property color dateColor: '#aeaeae'
+    property color timeColor: Theme.adapt("#cdcdcd")
+    property color dateColor: Theme.adapt("#aeaeae")
     property bool showDate: !SettingsData.s.bar.showClockOnly && !root.vertical
     // Left bar: read bottom-to-top; right bar: top-to-bottom
     readonly property int rotationAngle: root.vertical
@@ -88,7 +89,7 @@ Item {
                     width: 3
                     height: 3
                     radius: 1.5
-                    color: '#ffffff'
+                    color: Theme.adapt("#ffffff")
                     anchors.verticalCenter: parent.verticalCenter
                     visible: root.showDate
                 }

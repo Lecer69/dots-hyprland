@@ -176,9 +176,9 @@ PanelWindow {
         width: 280
         height: menuCol.implicitHeight + 12
         radius: 10
-        color: "#161616"
+        color: Theme.hover
         border.width: 1
-        border.color: "#242424"
+        border.color: Theme.adapt("#242424")
 
         // Entries load async; keep it placed as it grows
         onHeightChanged: if (root.isOpen) root.reposition()
@@ -222,7 +222,7 @@ PanelWindow {
                 Rectangle {
                     anchors.fill: parent
                     radius: 8
-                    color: backMouse.containsMouse ? "#262626" : "transparent"
+                    color: backMouse.containsMouse ? Theme.adapt("#262626") : "transparent"
 
                     RowLayout {
                         anchors.fill: parent
@@ -233,7 +233,7 @@ PanelWindow {
                         Text {
                             text: "‹"
                             font.pixelSize: 14
-                            color: "#808080"
+                            color: Theme.adapt("#808080")
                             Layout.alignment: Qt.AlignVCenter
                         }
 
@@ -243,7 +243,7 @@ PanelWindow {
                             text: root.currentLabel
                             font.pixelSize: 12
                             font.weight: Font.Medium
-                            color: "#e6e6e6"
+                            color: Theme.text
                             elide: Text.ElideRight
                         }
                     }
@@ -262,7 +262,7 @@ PanelWindow {
                 visible: root.inSubmenu
                 width: menuCol.width
                 height: 1
-                color: "#242424"
+                color: Theme.adapt("#242424")
             }
 
             Item {
@@ -277,7 +277,7 @@ PanelWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: 12
                     text: root.trayItem?.title ?? ""
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                     font.weight: Font.Medium
                     elide: Text.ElideRight
@@ -288,7 +288,7 @@ PanelWindow {
                 visible: !root.inSubmenu && (root.trayItem?.title ?? "") !== ""
                 width: menuCol.width
                 height: 1
-                color: "#242424"
+                color: Theme.adapt("#242424")
             }
 
             Repeater {
@@ -332,14 +332,14 @@ PanelWindow {
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
                         height: 1
-                        color: "#242424"
+                        color: Theme.adapt("#242424")
                     }
 
                     Rectangle {
                         visible: !modelData.isSeparator
                         anchors.fill: parent
                         radius: 8
-                        color: itemMouse.containsMouse || entry.activeFocus ? "#262626" : "transparent"
+                        color: itemMouse.containsMouse || entry.activeFocus ? Theme.adapt("#262626") : "transparent"
 
                         RowLayout {
                             anchors.fill: parent
@@ -367,7 +367,7 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: modelData.text
                                 font.pixelSize: 12
-                                color: modelData.enabled ? "#e6e6e6" : "#4a4a4a"
+                                color: modelData.enabled ? Theme.text : Theme.adapt("#4a4a4a")
                                 elide: Text.ElideRight
                             }
 
@@ -376,7 +376,7 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: "›"
                                 font.pixelSize: 14
-                                color: "#808080"
+                                color: Theme.adapt("#808080")
                             }
                         }
 
@@ -408,7 +408,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     text: "Loading…"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                 }
             }

@@ -78,7 +78,7 @@ PanelFrame {
             Text {
                 Layout.fillWidth: true
                 text: "Bluetooth"
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 13
             }
 
@@ -99,7 +99,7 @@ PanelFrame {
             Layout.topMargin: 4
             Layout.bottomMargin: 4
             horizontalAlignment: Text.AlignHCenter
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 13
             text: {
                 if (!root.adapter) return "No Bluetooth adapter found"
@@ -116,7 +116,7 @@ PanelFrame {
 
             Text {
                 text: "My devices"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }
@@ -142,7 +142,7 @@ PanelFrame {
 
             Text {
                 text: "Available devices"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }
@@ -154,7 +154,7 @@ PanelFrame {
                 Layout.bottomMargin: 8
                 horizontalAlignment: Text.AlignHCenter
                 text: root.adapter && root.adapter.discovering ? "Searching for devices…" : "No devices found"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 13
             }
 

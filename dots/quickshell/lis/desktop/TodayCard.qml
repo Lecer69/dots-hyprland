@@ -94,7 +94,7 @@ OverviewCard {
                 Text {
                     Layout.preferredWidth: 64
                     text: modelData.label
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
@@ -104,7 +104,7 @@ OverviewCard {
                     text: modelData.text
                     textFormat: Text.PlainText
                     elide: Text.ElideRight
-                    color: "#e6e6e6"
+                    color: Theme.text
                     font.pixelSize: 13
                 }
             }
@@ -113,7 +113,7 @@ OverviewCard {
         Text {
             visible: root.upcoming.length === 0
             text: "No notes this week"
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 12
         }
 

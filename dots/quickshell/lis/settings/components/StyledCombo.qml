@@ -3,6 +3,7 @@ import QtQuick.Controls
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
+import qs.common
 
 ComboBox {
     id: root
@@ -10,8 +11,8 @@ ComboBox {
 
     background: Rectangle {
         radius: 8
-        color: root.pressed ? "#28ffffff" : root.hovered ? "#1affffff" : "#14ffffff"
-        border.color: "#22ffffff"
+        color: root.pressed ? Theme.adapt("#28ffffff") : root.hovered ? Theme.adapt("#1affffff") : Theme.adapt("#14ffffff")
+        border.color: Theme.adapt("#22ffffff")
         border.width: 1
         Behavior on color { ColorAnimation { duration: 100 } }
     }
@@ -21,7 +22,7 @@ ComboBox {
         rightPadding: 28
         text: root.displayText
         font.pixelSize: 12
-        color: "#eeffffff"
+        color: Theme.adapt("#eeffffff")
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
@@ -31,7 +32,7 @@ ComboBox {
         y: root.height / 2 - height / 2
         text: "⌄"
         font.pixelSize: 10
-        color: "#88ffffff"
+        color: Theme.adapt("#88ffffff")
     }
 
     popup: Popup {
@@ -42,9 +43,9 @@ ComboBox {
         bottomPadding: 6
 
         background: Rectangle {
-            color: "#1e1e1e"
+            color: Theme.adapt("#1e1e1e")
             radius: 10
-            border.color: "#22ffffff"
+            border.color: Theme.adapt("#22ffffff")
             border.width: 1
             layer.enabled: true
         }
@@ -64,14 +65,14 @@ ComboBox {
         height: 34
 
         background: Rectangle {
-            color: highlighted ? "#22ffffff" : "transparent"
+            color: highlighted ? Theme.adapt("#22ffffff") : "transparent"
             radius: 8
         }
 
         contentItem: Text {
             text: modelData
             font.pixelSize: 12
-            color: "#eeffffff"
+            color: Theme.adapt("#eeffffff")
             leftPadding: 10
             verticalAlignment: Text.AlignVCenter
         }

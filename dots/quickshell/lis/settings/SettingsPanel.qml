@@ -4,6 +4,7 @@ import QtQuick.Controls
 import qs.settings.components
 import qs.settings.data
 import qs.settings.pages
+import qs.common
 
 Rectangle {
     id: root
@@ -12,9 +13,9 @@ Rectangle {
     signal closeRequested
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     // PgUp / PgDn scroll the page by most of a screen
@@ -72,7 +73,7 @@ Rectangle {
             Text {
                 text: "Settings"
                 font { pixelSize: 15; weight: Font.DemiBold }
-                color: "#ffffff"
+                color: Theme.adapt("#ffffff")
                 Layout.leftMargin: 10
                 Layout.topMargin: 8
                 Layout.bottomMargin: 16
@@ -116,7 +117,7 @@ Rectangle {
             Layout.preferredWidth: 1
             Layout.preferredHeight: parent.height * 0.75
             Layout.alignment: Qt.AlignVCenter
-            color: "#262626"
+            color: Theme.adapt("#262626")
         }
 
         StackLayout {
@@ -139,7 +140,7 @@ Rectangle {
         anchors { top: parent.top; right: parent.right; topMargin: 22; rightMargin: 28 }
         text: "✕"
         font.pixelSize: 12
-        color: closeArea.containsMouse ? "#dddddd" : "#666666"
+        color: closeArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
         MouseArea {
             id: closeArea

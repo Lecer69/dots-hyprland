@@ -21,7 +21,7 @@ Rectangle {
 
     height: Math.max(root.band, editor.y * 2 + editor.height)
     radius: 6
-    color: root.dragged || root.activeFocus ? "#1f1f1f" : "transparent"
+    color: root.dragged || root.activeFocus ? Theme.border : "transparent"
 
     readonly property string listRow: "subgoals " + root.goalId
     activeFocusOnTab: true
@@ -61,8 +61,8 @@ Rectangle {
                 Row {
                     spacing: 3
 
-                    Rectangle { width: 3; height: 3; radius: 1.5; color: "#444444" }
-                    Rectangle { width: 3; height: 3; radius: 1.5; color: "#444444" }
+                    Rectangle { width: 3; height: 3; radius: 1.5; color: Theme.adapt("#444444") }
+                    Rectangle { width: 3; height: 3; radius: 1.5; color: Theme.adapt("#444444") }
                 }
             }
         }
@@ -85,8 +85,8 @@ Rectangle {
         width: 14
         height: 14
         radius: width / 2
-        color: root.subgoal.done ? "#e6e6e6" : "transparent"
-        border.color: root.subgoal.done ? "#e6e6e6" : "#4a4a4a"
+        color: root.subgoal.done ? Theme.text : "transparent"
+        border.color: root.subgoal.done ? Theme.text : Theme.adapt("#4a4a4a")
         border.width: 1.5
 
         MouseArea {
@@ -108,9 +108,9 @@ Rectangle {
         selectByMouse: true
         font.pixelSize: 13
         font.strikeout: root.subgoal.done
-        color: root.subgoal.done ? "#6b6b6b" : "#e6e6e6"
-        selectionColor: "#333333"
-        selectedTextColor: "#ffffff"
+        color: root.subgoal.done ? Theme.textDim : Theme.text
+        selectionColor: Theme.adapt("#333333")
+        selectedTextColor: Theme.adapt("#ffffff")
 
         // Not bound: a save while typing would move the cursor
         Component.onCompleted: text = root.subgoal.title
@@ -136,7 +136,7 @@ Rectangle {
             anchors.centerIn: parent
             text: "✕"
             font.pixelSize: 10
-            color: removeArea.containsMouse ? "#dddddd" : "#666666"
+            color: removeArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
         }
 
         MouseArea {

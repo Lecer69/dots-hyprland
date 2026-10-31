@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.common
 
 // A short commit id that opens the commit on GitHub
 Text {
@@ -19,7 +20,7 @@ Text {
     font.family: "JetBrainsMono Nerd Font"
     font.pixelSize: 12
     font.underline: root.lit
-    color: root.lit ? "#e6e6e6" : "#808080"
+    color: root.lit ? Theme.text : Theme.adapt("#808080")
 
     activeFocusOnTab: root.sha !== ""
     Keys.onReturnPressed: root.open()

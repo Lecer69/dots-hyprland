@@ -26,13 +26,13 @@ Item {
         width: parent.width
         height: 3
         radius: 1.5
-        color: "#2a2a2a"
+        color: Theme.adapt("#2a2a2a")
 
         Rectangle {
             width: root.ratio * parent.width
             height: parent.height
             radius: parent.radius
-            color: root.activeFocus ? "#ffffff" : "#bbbbbb"
+            color: root.activeFocus ? Theme.adapt("#ffffff") : Theme.adapt("#bbbbbb")
         }
     }
 
@@ -42,7 +42,7 @@ Item {
         width: root.activeFocus ? 14 : 12
         height: width
         radius: width / 2
-        color: "#ffffff"
+        color: Theme.adapt("#ffffff")
     }
 
     MouseArea {

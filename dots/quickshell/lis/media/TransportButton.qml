@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import qs.common
 
 Item {
     id: root
@@ -13,12 +14,12 @@ Item {
     property bool active: false
     property bool enabled: true
     // Defaults are the plain grey look
-    property color accentColor: "#e6e6e6"
-    property color accentIconColor: "#0f0f0f"
-    property color activeColor: "#1f1f1f"
-    property color hoverColor: "#161616"
-    property color iconColor: "#bbbbbb"
-    property color activeIconColor: "#ffffff"
+    property color accentColor: Theme.text
+    property color accentIconColor: Theme.panel
+    property color activeColor: Theme.border
+    property color hoverColor: Theme.hover
+    property color iconColor: Theme.adapt("#bbbbbb")
+    property color activeIconColor: Theme.adapt("#ffffff")
     signal clicked()
 
     readonly property bool showPrimary: !(iconAlt !== "" && useAlt)

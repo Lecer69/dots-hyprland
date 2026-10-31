@@ -7,6 +7,7 @@ import qs.settings.components
 import qs.settings.data
 import qs.settings
 import qs.tools
+import qs.common
 
 // The list scrolls; the Clean button stays below it
 Item {
@@ -228,7 +229,7 @@ Item {
         Rectangle {
             anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
             height: 1
-            color: "#262626"
+            color: Theme.adapt("#262626")
         }
 
         Column {
@@ -247,10 +248,10 @@ Item {
                 width: cleanLabel.implicitWidth + 24
                 radius: 6
                 opacity: usable || root.cleaning ? 1 : 0.4
-                color: !usable ? "#1f1f1f"
-                     : cleanArea.pressed ? "#333333"
-                     : cleanArea.containsMouse ? "#2a2a2a"
-                     : "#1f1f1f"
+                color: !usable ? Theme.border
+                     : cleanArea.pressed ? Theme.adapt("#333333")
+                     : cleanArea.containsMouse ? Theme.adapt("#2a2a2a")
+                     : Theme.border
 
                 Text {
                     id: cleanLabel
@@ -259,7 +260,7 @@ Item {
                         : root.confirming ? "Click again to delete " + Format.bytes(root.cleanableBytes)
                         : "Clean selected · " + Format.bytes(root.cleanableBytes)
                     font { pixelSize: 12; weight: Font.Medium }
-                    color: "#e6e6e6"
+                    color: Theme.text
                 }
 
                 MouseArea {
@@ -286,7 +287,7 @@ Item {
                 visible: root.status !== ""
                 text: root.status
                 font.pixelSize: 12
-                color: "#6b6b6b"
+                color: Theme.textDim
             }
         }
     }

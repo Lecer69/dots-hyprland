@@ -1,5 +1,6 @@
 import QtQuick
 import qs.todo
+import qs.common
 
 // To-do tasks; clicking one toggles it done
 OverviewCard {
@@ -44,7 +45,7 @@ OverviewCard {
                     width: rows.width
                     height: 34
                     radius: 8
-                    color: rowArea.containsMouse ? "#161616" : "transparent"
+                    color: rowArea.containsMouse ? Theme.hover : "transparent"
 
                     Rectangle {
                         id: check
@@ -55,8 +56,8 @@ OverviewCard {
                         width: 16
                         height: 16
                         radius: width / 2
-                        color: row.modelData.done ? "#e6e6e6" : "transparent"
-                        border.color: row.modelData.done ? "#e6e6e6" : "#4a4a4a"
+                        color: row.modelData.done ? Theme.text : "transparent"
+                        border.color: row.modelData.done ? Theme.text : Theme.adapt("#4a4a4a")
                         border.width: 1.5
                     }
 
@@ -69,7 +70,7 @@ OverviewCard {
                         text: row.modelData.text
                         textFormat: Text.PlainText
                         elide: Text.ElideRight
-                        color: row.modelData.done ? "#6b6b6b" : "#e6e6e6"
+                        color: row.modelData.done ? Theme.textDim : Theme.text
                         font.pixelSize: 13
                         font.strikeout: row.modelData.done
                     }
@@ -83,7 +84,7 @@ OverviewCard {
                         width: row.modelData.important ? 8 : 0
                         height: 8
                         radius: 4
-                        color: "#e6e6e6"
+                        color: Theme.text
                     }
 
                     MouseArea {
@@ -103,7 +104,7 @@ OverviewCard {
         anchors.centerIn: parent
         visible: TodoService.tasks.length === 0
         text: "No tasks"
-        color: "#6b6b6b"
+        color: Theme.textDim
         font.pixelSize: 13
     }
 }

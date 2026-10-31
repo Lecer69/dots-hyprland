@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.common
 
 // Cover colours; ColorQuantizer only reads local files, so the shown cover is grabbed to a cache file
 Item {
@@ -7,7 +8,7 @@ Item {
 
     property Image source: null
     property bool active: false
-    property color fallback: "#89b4fa"
+    property color fallback: Theme.adapt("#89b4fa")
     property int _shot: 0
 
     // Most vivid first; greys left out

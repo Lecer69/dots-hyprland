@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import qs.common
 
 Item {
     id: root
@@ -17,9 +18,9 @@ Item {
 
     // Only a critical level gets a colour
     function arcColor() {
-        if (root.charging) return "#e6e6e6"
-        if (root.percent <= 10) return "#e06c6c"
-        return "#bbbbbb"
+        if (root.charging) return Theme.text
+        if (root.percent <= 10) return Theme.adapt("#e06c6c")
+        return Theme.adapt("#bbbbbb")
     }
 
     property real animatedSweep: percent * 3.6
@@ -44,7 +45,7 @@ Item {
         vendorExtensionsEnabled: true
 
         ShapePath {
-            strokeColor: "#2a2a2a"
+            strokeColor: Theme.adapt("#2a2a2a")
             strokeWidth: 4
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
@@ -83,7 +84,7 @@ Item {
             text: root.available ? root.percent + "%" : "--"
             font.pixelSize: 20
             font.weight: Font.DemiBold
-            color: "#e6e6e6"
+            color: Theme.text
         }
 
         Rectangle {

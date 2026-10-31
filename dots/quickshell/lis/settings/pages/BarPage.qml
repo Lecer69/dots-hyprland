@@ -5,6 +5,7 @@ import Quickshell
 import qs.settings.components
 import qs.settings.data
 import qs.settings
+import qs.common
 
 ScrollView {
     id: root
@@ -146,11 +147,14 @@ ScrollView {
 
         SettingRow {
             label: "Pill Color"
-            description: "Background of the bar's pills"
+            description: "Background of the bar's pills in " + (Theme.light ? "light" : "dark") + " mode"
             ColorPicker {
-                value: SettingsData.s.bar.pillColor
-                defaultValue: "#c30f0f0f"
-                onSelected: v => SettingsData.s.bar.pillColor = v
+                value: Theme.light ? SettingsData.s.bar.pillColorLight : SettingsData.s.bar.pillColor
+                defaultValue: Theme.light ? "#c3f5f5f5" : "#c30f0f0f"
+                onSelected: v => {
+                    if (Theme.light) SettingsData.s.bar.pillColorLight = v
+                    else SettingsData.s.bar.pillColor = v
+                }
             }
         }
         SettingRow {
@@ -164,11 +168,14 @@ ScrollView {
         }
         SettingRow {
             label: "Border Color"
-            description: "Color of the pills' border"
+            description: "Color of the pills' border in " + (Theme.light ? "light" : "dark") + " mode"
             ColorPicker {
-                value: SettingsData.s.bar.pillBorderColor
-                defaultValue: "#26ffffff"
-                onSelected: v => SettingsData.s.bar.pillBorderColor = v
+                value: Theme.light ? SettingsData.s.bar.pillBorderColorLight : SettingsData.s.bar.pillBorderColor
+                defaultValue: Theme.light ? "#26000000" : "#26ffffff"
+                onSelected: v => {
+                    if (Theme.light) SettingsData.s.bar.pillBorderColorLight = v
+                    else SettingsData.s.bar.pillBorderColor = v
+                }
             }
         }
         SettingRow {

@@ -5,6 +5,7 @@ import Quickshell
 import qs.settings.components
 import qs.settings.data
 import qs.settings
+import qs.common
 
 ScrollView {
     id: root
@@ -17,6 +18,15 @@ ScrollView {
 
         Item { height: 16 }
         SectionHeader { title: "Appearance" }
+
+        SettingRow {
+            label: "Light Mode"
+            description: "Dark text and icons on light backgrounds"
+            ToggleSwitch {
+                checked: SettingsData.s.general.lightMode
+                onToggled: v => SettingsData.s.general.lightMode = v
+            }
+        }
 
         SettingRow {
             label: "Accent Color"
@@ -42,12 +52,12 @@ ScrollView {
                 Text {
                     text: "Color Scheme"
                     font.pixelSize: 13
-                    color: "#e6e6e6"
+                    color: Theme.text
                 }
                 Text {
                     text: "Material You scheme variant used when applying colors"
                     font.pixelSize: 12
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                 }
             }
 
@@ -69,14 +79,14 @@ ScrollView {
                 height: 28
                 width: applyLabel.implicitWidth + 24
                 radius: 6
-                color: applyArea.pressed ? "#333333" : (applyArea.containsMouse ? "#2a2a2a" : "#1f1f1f")
+                color: applyArea.pressed ? Theme.adapt("#333333") : (applyArea.containsMouse ? Theme.adapt("#2a2a2a") : Theme.border)
 
                 Text {
                     id: applyLabel
                     anchors.centerIn: parent
                     text: "Apply"
                     font { pixelSize: 12; weight: Font.Medium }
-                    color: "#e6e6e6"
+                    color: Theme.text
                 }
 
                 MouseArea {

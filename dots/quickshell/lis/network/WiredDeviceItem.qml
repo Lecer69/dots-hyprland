@@ -27,7 +27,7 @@ Item {
         anchors.rightMargin: 10
         spacing: 12
 
-        Image {
+        Icon {
             Layout.preferredWidth: 16
             Layout.preferredHeight: 16
             source: "../icons/ethernet.svg"
@@ -42,14 +42,14 @@ Item {
 
             Text {
                 text: "Ethernet"
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 13
             }
 
             Text {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 text: {
                     const d = root.device

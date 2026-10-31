@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
 import qs.settings.data
+import qs.common
 
 Item {
     id: root
@@ -106,7 +107,7 @@ Item {
                 radius: width / 2
                 color: "transparent"
                 border.width: 2
-                border.color: "#3c3c3c"
+                border.color: Theme.adapt("#3c3c3c")
             }
 
             Item {
@@ -142,7 +143,7 @@ Item {
             }
             font.pixelSize: 11
             font.weight: Font.Medium
-            color: "#cdd6f4"
+            color: Theme.adapt("#cdd6f4")
             verticalAlignment: Text.AlignVCenter
         }
     }

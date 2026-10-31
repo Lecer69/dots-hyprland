@@ -2,14 +2,15 @@ import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import qs.settings.data
+import qs.common
 
 Rectangle {
     id: root
     width: 400
     height: content.implicitHeight + 24
     radius: 12
-    color: "#0f0f0f"
-    border.color: "#1f1f1f"
+    color: Theme.panel
+    border.color: Theme.border
     border.width: 1
 
     signal dismissed
@@ -143,7 +144,7 @@ Rectangle {
                         id: appLabel
                         text: root.notification?.appName ?? ""
                         visible: text !== ""
-                        color: "#808080"
+                        color: Theme.adapt("#808080")
                         font.pixelSize: 12
                         Layout.maximumWidth: 120
                         elide: Text.ElideRight
@@ -153,7 +154,7 @@ Rectangle {
                     Text {
                         visible: appLabel.visible && summaryLabel.visible
                         text: "·"
-                        color: "#4a4a4a"
+                        color: Theme.adapt("#4a4a4a")
                         font.pixelSize: 12
                     }
 
@@ -161,7 +162,7 @@ Rectangle {
                         id: summaryLabel
                         text: root.notification?.summary ?? ""
                         visible: text !== ""
-                        color: "#e6e6e6"
+                        color: Theme.text
                         font.pixelSize: 13
                         font.weight: Font.Medium
                         Layout.fillWidth: true
@@ -179,7 +180,7 @@ Rectangle {
 
                     text: cleaned
                     visible: cleaned !== ""
-                    color: "#999999"
+                    color: Theme.adapt("#999999")
                     font.pixelSize: 12
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
@@ -197,7 +198,7 @@ Rectangle {
                 Text {
                     anchors.centerIn: parent
                     text: "✕"
-                    color: closeHover.containsMouse ? "#dddddd" : "#666666"
+                    color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                     font.pixelSize: 12
                 }
 
@@ -225,14 +226,14 @@ Rectangle {
                     Layout.horizontalStretchFactor: 1
                     implicitHeight: 28
                     radius: 6
-                    color: actionHover.pressed ? "#333333" : actionHover.containsMouse ? "#2a2a2a" : "#1f1f1f"
+                    color: actionHover.pressed ? Theme.adapt("#333333") : actionHover.containsMouse ? Theme.adapt("#2a2a2a") : Theme.border
 
                     Text {
                         anchors.centerIn: parent
                         width: parent.width - 16
                         horizontalAlignment: Text.AlignHCenter
                         text: modelData.text
-                        color: "#e6e6e6"
+                        color: Theme.text
                         font.pixelSize: 12
                         font.weight: Font.Medium
                         elide: Text.ElideRight

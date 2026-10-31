@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.settings.data
+import qs.common
 
 PanelWindow {
     id: root
@@ -34,14 +35,14 @@ PanelWindow {
         width: 95
         height: 32
         radius: 16
-        color: "#0f0f0f"
-        border.color: "#1f1f1f"
+        color: Theme.panel
+        border.color: Theme.border
         border.width: 1
         opacity: root.showing ? 1.0 : 0.0
 
         Behavior on opacity { NumberAnimation { duration: 150 } }
 
-        Image {
+        Icon {
             anchors.left: parent.left
             anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
@@ -62,7 +63,7 @@ PanelWindow {
             text: root.label
             font.pixelSize: 13
             font.weight: Font.Medium
-            color: "#e6e6e6"
+            color: Theme.text
         }
     }
 }

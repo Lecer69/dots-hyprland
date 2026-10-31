@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.tools
+import qs.common
 
 Rectangle {
     id: root
@@ -141,9 +142,9 @@ Rectangle {
     }
 
     radius: 12
-    color: "#0f0f0f"
+    color: Theme.panel
     clip: true
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     InternetUsageState {
@@ -183,7 +184,7 @@ Rectangle {
             text: "Internet Usage"
             font.pixelSize: 15
             font.weight: Font.DemiBold
-            color: "#ffffff"
+            color: Theme.adapt("#ffffff")
         }
 
         Text {
@@ -192,7 +193,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: "✕"
             font.pixelSize: 12
-            color: closeHover.containsMouse ? "#dddddd" : "#666666"
+            color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: closeHover
@@ -233,7 +234,7 @@ Rectangle {
                     width: tabLabel.implicitWidth + 20
                     height: 28
                     radius: 6
-                    color: root.viewMode === index ? (viewTabs.activeFocus ? "#333333" : "#262626") : "transparent"
+                    color: root.viewMode === index ? (viewTabs.activeFocus ? Theme.adapt("#333333") : Theme.adapt("#262626")) : "transparent"
 
                     Text {
                         id: tabLabel
@@ -241,8 +242,8 @@ Rectangle {
                         anchors.centerIn: parent
                         text: modelData
                         font.pixelSize: 12
-                        color: root.viewMode === index ? "#ffffff"
-                             : tabMa.containsMouse ? "#cccccc" : "#808080"
+                        color: root.viewMode === index ? Theme.adapt("#ffffff")
+                             : tabMa.containsMouse ? Theme.adapt("#cccccc") : Theme.adapt("#808080")
                     }
 
                     MouseArea {
@@ -283,8 +284,8 @@ Rectangle {
                         radius: 6
                         property bool selected: root.selectedDayKey === modelData.key
                         property bool enabled_: modelData.hasData === true
-                        color: selected ? (dayPicker.activeFocus ? "#333333" : "#262626")
-                            : (dayMa.containsMouse && dayCell.enabled_ ? "#161616" : "transparent")
+                        color: selected ? (dayPicker.activeFocus ? Theme.adapt("#333333") : Theme.adapt("#262626"))
+                            : (dayMa.containsMouse && dayCell.enabled_ ? Theme.hover : "transparent")
                         opacity: dayCell.enabled_ ? 1 : 0.35
 
                         Column {
@@ -295,7 +296,7 @@ Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: modelData.label
                                 font.pixelSize: 10
-                                color: dayCell.selected ? "#ffffff" : (modelData.isToday ? "#cccccc" : "#6b6b6b")
+                                color: dayCell.selected ? Theme.adapt("#ffffff") : (modelData.isToday ? Theme.adapt("#cccccc") : Theme.textDim)
                             }
 
                             Text {
@@ -303,7 +304,7 @@ Rectangle {
                                 text: modelData.dayNum
                                 font.pixelSize: 12
                                 font.weight: dayCell.selected || modelData.isToday ? Font.Medium : Font.Normal
-                                color: dayCell.selected ? "#ffffff" : (modelData.isToday ? "#e6e6e6" : "#808080")
+                                color: dayCell.selected ? Theme.adapt("#ffffff") : (modelData.isToday ? Theme.text : Theme.adapt("#808080"))
                             }
                         }
 
@@ -339,7 +340,7 @@ Rectangle {
                     }
                     return "";
                 }
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 font.weight: Font.Medium
                 Layout.fillWidth: true
@@ -348,7 +349,7 @@ Rectangle {
             Text {
                 // formatData needs the state loaded
                 text: state._loaded ? (state.formatData(root.totalMB) + " total") : ""
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
             }
         }
@@ -362,7 +363,7 @@ Rectangle {
                 visible: root.currentList.length === 0
                 text: state._loaded ? "No usage recorded yet" : "Loading…"
                 font.pixelSize: 13
-                color: "#6b6b6b"
+                color: Theme.textDim
             }
 
             ScrollView {
@@ -432,7 +433,7 @@ Rectangle {
                     height: 6
                     radius: 3
                     visible: !footerIcon.visible && state.activeApp !== ""
-                    color: "#808080"
+                    color: Theme.adapt("#808080")
 
                     SequentialAnimation on opacity {
                         running: state.activeApp !== "" && root.visible
@@ -454,13 +455,13 @@ Rectangle {
 
                 Text {
                     text: "Latest: "
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                 }
 
                 Text {
                     text: state.activeApp
-                    color: "#e6e6e6"
+                    color: Theme.text
                     font.pixelSize: 12
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -468,7 +469,7 @@ Rectangle {
 
                 Text {
                     text: (state._loaded && state.activeApp !== "") ? state.formatData(state.currentSessionMB) : ""
-                    color: "#999999"
+                    color: Theme.adapt("#999999")
                     font.pixelSize: 12
                 }
             }

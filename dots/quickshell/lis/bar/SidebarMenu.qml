@@ -284,8 +284,8 @@ Scope {
 
             anchors.fill: parent
             radius: 12
-            color: "#0f0f0f"
-            border.color: "#1f1f1f"
+            color: Theme.panel
+            border.color: Theme.border
             border.width: 1
 
             // Keys only attach to items
@@ -308,7 +308,7 @@ Scope {
                     text: "Menu"
                     font.pixelSize: 15
                     font.weight: Font.DemiBold
-                    color: "#ffffff"
+                    color: Theme.adapt("#ffffff")
                 }
 
                 Text {
@@ -317,7 +317,7 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "✕"
                     font.pixelSize: 12
-                    color: closeHover.containsMouse ? "#dddddd" : "#666666"
+                    color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
                     MouseArea {
                         id: closeHover
@@ -361,7 +361,7 @@ Scope {
                             text: group.modelData
                             font.pixelSize: 12
                             font.weight: Font.Medium
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                         }
 
                         Repeater {
@@ -395,7 +395,7 @@ Scope {
         Layout.fillWidth: true
         implicitHeight: 36
         radius: 8
-        color: area.pressed ? "#1f1f1f" : entry.highlighted ? "#161616" : "transparent"
+        color: area.pressed ? Theme.border : entry.highlighted ? Theme.hover : "transparent"
 
         RowLayout {
             anchors {
@@ -405,7 +405,7 @@ Scope {
             }
             spacing: 12
 
-            Image {
+            Icon {
                 Layout.preferredWidth: 16
                 Layout.preferredHeight: 16
                 source: entry.modelData.icon
@@ -419,7 +419,7 @@ Scope {
                 Layout.fillWidth: true
                 text: entry.modelData.label
                 font.pixelSize: 13
-                color: entry.highlighted ? "#ffffff" : "#e6e6e6"
+                color: entry.highlighted ? Theme.adapt("#ffffff") : Theme.text
                 elide: Text.ElideRight
             }
         }

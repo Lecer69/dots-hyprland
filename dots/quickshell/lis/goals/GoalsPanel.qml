@@ -48,7 +48,7 @@ PanelFrame {
             Layout.fillWidth: true
             implicitHeight: 36
             radius: 8
-            color: "#161616"
+            color: Theme.hover
 
             TextInput {
                 id: input
@@ -57,9 +57,9 @@ PanelFrame {
                 anchors.leftMargin: 12
                 anchors.rightMargin: 36
                 verticalAlignment: TextInput.AlignVCenter
-                color: "#e6e6e6"
-                selectionColor: "#333333"
-                selectedTextColor: "#ffffff"
+                color: Theme.text
+                selectionColor: Theme.adapt("#333333")
+                selectedTextColor: Theme.adapt("#ffffff")
                 font.pixelSize: 13
                 clip: true
                 selectByMouse: true
@@ -73,7 +73,7 @@ PanelFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: input.text.length === 0
                     text: "Add a goal…"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 13
                 }
             }
@@ -84,7 +84,7 @@ PanelFrame {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "+"
                 font.pixelSize: 16
-                color: addArea.containsMouse ? "#ffffff" : "#808080"
+                color: addArea.containsMouse ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
 
                 MouseArea {
                     id: addArea
@@ -175,7 +175,7 @@ PanelFrame {
                 anchors.centerIn: parent
                 visible: GoalsService.goals.length === 0
                 text: "No goals yet"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 13
             }
         }

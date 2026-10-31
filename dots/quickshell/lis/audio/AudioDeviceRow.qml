@@ -13,8 +13,8 @@ Rectangle {
 
     implicitHeight: 34
     radius: 8
-    color: root.selected ? (root.activeFocus ? "#262626" : "#1f1f1f")
-        : area.containsMouse || root.activeFocus ? "#161616" : "transparent"
+    color: root.selected ? (root.activeFocus ? Theme.adapt("#262626") : Theme.border)
+        : area.containsMouse || root.activeFocus ? Theme.hover : "transparent"
 
     readonly property bool listRow: true
     activeFocusOnTab: true
@@ -34,14 +34,14 @@ Rectangle {
             width: 8
             height: 8
             radius: 4
-            color: root.selected ? "#e6e6e6" : "#3a3a3a"
+            color: root.selected ? Theme.text : Theme.adapt("#3a3a3a")
         }
 
         Text {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: root.node.description || root.node.nickname || root.node.name
-            color: root.selected ? "#ffffff" : "#e6e6e6"
+            color: root.selected ? Theme.adapt("#ffffff") : Theme.text
             font.pixelSize: 13
         }
     }

@@ -69,7 +69,7 @@ PanelFrame {
                     implicitWidth: tabLabel.implicitWidth + 24
                     implicitHeight: 30
                     radius: 6
-                    color: tabItem.active ? (tabs.activeFocus ? "#2a2a2a" : "#1f1f1f") : tabArea.containsMouse ? "#161616" : "transparent"
+                    color: tabItem.active ? (tabs.activeFocus ? Theme.adapt("#2a2a2a") : Theme.border) : tabArea.containsMouse ? Theme.hover : "transparent"
 
                     Row {
                         id: tabLabel
@@ -81,7 +81,7 @@ PanelFrame {
                             id: tabName
 
                             text: tabItem.modelData
-                            color: tabItem.active ? "#ffffff" : tabArea.containsMouse ? "#cccccc" : "#808080"
+                            color: tabItem.active ? Theme.adapt("#ffffff") : tabArea.containsMouse ? Theme.adapt("#cccccc") : Theme.adapt("#808080")
                             font.pixelSize: 13
                         }
 
@@ -89,7 +89,7 @@ PanelFrame {
                             anchors.baseline: tabName.baseline
                             visible: tabItem.count > 0
                             text: tabItem.count
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 12
                         }
                     }
@@ -136,7 +136,7 @@ PanelFrame {
                     Text {
                         visible: root.sinks.length === 0
                         text: "No output devices"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                     }
 
@@ -145,7 +145,7 @@ PanelFrame {
                         Layout.bottomMargin: 8
                         visible: root.sinks.length > 1
                         text: "Device"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                         font.weight: Font.Medium
                     }
@@ -197,14 +197,14 @@ PanelFrame {
                         Rectangle {
                             anchors.fill: parent
                             radius: 1.5
-                            color: "#1f1f1f"
+                            color: Theme.border
                         }
 
                         Rectangle {
                             height: parent.height
                             radius: 1.5
                             width: parent.width * Math.min(1, micLevel.peak)
-                            color: "#808080"
+                            color: Theme.adapt("#808080")
 
                             Behavior on width { NumberAnimation { duration: 80 } }
                         }
@@ -213,7 +213,7 @@ PanelFrame {
                     Text {
                         visible: root.sources.length === 0
                         text: "No input devices"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                     }
 
@@ -222,7 +222,7 @@ PanelFrame {
                         Layout.bottomMargin: 8
                         visible: root.sources.length > 1
                         text: "Device"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                         font.weight: Font.Medium
                     }
@@ -258,7 +258,7 @@ PanelFrame {
                     Text {
                         visible: root.streams.length === 0 && root.recordings.length === 0
                         text: "No apps are playing or recording"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                     }
 
@@ -266,7 +266,7 @@ PanelFrame {
                         Layout.bottomMargin: 10
                         visible: root.streams.length > 0
                         text: "Playing"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                         font.weight: Font.Medium
                     }
@@ -293,7 +293,7 @@ PanelFrame {
                         Layout.bottomMargin: 10
                         visible: root.recordings.length > 0
                         text: "Recording"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                         font.weight: Font.Medium
                     }

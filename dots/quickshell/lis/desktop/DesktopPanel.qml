@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.tools
+import qs.common
 
 // The desktop overview's content
 Item {
@@ -35,7 +36,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: Theme.adapt("#000000")
         opacity: 0.65
     }
 
@@ -59,7 +60,7 @@ Item {
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: Qt.formatTime(clock.date, "hh:mm")
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 108
                 font.weight: Font.Light
                 font.letterSpacing: -2
@@ -68,7 +69,7 @@ Item {
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: Qt.formatDate(clock.date, "dddd, MMMM d").toUpperCase()
-                color: dateArea.containsMouse ? "#e6e6e6" : "#b3b3b3"
+                color: dateArea.containsMouse ? Theme.text : Theme.adapt("#b3b3b3")
                 font.pixelSize: 16
                 font.letterSpacing: 2
 

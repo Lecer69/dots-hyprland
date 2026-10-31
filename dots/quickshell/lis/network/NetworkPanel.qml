@@ -101,7 +101,7 @@ PanelFrame {
 
             Text {
                 text: "Wired"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 font.weight: Font.Medium
             }
@@ -130,7 +130,7 @@ PanelFrame {
                 Text {
                     Layout.fillWidth: true
                     text: "Wi-Fi"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
@@ -153,7 +153,7 @@ PanelFrame {
                 Layout.topMargin: 12
                 Layout.bottomMargin: 12
                 horizontalAlignment: Text.AlignHCenter
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 13
                 text: {
                     if (!Networking.wifiHardwareEnabled) return "Wi-Fi is turned off by a hardware switch"
@@ -171,7 +171,7 @@ PanelFrame {
                 Layout.bottomMargin: 4
                 implicitHeight: prompt.implicitHeight + 24
                 radius: 8
-                color: "#161616"
+                color: Theme.hover
 
                 ColumnLayout {
                     id: prompt
@@ -186,7 +186,7 @@ PanelFrame {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                         text: "Password for " + (root.passwordTarget ? root.passwordTarget.name : "")
-                        color: "#e6e6e6"
+                        color: Theme.text
                         font.pixelSize: 13
                     }
 
@@ -198,7 +198,7 @@ PanelFrame {
                             Layout.fillWidth: true
                             implicitHeight: 28
                             radius: 6
-                            color: "#1f1f1f"
+                            color: Theme.border
 
                             TextInput {
                                 id: passwordInput
@@ -209,7 +209,7 @@ PanelFrame {
                                 anchors.rightMargin: 10
                                 verticalAlignment: TextInput.AlignVCenter
                                 echoMode: TextInput.Password
-                                color: "#e6e6e6"
+                                color: Theme.text
                                 font.pixelSize: 13
                                 clip: true
                                 selectByMouse: true
@@ -221,7 +221,7 @@ PanelFrame {
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: passwordInput.text.length === 0
                                     text: "Password"
-                                    color: "#6b6b6b"
+                                    color: Theme.textDim
                                     font.pixelSize: 13
                                 }
                             }
@@ -279,7 +279,7 @@ PanelFrame {
             Layout.topMargin: 12
             horizontalAlignment: Text.AlignHCenter
             text: "No network devices"
-            color: "#6b6b6b"
+            color: Theme.textDim
             font.pixelSize: 13
         }
     }

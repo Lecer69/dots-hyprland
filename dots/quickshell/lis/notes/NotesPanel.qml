@@ -191,7 +191,7 @@ PanelFrame {
                     Layout.alignment: Qt.AlignTop
                     implicitHeight: 32
                     radius: 8
-                    color: "#161616"
+                    color: Theme.hover
 
                     TextInput {
                         id: searchInput
@@ -200,9 +200,9 @@ PanelFrame {
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
                         verticalAlignment: TextInput.AlignVCenter
-                        color: "#e6e6e6"
-                        selectionColor: "#333333"
-                        selectedTextColor: "#ffffff"
+                        color: Theme.text
+                        selectionColor: Theme.adapt("#333333")
+                        selectedTextColor: Theme.adapt("#ffffff")
                         font.pixelSize: 13
                         clip: true
                         selectByMouse: true
@@ -218,7 +218,7 @@ PanelFrame {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: searchInput.text.length === 0
                             text: "Search notes…"
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 13
                         }
                     }
@@ -235,7 +235,7 @@ PanelFrame {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 1
-                color: "#262626"
+                color: Theme.adapt("#262626")
             }
 
             ListView {
@@ -272,7 +272,7 @@ PanelFrame {
                     width: ListView.view.width
                     height: 58
                     radius: 8
-                    color: row.isSelected ? (list.activeFocus ? "#2a2a2a" : "#1f1f1f") : rowArea.containsMouse ? "#161616" : "transparent"
+                    color: row.isSelected ? (list.activeFocus ? Theme.adapt("#2a2a2a") : Theme.border) : rowArea.containsMouse ? Theme.hover : "transparent"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -293,14 +293,14 @@ PanelFrame {
                                 text: row.modelData.title.trim() || "Untitled"
                                 textFormat: Text.PlainText
                                 elide: Text.ElideRight
-                                color: row.modelData.title.trim() ? "#e6e6e6" : "#808080"
+                                color: row.modelData.title.trim() ? Theme.text : Theme.adapt("#808080")
                                 font.pixelSize: 13
                                 font.weight: Font.Medium
                             }
 
                             Text {
                                 text: root.listDate(row.modelData.updated)
-                                color: "#6b6b6b"
+                                color: Theme.textDim
                                 font.pixelSize: 12
                             }
                         }
@@ -311,7 +311,7 @@ PanelFrame {
                             textFormat: Text.PlainText
                             elide: Text.ElideRight
                             maximumLineCount: 1
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 12
                         }
 
@@ -334,7 +334,7 @@ PanelFrame {
                     anchors.centerIn: parent
                     visible: list.count === 0
                     text: root.query.trim() !== "" ? "No matching notes" : "No notes yet"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 13
                 }
             }
@@ -344,7 +344,7 @@ PanelFrame {
             Layout.preferredWidth: 1
             Layout.fillHeight: true
             Layout.topMargin: root.topRowHeight + 25
-            color: "#262626"
+            color: Theme.adapt("#262626")
         }
 
         ColumnLayout {
@@ -362,9 +362,9 @@ PanelFrame {
                     id: titleInput
 
                     Layout.fillWidth: true
-                    color: "#ffffff"
-                    selectionColor: "#333333"
-                    selectedTextColor: "#ffffff"
+                    color: Theme.adapt("#ffffff")
+                    selectionColor: Theme.adapt("#333333")
+                    selectedTextColor: Theme.adapt("#ffffff")
                     font.pixelSize: 20
                     font.weight: Font.DemiBold
                     clip: true
@@ -379,7 +379,7 @@ PanelFrame {
                     Text {
                         visible: titleInput.text.length === 0
                         text: "Title"
-                        color: "#4a4a4a"
+                        color: Theme.adapt("#4a4a4a")
                         font: titleInput.font
                     }
                 }
@@ -392,14 +392,14 @@ PanelFrame {
                         Layout.fillWidth: true
                         text: root.selected ? root.editedText(root.selected.updated) + "  ·  " + root.words + (root.words === 1 ? " word" : " words") : ""
                         elide: Text.ElideRight
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                     }
 
                     Text {
                         visible: noteBody.hoveredLink !== ""
                         text: "Ctrl+click to open"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                     }
 
@@ -408,8 +408,8 @@ PanelFrame {
                         readonly property bool lit: privateArea.containsMouse || activeFocus
 
                         text: isPrivate ? "Private" : "Make private"
-                        color: isPrivate ? (lit ? "#ffffff" : "#e6e6e6")
-                            : lit ? "#dddddd" : "#666666"
+                        color: isPrivate ? (lit ? Theme.adapt("#ffffff") : Theme.text)
+                            : lit ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                         font.pixelSize: 12
 
                         activeFocusOnTab: true
@@ -430,7 +430,7 @@ PanelFrame {
 
                     Text {
                         text: root.deleteArmed ? "Click again to delete" : "Delete"
-                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse || activeFocus ? "#dddddd" : "#666666"
+                        color: root.deleteArmed ? Theme.adapt("#e06c6c") : deleteArea.containsMouse || activeFocus ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                         font.pixelSize: 12
 
                         // Like the click, the first press only arms it
@@ -455,7 +455,7 @@ PanelFrame {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 1
-                color: "#262626"
+                color: Theme.adapt("#262626")
             }
 
             NoteBody {
@@ -481,7 +481,7 @@ PanelFrame {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "This note is private"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                     }
 
@@ -507,7 +507,7 @@ PanelFrame {
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: notesState.notes.length === 0 ? "Keep your first note here" : "No note open"
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 13
             }
 

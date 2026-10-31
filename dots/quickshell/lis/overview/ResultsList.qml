@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import qs.common
 
 Item {
     id: root
@@ -107,7 +108,7 @@ Item {
 
         highlight: Rectangle {
             radius: 8
-            color: root.chosen ? "#333333" : "#1f1f1f"
+            color: root.chosen ? Theme.adapt("#333333") : Theme.border
             // Fades in with the row under it
             opacity: listView.currentItem ? listView.currentItem.opacity * listView.currentItem.appear : 0
             Behavior on color { ColorAnimation { duration: 100 } }

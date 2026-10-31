@@ -12,14 +12,14 @@ RowLayout {
         Layout.fillWidth: true
         text: info.label
         elide: Text.ElideRight
-        color: "#6b6b6b"
+        color: Theme.textDim
         font.pixelSize: 12
         font.weight: Font.Medium
     }
 
     Text {
         text: info.value
-        color: "#999999"
+        color: Theme.adapt("#999999")
         font.pixelSize: 12
     }
 }

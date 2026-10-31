@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
+import qs.common
 
 // Lit while its control has keyboard focus
 FocusScope {
@@ -18,7 +19,7 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         radius: 8
-        color: root.activeFocus ? "#161616" : "transparent"
+        color: root.activeFocus ? Theme.hover : "transparent"
     }
 
     RowLayout {
@@ -33,7 +34,7 @@ FocusScope {
             Text {
                 text: root.label
                 font.pixelSize: 13
-                color: "#e6e6e6"
+                color: Theme.text
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -41,7 +42,7 @@ FocusScope {
                 visible: root.description !== ""
                 text: root.description
                 font.pixelSize: 12
-                color: "#6b6b6b"
+                color: Theme.textDim
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }

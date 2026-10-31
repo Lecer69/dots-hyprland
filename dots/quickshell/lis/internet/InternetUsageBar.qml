@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import qs.common
 
 ColumnLayout {
     id: root
@@ -45,7 +46,7 @@ ColumnLayout {
                 width: 8
                 height: 8
                 radius: 4
-                color: "#808080"
+                color: Theme.adapt("#808080")
                 visible: !iconImg.visible
 
                 SequentialAnimation on opacity {
@@ -72,7 +73,7 @@ ColumnLayout {
                 height: 22 + 4
                 radius: (22 + 4) / 2
                 color: "transparent"
-                border.color: "#bbbbbb"
+                border.color: Theme.adapt("#bbbbbb")
                 border.width: 1.5
                 visible: root.isActive && iconImg.visible
                 opacity: 0.6
@@ -98,7 +99,7 @@ ColumnLayout {
 
         Text {
             text: root.appName
-            color: root.isActive ? "#ffffff" : "#e6e6e6"
+            color: root.isActive ? Theme.adapt("#ffffff") : Theme.text
             font.pixelSize: 12
             font.weight: root.isActive ? Font.Medium : Font.Normal
             elide: Text.ElideRight
@@ -107,7 +108,7 @@ ColumnLayout {
 
         Text {
             text: root.dataLabel
-            color: "#999999"
+            color: Theme.adapt("#999999")
             font.pixelSize: 12
         }
     }
@@ -119,7 +120,7 @@ ColumnLayout {
         Rectangle {
             anchors.fill: parent
             radius: 1.5
-            color: "#1f1f1f"
+            color: Theme.border
         }
 
         Rectangle {
@@ -127,7 +128,7 @@ ColumnLayout {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             radius: 1.5
-            color: root.isActive ? "#e6e6e6" : "#808080"
+            color: root.isActive ? Theme.text : Theme.adapt("#808080")
             width: root.maxMegabytes > 0 ? Math.max(5, parent.width * Math.min(root.megabytes / root.maxMegabytes, 1)) : 5
 
             Behavior on width {

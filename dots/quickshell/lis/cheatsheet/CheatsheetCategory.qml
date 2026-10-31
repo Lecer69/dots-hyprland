@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Row {
     id: root
@@ -13,9 +14,9 @@ Row {
     property real columnSpacing: 20
     property real titleSpacing: 8
 
-    property color textColor: "#e6e6e6"
-    property color dimTextColor: "#999999"
-    property color keyBgColor: "#1f1f1f"
+    property color textColor: Theme.text
+    property color dimTextColor: Theme.adapt("#999999")
+    property color keyBgColor: Theme.border
 
     property int keyFontSize: 10
     property int descFontSize: 11
@@ -148,7 +149,7 @@ Row {
     Rectangle {
         width: 1
         height: section.height
-        color: "#262626"
+        color: Theme.adapt("#262626")
     }
 
     Column {
@@ -159,7 +160,7 @@ Row {
             text: root.isCategorized ? root.categoryName : "Uncategorized"
             font.pixelSize: root.titleFontSize
             font.weight: Font.Medium
-            color: "#6b6b6b"
+            color: Theme.textDim
         }
 
         Column {
@@ -241,7 +242,7 @@ Row {
                             width: modelData === "Super" ? 11 : modText.implicitWidth
                             height: modText.implicitHeight
 
-                            Image {
+                            Icon {
                                 id: superIcon
                                 anchors.centerIn: parent
                                 source: "../icons/windows.svg"

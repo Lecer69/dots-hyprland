@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import qs.common
 
 Rectangle {
     id: card
@@ -165,9 +166,9 @@ Rectangle {
 
     width: 520
     height: col.implicitHeight + 16
-    color: "#0f0f0f"
+    color: Theme.panel
     radius: 12
-    border.color: "#1f1f1f"
+    border.color: Theme.border
     border.width: 1
 
     opacity: isOpen ? 1 : 0

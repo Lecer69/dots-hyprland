@@ -7,6 +7,7 @@ import Quickshell.Hyprland
 import Quickshell.Widgets
 import qs.tools
 import qs.settings.data
+import qs.common
 
 Item {
     id: root
@@ -50,7 +51,7 @@ Item {
         anchors.fill: parent
         radius: 12
         color: (focused || focusedOnOtherMonitor)
-            ? (root.iconSource === "" ? '#beffffff' : '#43ffffff')
+            ? (root.iconSource === "" ? Theme.adapt("#beffffff") : Theme.adapt("#43ffffff"))
             : "#00000000"
 
         opacity: focused ? 1.0 : focusedOnOtherMonitor ? 0.4 : 1.0
@@ -67,7 +68,7 @@ Item {
         font.weight: Font.Medium
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        color: focused ? "#111111" : '#969696'
+        color: focused ? Theme.adapt("#111111") : Theme.adapt("#969696")
         Behavior on color { ColorAnimation { duration: 160 } }
     }
 
@@ -79,8 +80,8 @@ Item {
         radius: width / 2
         visible: root.iconSource === "" && root.dotsMode
         color: (focused || focusedOnOtherMonitor)
-            ? "#111111"
-            : root.occupied ? '#969696' : '#5c5c5c'
+            ? Theme.adapt("#111111")
+            : root.occupied ? Theme.adapt("#969696") : Theme.adapt("#5c5c5c")
 
         Behavior on color { ColorAnimation { duration: 160 } }
         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -110,7 +111,7 @@ Item {
             layer.smooth: true
             layer.effect: MultiEffect {
                 colorization: 1.0
-                colorizationColor: "#e8e8e8"
+                colorizationColor: Theme.appIconTint
             }
         }
     }
@@ -128,7 +129,7 @@ Item {
         id: hoverRect
         anchors.fill: parent
         radius: 11
-        color: "#ffffff"
+        color: Theme.adapt("#ffffff")
         opacity: 0.05
         visible: false
     }

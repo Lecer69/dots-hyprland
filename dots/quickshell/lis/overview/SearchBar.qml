@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 SearchPill {
     id: bar
@@ -30,7 +31,7 @@ SearchPill {
         spacing: 10
         width: bar.width - bar.horizontalPadding * 2
 
-        Image {
+        Icon {
             id: modeIcon
 
             width: 18
@@ -62,8 +63,8 @@ SearchPill {
         TextInput {
             id: input
             Layout.fillWidth: true
-            color: "#e6e6e6"
-            selectionColor: "#444444"
+            color: Theme.text
+            selectionColor: Theme.adapt("#444444")
             font.pixelSize: 14
             verticalAlignment: TextInput.AlignVCenter
             clip: true
@@ -89,7 +90,7 @@ SearchPill {
                     width: 2
                     height: parent.height
                     radius: 1
-                    color: "#e6e6e6"
+                    color: Theme.text
                 }
 
                 NumberAnimation {
@@ -118,7 +119,7 @@ SearchPill {
                     if (bar.isEmoji)     return "Search emojis..."
                     return "Search apps..."
                 }
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: parent.font.pixelSize
                 verticalAlignment: Text.AlignVCenter
                 // Slides away as typing starts
@@ -164,7 +165,7 @@ SearchPill {
             Behavior on rotation { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
 
             text: "✕"
-            color: clearHover.containsMouse ? "#dddddd" : "#666666"
+            color: clearHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
             font.pixelSize: 12
             Layout.alignment: Qt.AlignVCenter
 

@@ -192,7 +192,7 @@ PanelFrame {
                 Layout.fillWidth: true
                 implicitHeight: 32
                 radius: 8
-                color: "#161616"
+                color: Theme.hover
 
                 TextInput {
                     id: search
@@ -201,7 +201,7 @@ PanelFrame {
                     anchors.leftMargin: 12
                     anchors.rightMargin: 12
                     verticalAlignment: TextInput.AlignVCenter
-                    color: "#e6e6e6"
+                    color: Theme.text
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
@@ -218,7 +218,7 @@ PanelFrame {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: search.text.length === 0
                         text: "Search processes…"
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                     }
                 }
@@ -300,7 +300,7 @@ PanelFrame {
                     width: list.width
                     height: 30
                     radius: 6
-                    color: row.selected ? (list.activeFocus ? "#2a2a2a" : "#1f1f1f") : rowArea.containsMouse ? "#161616" : "transparent"
+                    color: row.selected ? (list.activeFocus ? Theme.adapt("#2a2a2a") : Theme.border) : rowArea.containsMouse ? Theme.hover : "transparent"
 
                     RowLayout {
                         anchors.fill: parent
@@ -312,7 +312,7 @@ PanelFrame {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: row.name
-                            color: row.selected ? "#ffffff" : row.own ? "#e6e6e6" : "#999999"
+                            color: row.selected ? Theme.adapt("#ffffff") : row.own ? Theme.text : Theme.adapt("#999999")
                             font.pixelSize: 13
                         }
 
@@ -320,7 +320,7 @@ PanelFrame {
                             Layout.preferredWidth: 70
                             horizontalAlignment: Text.AlignRight
                             text: row.pid
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 12
                         }
 
@@ -328,7 +328,7 @@ PanelFrame {
                             Layout.preferredWidth: 70
                             horizontalAlignment: Text.AlignRight
                             text: row.cpu.toFixed(1) + "%"
-                            color: "#999999"
+                            color: Theme.adapt("#999999")
                             font.pixelSize: 12
                         }
 
@@ -336,7 +336,7 @@ PanelFrame {
                             Layout.preferredWidth: 90
                             horizontalAlignment: Text.AlignRight
                             text: root.formatMemory(row.memory)
-                            color: "#999999"
+                            color: Theme.adapt("#999999")
                             font.pixelSize: 12
                         }
                     }
@@ -363,7 +363,7 @@ PanelFrame {
             Text {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
                 text: {
                     if (root.selectedPid === -1) return "Select a process"
@@ -394,7 +394,7 @@ PanelFrame {
 
         horizontalAlignment: alignRight ? Text.AlignRight : Text.AlignLeft
         text: label + (root.sortKey === key ? " ▾" : "")
-        color: root.sortKey === key || header.activeFocus ? "#e6e6e6" : headerArea.containsMouse ? "#cccccc" : "#6b6b6b"
+        color: root.sortKey === key || header.activeFocus ? Theme.text : headerArea.containsMouse ? Theme.adapt("#cccccc") : Theme.textDim
         font.underline: header.activeFocus
 
         activeFocusOnTab: true

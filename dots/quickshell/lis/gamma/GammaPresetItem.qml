@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.common
 
 Rectangle {
     id: root
@@ -30,7 +31,7 @@ Rectangle {
     width: parent ? parent.width : 0
     height: 56
     radius: 8
-    color: rowHover.hovered || root.activeFocus ? "#161616" : "transparent"
+    color: rowHover.hovered || root.activeFocus ? Theme.hover : "transparent"
 
     activeFocusOnTab: true
     Keys.onSpacePressed: root.applyRequested()
@@ -64,7 +65,7 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 text: root.name
-                color: "#e6e6e6"
+                color: Theme.text
                 font.pixelSize: 13
                 elide: Text.ElideRight
             }
@@ -72,7 +73,7 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 text: root.summary()
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 11
                 elide: Text.ElideRight
             }
@@ -81,7 +82,7 @@ Rectangle {
         Text {
             text: "✕"
             font.pixelSize: 11
-            color: delHover.containsMouse ? "#dddddd" : "#666666"
+            color: delHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
             MouseArea {
                 id: delHover

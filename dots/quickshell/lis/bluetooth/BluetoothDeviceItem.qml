@@ -51,8 +51,8 @@ Rectangle {
 
     implicitHeight: column.implicitHeight + 16
     radius: 8
-    color: root.expanded && root.activeFocus ? "#1f1f1f"
-        : root.expanded || rowArea.containsMouse || root.activeFocus ? "#161616" : "transparent"
+    color: root.expanded && root.activeFocus ? Theme.border
+        : root.expanded || rowArea.containsMouse || root.activeFocus ? Theme.hover : "transparent"
 
     readonly property bool listRow: true
     activeFocusOnTab: true
@@ -104,7 +104,7 @@ Rectangle {
                 anchors.fill: parent
                 spacing: 12
 
-                Image {
+                Icon {
                     Layout.preferredWidth: 16
                     Layout.preferredHeight: 16
                     source: "../icons/" + (root.audio ? "bluetooth-audio" : "bluetooth") + ".svg"
@@ -117,7 +117,7 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.device.name
                     elide: Text.ElideRight
-                    color: root.device.connected ? "#ffffff" : "#e6e6e6"
+                    color: root.device.connected ? Theme.adapt("#ffffff") : Theme.text
                     font.pixelSize: 13
                     font.weight: root.device.connected ? Font.Medium : Font.Normal
                 }
@@ -125,7 +125,7 @@ Rectangle {
                 Text {
                     visible: text !== ""
                     text: root.statusText
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                 }
             }
@@ -142,7 +142,7 @@ Rectangle {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
                 text: root.device.address
-                color: "#6b6b6b"
+                color: Theme.textDim
                 font.pixelSize: 12
             }
 

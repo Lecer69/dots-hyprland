@@ -13,6 +13,8 @@ PanelFrame {
     // -1 for All tasks
     property real selectedList: -1
     property bool deleteArmed: false
+    // Ids of the tasks with their description open
+    property var expanded: []
     // While dragging over the lists: the one under it
     property var dropList: null
     // Shared with the title block so the lines below align
@@ -36,6 +38,10 @@ PanelFrame {
             root.leave();
             root.deleteArmed = false;
         }
+    }
+
+    function toggleExpanded(id: real): void {
+        root.expanded = root.expanded.includes(id) ? root.expanded.filter(e => e !== id) : root.expanded.concat([id]);
     }
 
     function listName(id: real): string {
@@ -165,7 +171,7 @@ PanelFrame {
                     leftPadding: 12
                     verticalAlignment: Text.AlignVCenter
                     text: "Lists"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 12
                     font.weight: Font.Medium
                 }
@@ -181,7 +187,7 @@ PanelFrame {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 1
-                color: "#262626"
+                color: Theme.adapt("#262626")
             }
 
             ListView {
@@ -211,9 +217,9 @@ PanelFrame {
                     width: ListView.view.width
                     height: 58
                     radius: 8
-                    color: row.isDropTarget ? "#262626"
-                        : row.isSelected ? (row.activeFocus ? "#262626" : "#1f1f1f")
-                        : rowArea.containsMouse || row.activeFocus ? "#161616" : "transparent"
+                    color: row.isDropTarget ? Theme.adapt("#262626")
+                        : row.isSelected ? (row.activeFocus ? Theme.adapt("#262626") : Theme.border)
+                        : rowArea.containsMouse || row.activeFocus ? Theme.hover : "transparent"
 
                     activeFocusOnTab: true
                     Keys.onUpPressed: KeyNav.stepView(row.ListView.view, row.index, false)
@@ -241,7 +247,7 @@ PanelFrame {
                                 text: row.modelData.id === -1 ? "All tasks" : row.modelData.name.trim() || "Untitled list"
                                 textFormat: Text.PlainText
                                 elide: Text.ElideRight
-                                color: row.modelData.id === -1 || row.modelData.name.trim() ? "#e6e6e6" : "#808080"
+                                color: row.modelData.id === -1 || row.modelData.name.trim() ? Theme.text : Theme.adapt("#808080")
                                 font.pixelSize: 13
                                 font.weight: Font.Medium
                             }
@@ -249,7 +255,7 @@ PanelFrame {
                             Text {
                                 visible: row.tasks.length > 0
                                 text: row.done + "/" + row.tasks.length
-                                color: "#6b6b6b"
+                                color: Theme.textDim
                                 font.pixelSize: 12
                             }
                         }
@@ -260,7 +266,7 @@ PanelFrame {
                             textFormat: Text.PlainText
                             elide: Text.ElideRight
                             maximumLineCount: 1
-                            color: "#6b6b6b"
+                            color: Theme.textDim
                             font.pixelSize: 12
                         }
 
@@ -285,7 +291,7 @@ PanelFrame {
             Layout.preferredWidth: 1
             Layout.fillHeight: true
             Layout.topMargin: root.topRowHeight + 25
-            color: "#262626"
+            color: Theme.adapt("#262626")
         }
 
         ColumnLayout {
@@ -307,9 +313,9 @@ PanelFrame {
                     activeFocusOnPress: !readOnly
                     activeFocusOnTab: !readOnly
                     text: "All tasks"
-                    color: "#ffffff"
-                    selectionColor: "#333333"
-                    selectedTextColor: "#ffffff"
+                    color: Theme.adapt("#ffffff")
+                    selectionColor: Theme.adapt("#333333")
+                    selectedTextColor: Theme.adapt("#ffffff")
                     font.pixelSize: 20
                     font.weight: Font.DemiBold
                     clip: true
@@ -326,7 +332,7 @@ PanelFrame {
                     Text {
                         visible: nameInput.text.length === 0
                         text: "List name"
-                        color: "#4a4a4a"
+                        color: Theme.adapt("#4a4a4a")
                         font: nameInput.font
                     }
                 }
@@ -339,7 +345,7 @@ PanelFrame {
                         Layout.fillWidth: true
                         text: root.tasks.length === 0 ? "No tasks" : root.doneCount + " of " + root.tasks.length + " done"
                         elide: Text.ElideRight
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 12
                     }
 
@@ -348,7 +354,7 @@ PanelFrame {
 
                         visible: root.doneCount > 0
                         text: "Clear completed"
-                        color: clearArea.containsMouse || clearLink.activeFocus ? "#dddddd" : "#666666"
+                        color: clearArea.containsMouse || clearLink.activeFocus ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                         font.pixelSize: 12
 
                         activeFocusOnTab: true
@@ -376,7 +382,7 @@ PanelFrame {
                             return count === 0 ? "Click again to delete"
                                 : "Click again to delete it and " + count + (count === 1 ? " task" : " tasks");
                         }
-                        color: root.deleteArmed ? "#e06c6c" : deleteArea.containsMouse || activeFocus ? "#dddddd" : "#666666"
+                        color: root.deleteArmed ? Theme.adapt("#e06c6c") : deleteArea.containsMouse || activeFocus ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                         font.pixelSize: 12
 
                         // Like the click, the first press only arms it
@@ -401,14 +407,14 @@ PanelFrame {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 1
-                color: "#262626"
+                color: Theme.adapt("#262626")
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 36
                 radius: 8
-                color: "#161616"
+                color: Theme.hover
 
                 TextInput {
                     id: input
@@ -417,9 +423,9 @@ PanelFrame {
                     anchors.leftMargin: 12
                     anchors.rightMargin: 36
                     verticalAlignment: TextInput.AlignVCenter
-                    color: "#e6e6e6"
-                    selectionColor: "#333333"
-                    selectedTextColor: "#ffffff"
+                    color: Theme.text
+                    selectionColor: Theme.adapt("#333333")
+                    selectedTextColor: Theme.adapt("#ffffff")
                     font.pixelSize: 13
                     clip: true
                     selectByMouse: true
@@ -435,7 +441,7 @@ PanelFrame {
                         visible: input.text.length === 0
                         text: root.selected ? "Add a task to " + root.listName(root.selectedList) + "…" : "Add a task…"
                         elide: Text.ElideRight
-                        color: "#6b6b6b"
+                        color: Theme.textDim
                         font.pixelSize: 13
                     }
                 }
@@ -446,7 +452,7 @@ PanelFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "+"
                     font.pixelSize: 16
-                    color: addArea.containsMouse ? "#ffffff" : "#808080"
+                    color: addArea.containsMouse ? Theme.adapt("#ffffff") : Theme.adapt("#808080")
 
                     MouseArea {
                         id: addArea
@@ -512,10 +518,13 @@ PanelFrame {
                                     y: wrap.isDragged ? reorder.top - wrap.y : 0
                                     task: wrap.modelData
                                     listName: root.viewList === -1 ? root.listName(wrap.modelData.list) : ""
+                                    expanded: root.expanded.includes(wrap.modelData.id)
                                     dragged: wrap.isDragged
                                     dragSpace: root
                                     above: input
+                                    view: flick
 
+                                    onToggleExpanded: root.toggleExpanded(wrap.modelData.id)
                                     onDragStarted: p => root.dragStart(wrap.modelData, p)
                                     onDragMoved: p => root.dragMove(p)
                                     onDragEnded: root.dragEnd()
@@ -529,7 +538,7 @@ PanelFrame {
                     anchors.centerIn: parent
                     visible: root.tasks.length === 0
                     text: root.selected ? "No tasks in this list" : "No tasks yet"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 13
                 }
             }

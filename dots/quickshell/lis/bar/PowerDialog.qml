@@ -93,7 +93,7 @@ PanelWindow {
             index: 0
             label: "Shutdown"
             iconSource: "../icons/power.svg"
-            accent: "#f38ba8"
+            accent: Theme.adapt("#f38ba8")
             onActivated: root.run(() => Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.local/bin/lis", "shutdown"]))
         }
 
@@ -101,7 +101,7 @@ PanelWindow {
             index: 1
             label: "Reboot"
             iconSource: "../icons/restart.svg"
-            accent: "#89b4fa"
+            accent: Theme.adapt("#89b4fa")
             onActivated: root.run(() => Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.local/bin/lis", "reboot"]))
         }
 
@@ -109,7 +109,7 @@ PanelWindow {
             index: 2
             label: "Suspend"
             iconSource: "../icons/sleep.svg"
-            accent: "#a6e3a1"
+            accent: Theme.adapt("#a6e3a1")
             onActivated: root.run(() => Quickshell.execDetached(["systemctl", "suspend"]))
         }
 
@@ -119,7 +119,7 @@ PanelWindow {
             index: 3
             label: "Exit"
             iconSource: "../icons/exit.svg"
-            accent: "#f9e2af"
+            accent: Theme.adapt("#f9e2af")
             onActivated: root.run(() => Hyprland.dispatch("exit"))
         }
     }
@@ -129,7 +129,7 @@ PanelWindow {
 
         property string label: ""
         property string iconSource: ""
-        property color accent: "#ffffff"
+        property color accent: Theme.adapt("#ffffff")
         property int index: 0
         signal activated()
 
@@ -175,9 +175,9 @@ PanelWindow {
 
             anchors.fill: parent
             radius: width / 2
-            color: action.lit ? "#1a1a1a" : "#141414"
+            color: action.lit ? Theme.adapt("#1a1a1a") : Theme.adapt("#141414")
             border.width: 1
-            border.color: action.lit ? action.accent : "#2a2a2a"
+            border.color: action.lit ? action.accent : Theme.adapt("#2a2a2a")
 
             Behavior on color { ColorAnimation { duration: 120 } }
             Behavior on border.color { ColorAnimation { duration: 120 } }
@@ -205,7 +205,7 @@ PanelWindow {
                 anchors.fill: actionIcon
                 source: actionIcon
                 colorization: 1.0
-                colorizationColor: action.lit ? action.accent : "#bfbfbf"
+                colorizationColor: action.lit ? action.accent : Theme.adapt("#bfbfbf")
 
                 Behavior on colorizationColor { ColorAnimation { duration: 120 } }
             }
@@ -221,8 +221,8 @@ PanelWindow {
             width: tipText.implicitWidth + 24
             height: tipText.implicitHeight + 14
             radius: height / 2
-            color: "#121212"
-            border.color: "#2a2a2a"
+            color: Theme.adapt("#121212")
+            border.color: Theme.adapt("#2a2a2a")
             border.width: 1
             opacity: action.lit ? 1 : 0
             visible: opacity > 0.01
@@ -234,7 +234,7 @@ PanelWindow {
 
                 anchors.centerIn: parent
                 text: action.label
-                color: "#dddddd"
+                color: Theme.adapt("#dddddd")
                 font.pixelSize: 13
             }
         }

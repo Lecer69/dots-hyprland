@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
+import qs.common
 
 // A row with a checkbox and a value; clicking anywhere toggles it
 Item {
@@ -30,7 +31,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: 8
-        color: root.activeFocus ? "#161616" : "transparent"
+        color: root.activeFocus ? Theme.hover : "transparent"
     }
 
     RowLayout {
@@ -42,9 +43,9 @@ Item {
             height: 16
             radius: 4
             Layout.alignment: Qt.AlignVCenter
-            color: root.checked ? "#e6e6e6" : "transparent"
+            color: root.checked ? Theme.text : "transparent"
             border.width: root.checked ? 0 : 1
-            border.color: area.containsMouse || root.activeFocus ? "#5a5a5a" : "#3a3a3a"
+            border.color: area.containsMouse || root.activeFocus ? Theme.adapt("#5a5a5a") : Theme.adapt("#3a3a3a")
 
             Shape {
                 anchors.fill: parent
@@ -52,7 +53,7 @@ Item {
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    strokeColor: "#0f0f0f"
+                    strokeColor: Theme.panel
                     strokeWidth: 1.8
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
@@ -73,7 +74,7 @@ Item {
             Text {
                 text: root.label
                 font.pixelSize: 13
-                color: "#e6e6e6"
+                color: Theme.text
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -81,7 +82,7 @@ Item {
                 visible: root.description !== ""
                 text: root.description
                 font.pixelSize: 12
-                color: "#6b6b6b"
+                color: Theme.textDim
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -90,7 +91,7 @@ Item {
         Text {
             text: root.value
             font.pixelSize: 12
-            color: "#999999"
+            color: Theme.adapt("#999999")
             Layout.alignment: Qt.AlignVCenter
         }
     }

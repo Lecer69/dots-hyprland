@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.settings.data
 import qs.settings.pages
 import qs.settings
+import qs.common
 
 Flow {
     id: root
@@ -34,16 +35,16 @@ Flow {
             height: 28
             width: label.implicitWidth + 20
             radius: 6
-            color: active ? (root.activeFocus ? "#333333" : "#262626") : "transparent"
+            color: active ? (root.activeFocus ? Theme.adapt("#333333") : Theme.adapt("#262626")) : "transparent"
 
             Text {
                 id: label
                 anchors.centerIn: parent
                 text: modelData
                 font.pixelSize: 12
-                color: active ? "#ffffff"
-                     : area.containsMouse ? "#cccccc"
-                     : "#808080"
+                color: active ? Theme.adapt("#ffffff")
+                     : area.containsMouse ? Theme.adapt("#cccccc")
+                     : Theme.adapt("#808080")
             }
 
             MouseArea {

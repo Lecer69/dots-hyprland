@@ -52,14 +52,18 @@ Singleton {
                 property bool notificationsMainMonitorOnly: true
                 property string accentColor: '#822828'
                 property string colorScheme: 'expressive'
+                property bool lightMode: false
             }
 
             property JsonObject bar: JsonObject {
                 property string position: "top"
+                // The colors have a light mode copy
                 property string pillColor: "#c30f0f0f"
+                property string pillColorLight: "#c3f5f5f5"
                 // 0 hides the border
                 property int pillBorderWidth: 1
                 property string pillBorderColor: "#26ffffff"
+                property string pillBorderColorLight: "#26000000"
                 property bool pillBlur: false
                 property bool showBluetooth: true
                 property bool showGameMode: true

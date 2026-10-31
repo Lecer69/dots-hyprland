@@ -11,7 +11,7 @@ Rectangle {
     implicitHeight: 28
     radius: 6
     opacity: enabled ? 1 : 0.4
-    color: area.pressed ? "#333333" : area.containsMouse || root.activeFocus ? "#2a2a2a" : "#1f1f1f"
+    color: area.pressed ? Theme.adapt("#333333") : area.containsMouse || root.activeFocus ? Theme.adapt("#2a2a2a") : Theme.border
 
     activeFocusOnTab: true
     Keys.onReturnPressed: root.clicked()
@@ -23,7 +23,7 @@ Rectangle {
 
         anchors.centerIn: parent
         text: root.text
-        color: "#e6e6e6"
+        color: Theme.text
         font.pixelSize: 12
         font.weight: Font.Medium
     }

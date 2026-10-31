@@ -1,5 +1,7 @@
 import QtQuick
+import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 
 // Keyboard focus for panel windows: exclusive while open and on top (Hyprland 0.57 doesn't focus on-demand layers)
 Item {
@@ -7,8 +9,14 @@ Item {
 
     property bool open: false
     property Item initialFocus: null
-    readonly property int mode: root.open && PanelFocus.top === root
-        ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    readonly property string screenName: QsWindow.window?.screen?.name ?? ""
+    readonly property bool onFocusedScreen: {
+        const focused = Hyprland.focusedMonitor
+        return root.screenName === "" || !focused || focused.name === root.screenName
+    }
+    // On-demand while the pointer is on another screen, so the keyboard follows it there
+    readonly property int mode: !root.open || PanelFocus.topOn(root.screenName) !== root ? WlrKeyboardFocus.None
+        : root.onFocusedScreen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
     readonly property Item focusedItem: Window.activeFocusItem
 
     // Scrolls the nearest Flickable to show `item`; taller items are left alone

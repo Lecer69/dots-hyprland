@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.common
 
 Scope {
     id: root
@@ -37,10 +38,10 @@ Scope {
                 id: cheatsheetBackground
                 anchors.centerIn: parent
                 radius: 12
-                color: "#0f0f0f"
+                color: Theme.panel
                 clip: true
                 border.width: 1
-                border.color: "#1f1f1f"
+                border.color: Theme.border
 
                 readonly property real headerHeight: 56
                 readonly property real headerGap: 8
@@ -73,7 +74,7 @@ Scope {
                         text: "Keybinds"
                         font.pixelSize: 15
                         font.weight: Font.DemiBold
-                        color: "#ffffff"
+                        color: Theme.adapt("#ffffff")
                     }
 
                     Text {
@@ -82,7 +83,7 @@ Scope {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "✕"
                         font.pixelSize: 12
-                        color: closeHover.containsMouse ? "#dddddd" : "#666666"
+                        color: closeHover.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
                         MouseArea {
                             id: closeHover

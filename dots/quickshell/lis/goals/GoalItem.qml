@@ -47,8 +47,8 @@ Rectangle {
 
     height: header.height + (root.expanded ? subgoals.height : 0)
     radius: 8
-    color: root.dragged || (root.activeFocus && root.expanded) ? "#1f1f1f"
-        : (root.expanded || hover.hovered || root.activeFocus) ? "#161616" : "transparent"
+    color: root.dragged || (root.activeFocus && root.expanded) ? Theme.border
+        : (root.expanded || hover.hovered || root.activeFocus) ? Theme.hover : "transparent"
 
     readonly property string listRow: "goals"
     activeFocusOnTab: true
@@ -106,8 +106,8 @@ Rectangle {
                     Row {
                         spacing: 3
 
-                        Rectangle { width: 3; height: 3; radius: 1.5; color: "#444444" }
-                        Rectangle { width: 3; height: 3; radius: 1.5; color: "#444444" }
+                        Rectangle { width: 3; height: 3; radius: 1.5; color: Theme.adapt("#444444") }
+                        Rectangle { width: 3; height: 3; radius: 1.5; color: Theme.adapt("#444444") }
                     }
                 }
             }
@@ -130,8 +130,8 @@ Rectangle {
             width: 18
             height: 18
             radius: width / 2
-            color: root.goal.done ? "#e6e6e6" : "transparent"
-            border.color: root.goal.done ? "#e6e6e6" : "#4a4a4a"
+            color: root.goal.done ? Theme.text : "transparent"
+            border.color: root.goal.done ? Theme.text : Theme.adapt("#4a4a4a")
             border.width: 1.5
 
             MouseArea {
@@ -156,9 +156,9 @@ Rectangle {
             font.pixelSize: 13
             font.weight: Font.Medium
             font.strikeout: root.goal.done
-            color: root.goal.done ? "#6b6b6b" : "#e6e6e6"
-            selectionColor: "#333333"
-            selectedTextColor: "#ffffff"
+            color: root.goal.done ? Theme.textDim : Theme.text
+            selectionColor: Theme.adapt("#333333")
+            selectedTextColor: Theme.adapt("#ffffff")
 
             // Not bound: a save while typing would move the cursor
             Component.onCompleted: text = root.goal.title
@@ -171,7 +171,7 @@ Rectangle {
             Text {
                 visible: title.text.length === 0
                 text: "Untitled goal"
-                color: "#4a4a4a"
+                color: Theme.adapt("#4a4a4a")
                 font: title.font
             }
         }
@@ -188,7 +188,7 @@ Rectangle {
                 rightPadding: 4
                 visible: root.deleteArmed || root.total > 0
                 text: root.deleteArmed ? "Delete?" : root.doneSubgoals + "/" + root.total
-                color: root.deleteArmed ? "#e06c6c" : "#6b6b6b"
+                color: root.deleteArmed ? Theme.adapt("#e06c6c") : Theme.textDim
                 font.pixelSize: 12
             }
 
@@ -201,7 +201,7 @@ Rectangle {
                     text: "›"
                     rotation: root.expanded ? 90 : 0
                     font.pixelSize: 16
-                    color: chevronArea.containsMouse ? "#dddddd" : "#666666"
+                    color: chevronArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
 
                     Behavior on rotation {
                         NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
@@ -226,7 +226,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "✕"
                     font.pixelSize: 11
-                    color: root.deleteArmed ? "#e06c6c" : removeArea.containsMouse ? "#dddddd" : "#666666"
+                    color: root.deleteArmed ? Theme.adapt("#e06c6c") : removeArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                 }
 
                 MouseArea {
@@ -249,13 +249,13 @@ Rectangle {
             height: 2
             radius: 1
             visible: root.total > 0
-            color: "#2a2a2a"
+            color: Theme.adapt("#2a2a2a")
 
             Rectangle {
                 width: root.total > 0 ? parent.width * root.doneSubgoals / root.total : 0
                 height: parent.height
                 radius: parent.radius
-                color: root.goal.done ? "#6b6b6b" : "#bbbbbb"
+                color: root.goal.done ? Theme.textDim : Theme.adapt("#bbbbbb")
 
                 Behavior on width {
                     NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
@@ -335,7 +335,7 @@ Rectangle {
                 horizontalAlignment: Text.AlignHCenter
                 text: "+"
                 font.pixelSize: 14
-                color: "#6b6b6b"
+                color: Theme.textDim
             }
 
             TextInput {
@@ -344,9 +344,9 @@ Rectangle {
                 x: 50
                 width: parent.width - x - 8
                 anchors.verticalCenter: parent.verticalCenter
-                color: "#e6e6e6"
-                selectionColor: "#333333"
-                selectedTextColor: "#ffffff"
+                color: Theme.text
+                selectionColor: Theme.adapt("#333333")
+                selectedTextColor: Theme.adapt("#ffffff")
                 font.pixelSize: 13
                 clip: true
                 selectByMouse: true
@@ -359,7 +359,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: addInput.text.length === 0
                     text: "Add a sub goal…"
-                    color: "#6b6b6b"
+                    color: Theme.textDim
                     font.pixelSize: 13
                 }
             }

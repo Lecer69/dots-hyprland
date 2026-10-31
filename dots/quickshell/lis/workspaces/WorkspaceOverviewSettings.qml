@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.settings.data
+import qs.common
 
 Singleton {
     id: root
@@ -17,17 +18,17 @@ Singleton {
     property int livePreviewMaxWidth: 480
     property int livePreviewMaxHeight: 270
 
-    property color activeBorderColor: "#e6e6e6"
-    property color backgroundColor: "#0f0f0f"
-    property color backgroundBorderColor: "#1f1f1f"
-    property color workspaceColor: "#161616"
-    property color workspaceHoverColor: "#1f1f1f"
-    property color workspaceHoverBorderColor: "#2a2a2a"
-    property color windowOverlayColor: "#330f0f0f"
-    property color windowOverlayHoverColor: "#4a1c1c1c"
-    property color windowOverlayPressColor: "#803a3a3a"
-    property color windowBorderColor: "#1d2a2a2a"
-    property color workspaceNumberColor: '#33656565'
+    property color activeBorderColor: Theme.text
+    property color backgroundColor: Theme.panel
+    property color backgroundBorderColor: Theme.border
+    property color workspaceColor: Theme.hover
+    property color workspaceHoverColor: Theme.border
+    property color workspaceHoverBorderColor: Theme.adapt("#2a2a2a")
+    property color windowOverlayColor: Theme.adapt("#330f0f0f")
+    property color windowOverlayHoverColor: Theme.adapt("#4a1c1c1c")
+    property color windowOverlayPressColor: Theme.adapt("#803a3a3a")
+    property color windowBorderColor: Theme.adapt("#1d2a2a2a")
+    property color workspaceNumberColor: Theme.adapt("#33656565")
 
     property real largeWorkspaceRadius: 4
     property real smallWorkspaceRadius: 4

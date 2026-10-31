@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.settings.data
 import qs.tools
+import qs.common
 
 PanelWindow {
     id: root
@@ -63,7 +64,7 @@ PanelWindow {
             : (root.anchorTop ? 8 : root.height - height - 8)
 
         radius: 5
-        color: "#22ffffff"
+        color: Theme.adapt("#22ffffff")
         visible: !fullscreen
         opacity: root.hovered ? 1.0 : 0.0
         clip: true
@@ -77,7 +78,8 @@ PanelWindow {
             radius: parent.radius
             width: root.verticalBar ? parent.width * root.value : parent.width
             height: root.verticalBar ? parent.height : parent.height * root.value
-            color: '#ffffff'
+            // adapt's black is too heavy here
+            color: Theme.light ? "#8a8a8a" : "#ffffff"
             Behavior on width { NumberAnimation { duration: 80 } }
             Behavior on height { NumberAnimation { duration: 80 } }
         }

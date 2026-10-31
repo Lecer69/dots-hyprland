@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Bluetooth
+import qs.common
 
 Item {
     id: root
@@ -22,7 +23,7 @@ Item {
         return root.connectedDevices.some(root.isAudio) ? "bluetooth-audio" : "bluetooth-connected"
     }
 
-    Image {
+    Icon {
         id: icon
         source: "../icons/" + root._iconName + ".svg"
         width: 18

@@ -1,4 +1,5 @@
 import QtQuick
+import qs.common
 
 Rectangle {
     id: searchPill
@@ -9,7 +10,7 @@ Rectangle {
     property real horizontalPadding: 6
     
     radius: 8
-    color: "#161616"
+    color: Theme.hover
     
     default property alias content: contentItem.data
     
