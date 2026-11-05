@@ -16,21 +16,7 @@ QtObject {
     property bool isLocked: false
     signal lockedChanged()
 
-    onIsLockedChanged: root._reportLock()
-
-    // The first unlock after booting takes the password, which also opens the keyring.
-    // Kept across hot reloads, like the boot lock.
-    property PersistentProperties _kept: PersistentProperties {
-        reloadableId: "lockPassword"
-
-        property bool passwordUsed: false
-
-        onLoaded: root._reportLock()
-    }
-
-    function _reportLock() {
-        PhoneService.reportLock(root.isLocked, !root._kept.passwordUsed)
-    }
+    onIsLockedChanged: PhoneService.reportLock(root.isLocked)
 
     // Every lock comes through the same shortcut. Having been away means it's the idle timer, which
     // shouldn't wake the phone in the night.
@@ -41,10 +27,10 @@ QtObject {
 
     property real _askedPhoneAt: 0
 
-    // Not once per key
+    // Not once per key. At boot the daemon may not be there yet, which shouldn't use up the wait.
     function _askPhone() {
         const now = Date.now()
-        if (now - root._askedPhoneAt < 5000) return
+        if (!PhoneService.running || now - root._askedPhoneAt < 5000) return
         root._askedPhoneAt = now
         PhoneService.askToUnlock()
     }
@@ -53,7 +39,7 @@ QtObject {
     property Connections _phoneWatcher: Connections {
         target: PhoneService
         function onUnlockGranted(by) {
-            if (!root.isLocked || !root._kept.passwordUsed) return
+            if (!root.isLocked) return
             console.log("[lock] unlocked by", by)
             lockCtx.clearPassword()
             root._unlock()
@@ -364,12 +350,11 @@ QtObject {
     property LockContext _ctx: LockContext {
         id: lockCtx
         active: root.isLocked
-        phoneUnlock: root.isLocked && root._kept.passwordUsed && PhoneService.canUnlock
+        phoneUnlock: root.isLocked && PhoneService.canUnlock
         onUnlocked: root._unlock()
         onAttention: root._askPhone()
+        // Only the password opens the keyring; a phone unlock leaves it as it is
         onUnlockedWithPassword: (pw) => {
-            root._kept.passwordUsed = true
-            root._reportLock()
             if (root._keyringUnlock.running) return
             root._keyringUnlock.password = pw
             root._keyringUnlock.running = true

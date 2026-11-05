@@ -17,6 +17,8 @@ hl.bind("SUPER + G", hl.dsp.global("quickshell:gamma"), { description = "Shell: 
 hl.bind("SUPER + N", hl.dsp.global("quickshell:internetusage"), { description = "Shell: Toggle Internet Usage panel" })
 hl.bind("SUPER + Y", hl.dsp.global("quickshell:wellbeing"), { description = "Shell: Digital Wellbeing panel" })
 hl.bind("SUPER + O", hl.dsp.global("quickshell:notificationCenter"), { description = "Shell: Notification Center panel" })
+hl.bind("SUPER + A", hl.dsp.global("quickshell:sidebar"), { description = "Shell: Toggle sidebar" })
+hl.bind("SUPER + SHIFT + A", hl.dsp.global("quickshell:leftsidebar"), { description = "Shell: Toggle left sidebar" })
 
 hl.bind("SUPER + CTRL + R", hl.dsp.exec_cmd("killall qs quickshell; qs -c $qsConfig &"), { description = "Shell: Restart shell" })
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("killall hyprpaper; hyprpaper &"), { description = "Shell: Restart wallpaper" })

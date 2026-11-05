@@ -42,7 +42,6 @@ Singleton {
     signal unlockGranted(string by)
 
     property bool _locked: false
-    property bool _passwordRequired: true
 
     property var _callbacks: ({})
     property int _nextId: 1
@@ -130,9 +129,8 @@ Singleton {
     }
 
     // The daemon only offers phone unlock while this says so
-    function reportLock(locked: bool, passwordRequired: bool): void {
+    function reportLock(locked: bool): void {
         root._locked = locked;
-        root._passwordRequired = passwordRequired;
         root._sendLock();
     }
 
@@ -142,7 +140,7 @@ Singleton {
     }
 
     function _sendLock(): void {
-        root.request({ cmd: "lock_state", locked: root._locked, password_required: root._passwordRequired });
+        root.request({ cmd: "lock_state", locked: root._locked, password_required: false });
     }
 
     function _sendUsb(): void {
