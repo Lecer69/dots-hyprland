@@ -11,9 +11,16 @@ Singleton {
 
     // { id, text, description, done, important, list (-1 for none) }, in the user's order
     property var tasks: []
-    // { id, name }, in creation order
+    // { id, name }: Daily, then the rest in creation order
     property var lists: []
+    // Always there; its tasks go back to undone each day
+    readonly property real dailyList: 1
+    property string _dailyDate: ""
+    // Deleted tasks, oldest first: a task plus { listName, deletedAt }
+    property var trash: []
+    readonly property int trashDays: 30
 
+    readonly property real _day: 86400000
     property bool _loaded: false
     property bool _dirty: false
     property real _lastId: 0
@@ -49,6 +56,17 @@ Singleton {
         onTriggered: root.flush()
     }
 
+    // Polled, so a day that passes during suspend still counts
+    Timer {
+        interval: 60000
+        running: root._loaded
+        repeat: true
+        onTriggered: {
+            root._purgeTrash();
+            root._checkDay();
+        }
+    }
+
     function _load(text: string): void {
         let parsed = null;
         if (text !== "") {
@@ -66,11 +84,17 @@ Singleton {
         }
 
         root.lists = root._validLists(parsed.lists);
-        root._lastId = Math.max(0, ...root.lists.map(l => l.id), ...parsed.tasks.map(t => Number(t?.id) || 0));
+        root._dailyDate = typeof parsed.dailyDate === "string" ? parsed.dailyDate : "";
+        root.trash = (Array.isArray(parsed.trash) ? parsed.trash : [])
+            .filter(t => typeof t?.text === "string" && Number(t.id) > 0 && Number(t.deletedAt) > 0);
+        root._lastId = Math.max(0, ...root.lists.map(l => l.id), ...parsed.tasks.map(t => Number(t?.id) || 0),
+            ...root.trash.map(t => Number(t.id)));
         root.tasks = parsed.tasks.filter(t => typeof t?.text === "string").map(t =>
             root._task(Number(t.id) > 0 ? Number(t.id) : root._newId(), t.text,
                 typeof t.description === "string" ? t.description : "", !!t.done, !!t.important, Number(t.list)));
         root._loaded = true;
+        root._purgeTrash();
+        root._checkDay();
     }
 
     // From the older formats: the CLI's file plus stars and lists by text, or a plain array
@@ -94,6 +118,7 @@ Singleton {
         root._loaded = true;
         root._dirty = true;
         root.flush();
+        root._checkDay();
         console.log("[todo] brought", root.tasks.length, "tasks over into todo.json");
     }
 
@@ -111,8 +136,19 @@ Singleton {
     }
 
     function _validLists(lists: var): var {
-        return (Array.isArray(lists) ? lists : []).filter(l => typeof l?.name === "string" && Number(l.id) > 0)
-            .map(l => ({ id: Number(l.id), name: l.name }));
+        return [{ id: root.dailyList, name: "Daily" }].concat((Array.isArray(lists) ? lists : [])
+            .filter(l => typeof l?.name === "string" && Number(l.id) > 0 && Number(l.id) !== root.dailyList)
+            .map(l => ({ id: Number(l.id), name: l.name })));
+    }
+
+    function _checkDay(): void {
+        const now = new Date();
+        const today = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+        if (today === root._dailyDate)
+            return;
+
+        root._dailyDate = today;
+        root._set(root.tasks.map(t => t.list === root.dailyList && t.done ? Object.assign({}, t, { done: false }) : t));
     }
 
     function _task(id: real, text: string, description: string, done: bool, important: bool, list: real): var {
@@ -154,7 +190,7 @@ Singleton {
             return;
 
         root._dirty = false;
-        store.setText(JSON.stringify({ tasks: root.tasks, lists: root.lists }));
+        store.setText(JSON.stringify({ tasks: root.tasks, lists: root.lists, trash: root.trash, dailyDate: root._dailyDate }));
     }
 
     function sorted(): var {
@@ -197,13 +233,56 @@ Singleton {
         root._update(id, () => ({ list: root.lists.some(l => l.id === list) ? list : -1 }));
     }
 
-    function removeTask(id: real): void {
-        root._set(root.tasks.filter(t => t.id !== id));
+    // Trashes the matching tasks and returns the rest
+    function _discard(matches: var): var {
+        const now = Date.now();
+        const name = list => root.lists.find(l => l.id === list)?.name.trim() ?? "";
+        root.trash = root.trash.concat(root.tasks.filter(matches)
+            .map(t => Object.assign({}, t, { listName: name(t.list), deletedAt: now })));
+        return root.tasks.filter(t => !matches(t));
     }
 
-    // A list's done tasks, or every list's for -1
+    function removeTask(id: real): void {
+        root._set(root._discard(t => t.id === id));
+    }
+
+    // A list's done tasks, or every list's for -1; daily tasks stay, as they reset
     function clearDone(list: real): void {
-        root._set(root.tasks.filter(t => !t.done || (list !== -1 && t.list !== list)));
+        root._set(root._discard(t => t.done && t.list !== root.dailyList && (list === -1 || t.list === list)));
+    }
+
+    // Back to its list, or to no list if that's gone
+    function restoreTask(id: real): void {
+        const t = root.trash.find(t => t.id === id);
+        if (!t)
+            return;
+
+        root.trash = root.trash.filter(t => t.id !== id);
+        root._set(root.tasks.concat([root._task(t.id, t.text, t.description ?? "", !!t.done, !!t.important, Number(t.list))]));
+    }
+
+    function _setTrash(trash: var): void {
+        root.trash = trash;
+        root._dirty = true;
+        root.flush();
+    }
+
+    function deleteForever(id: real): void {
+        root._setTrash(root.trash.filter(t => t.id !== id));
+    }
+
+    function emptyTrash(): void {
+        root._setTrash([]);
+    }
+
+    function trashDaysLeft(task: var): int {
+        return Math.max(1, Math.ceil((task.deletedAt + root.trashDays * root._day - Date.now()) / root._day));
+    }
+
+    function _purgeTrash(): void {
+        const cutoff = Date.now() - root.trashDays * root._day;
+        if (root.trash.some(t => t.deletedAt < cutoff))
+            root._setTrash(root.trash.filter(t => t.deletedAt >= cutoff));
     }
 
     // ids take the places they had between them, so one list reorders without moving others
@@ -227,18 +306,22 @@ Singleton {
 
     // Saved once the typing pauses
     function renameList(id: real, name: string): void {
+        if (id === root.dailyList)
+            return;
+
         root.lists = root.lists.map(l => l.id === id ? { id: id, name: name } : l);
         root._dirty = true;
         saveTimer.restart();
     }
 
-    // Its tasks go with it
+    // Its tasks go to the trash
     function removeList(id: real): void {
-        if (!root._loaded)
+        if (!root._loaded || id === root.dailyList)
             return;
 
+        const rest = root._discard(t => t.list === id);
         root.lists = root.lists.filter(l => l.id !== id);
-        root._set(root.tasks.filter(t => t.list !== id));
+        root._set(rest);
     }
 
     Component.onDestruction: flush()

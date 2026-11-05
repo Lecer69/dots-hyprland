@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell.Networking
 import qs.common
 import qs.settings.components
+import qs.tools
 
 PanelFrame {
     id: root
@@ -93,6 +94,24 @@ PanelFrame {
         anchors.leftMargin: 24
         anchors.rightMargin: 24
         spacing: 20
+
+        ColumnLayout {
+            visible: root.wiredDevices.length > 0 || root.wifiDevices.length > 0
+            Layout.fillWidth: true
+            spacing: 8
+
+            InfoRow {
+                Layout.fillWidth: true
+                label: "Usage"
+                value: "↓ " + Format.rate(NetworkUsage.downRate) + "   ↑ " + Format.rate(NetworkUsage.upRate)
+            }
+
+            NetworkGraph {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 72
+                active: root.shown
+            }
+        }
 
         ColumnLayout {
             visible: root.wiredDevices.length > 0

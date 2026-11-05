@@ -5,13 +5,17 @@ import QtQuick.Layouts
 import Quickshell
 import qs.common
 
-// Tasks by list: the lists on the left, the open list's tasks on the right; drop a task on a list to move it
+// Tasks by list: the lists on the left, the open list's tasks on the right; drop a task on a list, or right-click it, to move it
 PanelFrame {
     id: root
 
     property bool shown: false
-    // -1 for All tasks
+    // -1 for All tasks, trashView for the trash
     property real selectedList: -1
+    readonly property real trashView: -2
+    readonly property bool inTrash: root.selectedList === root.trashView
+    // Can't be renamed or deleted
+    readonly property bool inDaily: root.selectedList === TodoService.dailyList
     property bool deleteArmed: false
     // Ids of the tasks with their description open
     property var expanded: []
@@ -25,6 +29,8 @@ PanelFrame {
     // Starred first
     readonly property var tasks: TodoService.listed(root.viewList)
     readonly property int doneCount: root.tasks.filter(t => t.done).length
+    // Daily tasks reset instead
+    readonly property int clearableCount: root.tasks.filter(t => t.done && t.list !== TodoService.dailyList).length
     readonly property Item initialFocus: input
 
     title: "To-do"
@@ -35,8 +41,12 @@ PanelFrame {
 
     onShownChanged: {
         if (!root.shown) {
+            moveMenu.close(false);
             root.leave();
             root.deleteArmed = false;
+            // The task input takes the keyboard on opening, and the trash has none
+            if (root.inTrash)
+                root.select(-1);
         }
     }
 
@@ -63,7 +73,7 @@ PanelFrame {
         root.leave();
         root.selectedList = id;
         root.deleteArmed = false;
-        nameInput.text = root.selected?.name ?? "All tasks";
+        nameInput.text = root.inTrash ? "Trash" : root.selected?.name ?? "All tasks";
         flick.contentY = 0;
     }
 
@@ -99,6 +109,18 @@ PanelFrame {
         root.select(-1);
     }
 
+    // The first click arms it, like deleting a list
+    function emptyTrash(): void {
+        if (!root.deleteArmed) {
+            root.deleteArmed = true;
+            disarm.restart();
+            return;
+        }
+        root.deleteArmed = false;
+        trashRow.forceActiveFocus();
+        TodoService.emptyTrash();
+    }
+
     // Null for none
     function listAt(p: point): var {
         const q = lists.mapFromItem(root, p.x, p.y);
@@ -131,6 +153,14 @@ PanelFrame {
         reorder.end();
         if (target !== null && target !== root.viewList)
             TodoService.setList(id, target);
+    }
+
+    // Out of the open list, the keyboard moves on first, like Delete
+    function moveTask(item: Item, id: real, list: real): void {
+        if (item?.activeFocus && root.viewList !== -1 && list !== root.viewList
+                && !KeyNav.step(item, true) && !KeyNav.step(item, false))
+            input.forceActiveFocus();
+        TodoService.setList(id, list);
     }
 
     Timer {
@@ -211,7 +241,7 @@ PanelFrame {
                     required property int index
                     readonly property var tasks: TodoService.listed(row.modelData.id)
                     readonly property int done: row.tasks.filter(t => t.done).length
-                    readonly property bool isSelected: row.modelData.id === root.viewList
+                    readonly property bool isSelected: !root.inTrash && row.modelData.id === root.viewList
                     readonly property bool isDropTarget: root.dropList === row.modelData.id && !row.isSelected
 
                     width: ListView.view.width
@@ -223,7 +253,10 @@ PanelFrame {
 
                     activeFocusOnTab: true
                     Keys.onUpPressed: KeyNav.stepView(row.ListView.view, row.index, false)
-                    Keys.onDownPressed: KeyNav.stepView(row.ListView.view, row.index, true)
+                    Keys.onDownPressed: {
+                        if (!KeyNav.stepView(row.ListView.view, row.index, true))
+                            trashRow.forceActiveFocus(Qt.TabFocusReason);
+                    }
                     Keys.onSpacePressed: root.select(row.modelData.id)
                     Keys.onReturnPressed: root.select(row.modelData.id)
                     Keys.onEnterPressed: root.select(row.modelData.id)
@@ -285,6 +318,65 @@ PanelFrame {
                     }
                 }
             }
+
+            Rectangle {
+                id: trashRow
+
+                Layout.fillWidth: true
+                implicitHeight: 40
+                radius: 8
+                color: root.inTrash ? (trashRow.activeFocus ? Theme.adapt("#262626") : Theme.border)
+                    : trashArea.containsMouse || trashRow.activeFocus ? Theme.hover : "transparent"
+
+                activeFocusOnTab: true
+                Keys.onUpPressed: {
+                    lists.positionViewAtEnd();
+                    lists.itemAtIndex(lists.count - 1)?.forceActiveFocus(Qt.BacktabFocusReason);
+                }
+                Keys.onSpacePressed: root.select(root.trashView)
+                Keys.onReturnPressed: root.select(root.trashView)
+                Keys.onEnterPressed: root.select(root.trashView)
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 8
+
+                    Icon {
+                        Layout.preferredWidth: 16
+                        Layout.preferredHeight: 16
+                        source: "../icons/trash.svg"
+                        sourceSize: Qt.size(32, 32)
+                        mipmap: true
+                        opacity: 0.8
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Trash"
+                        color: Theme.text
+                        font.pixelSize: 13
+                        font.weight: Font.Medium
+                    }
+
+                    Text {
+                        visible: TodoService.trash.length > 0
+                        text: TodoService.trash.length
+                        color: Theme.textDim
+                        font.pixelSize: 12
+                    }
+                }
+
+                MouseArea {
+                    id: trashArea
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.select(root.trashView)
+                }
+            }
         }
 
         Rectangle {
@@ -308,8 +400,7 @@ PanelFrame {
                     id: nameInput
 
                     Layout.fillWidth: true
-                    // All tasks can't be renamed
-                    readOnly: root.selected === null
+                    readOnly: root.selected === null || root.inDaily
                     activeFocusOnPress: !readOnly
                     activeFocusOnTab: !readOnly
                     text: "All tasks"
@@ -343,16 +434,51 @@ PanelFrame {
 
                     Text {
                         Layout.fillWidth: true
-                        text: root.tasks.length === 0 ? "No tasks" : root.doneCount + " of " + root.tasks.length + " done"
+                        text: {
+                            if (root.inTrash) {
+                                const count = TodoService.trash.length;
+                                return count === 0 ? "No deleted tasks"
+                                    : count + (count === 1 ? " task" : " tasks") + ", kept for " + TodoService.trashDays + " days";
+                            }
+                            const status = root.tasks.length === 0 ? "No tasks" : root.doneCount + " of " + root.tasks.length + " done";
+                            return root.inDaily ? status + ", resets at midnight" : status;
+                        }
                         elide: Text.ElideRight
                         color: Theme.textDim
                         font.pixelSize: 12
                     }
 
                     Text {
+                        visible: root.inTrash && TodoService.trash.length > 0
+                        text: {
+                            if (!root.deleteArmed)
+                                return "Empty trash";
+                            const count = TodoService.trash.length;
+                            return "Click again to delete " + count + (count === 1 ? " task" : " tasks") + " for good";
+                        }
+                        color: root.deleteArmed ? Theme.adapt("#e06c6c") : emptyArea.containsMouse || activeFocus ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
+                        font.pixelSize: 12
+
+                        activeFocusOnTab: true
+                        Keys.onSpacePressed: root.emptyTrash()
+                        Keys.onReturnPressed: root.emptyTrash()
+                        Keys.onEnterPressed: root.emptyTrash()
+
+                        MouseArea {
+                            id: emptyArea
+
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.emptyTrash()
+                        }
+                    }
+
+                    Text {
                         id: clearLink
 
-                        visible: root.doneCount > 0
+                        visible: !root.inTrash && root.clearableCount > 0
                         text: "Clear completed"
                         color: clearArea.containsMouse || clearLink.activeFocus ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
                         font.pixelSize: 12
@@ -374,7 +500,7 @@ PanelFrame {
                     }
 
                     Text {
-                        visible: root.selected !== null
+                        visible: root.selected !== null && !root.inDaily
                         text: {
                             if (!root.deleteArmed)
                                 return "Delete list";
@@ -415,6 +541,7 @@ PanelFrame {
                 implicitHeight: 36
                 radius: 8
                 color: Theme.hover
+                visible: !root.inTrash
 
                 TextInput {
                     id: input
@@ -474,6 +601,7 @@ PanelFrame {
                     id: flick
 
                     anchors.fill: parent
+                    visible: !root.inTrash
                     contentWidth: width
                     contentHeight: column.height
                     clip: true
@@ -528,6 +656,7 @@ PanelFrame {
                                     onDragStarted: p => root.dragStart(wrap.modelData, p)
                                     onDragMoved: p => root.dragMove(p)
                                     onDragEnded: root.dragEnd()
+                                    onMenuRequested: (p, keyboard) => moveMenu.open(item, wrap.modelData, item.mapToItem(moveMenu, p.x, p.y), keyboard)
                                 }
                             }
                         }
@@ -536,10 +665,17 @@ PanelFrame {
 
                 Text {
                     anchors.centerIn: parent
-                    visible: root.tasks.length === 0
-                    text: root.selected ? "No tasks in this list" : "No tasks yet"
+                    visible: !root.inTrash && root.tasks.length === 0
+                    text: root.inDaily ? "Tasks here go back to undone every day"
+                        : root.selected ? "No tasks in this list" : "No tasks yet"
                     color: Theme.textDim
                     font.pixelSize: 13
+                }
+
+                TrashView {
+                    anchors.fill: parent
+                    visible: root.inTrash
+                    fallback: trashRow
                 }
             }
         }
@@ -551,5 +687,13 @@ PanelFrame {
         column: column
         repeater: repeater
         onDropped: ids => TodoService.applyOrder(ids)
+    }
+
+    MoveMenu {
+        id: moveMenu
+
+        anchors.fill: parent
+        anchors.topMargin: -root.headerHeight
+        onMoved: (opener, id, list) => root.moveTask(opener, id, list)
     }
 }

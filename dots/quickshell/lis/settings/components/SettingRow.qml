@@ -12,7 +12,10 @@ FocusScope {
     default property alias content: controlSlot.data
     property string label: ""
     property string description: ""
+    // False hides it and leaves it out of the search
+    property bool available: true
 
+    visible: available
     Layout.fillWidth: true
     implicitHeight: description !== "" ? 58 : 44
 

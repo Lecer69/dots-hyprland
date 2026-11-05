@@ -206,5 +206,50 @@ ScrollView {
         }
 
         Item { height: 16 }
+        SectionHeader { title: "Configuration" }
+
+        SettingRow {
+            label: "Export Configuration"
+            description: "Saves the JSON files of ~/.config/lis to a .lisc file"
+            PanelButton {
+                text: "Export…"
+                enabled: !ConfigTransfer.busy
+                onClicked: ConfigTransfer.startExport()
+            }
+        }
+        SettingRow {
+            label: "Import Configuration"
+            description: ConfigTransfer.pending
+                ? "Replaces " + ConfigTransfer.pending.files.length + " files with the ones from " + ConfigTransfer.pending.host + ", " + ConfigTransfer.pending.created
+                : "Replaces them from a .lisc file and restarts the shell"
+            Row {
+                spacing: 6
+
+                PanelButton {
+                    visible: ConfigTransfer.pending !== null
+                    text: "Cancel"
+                    onClicked: ConfigTransfer.cancelImport()
+                }
+                PanelButton {
+                    text: ConfigTransfer.pending ? "Import" : "Import…"
+                    enabled: !ConfigTransfer.busy
+                    onClicked: ConfigTransfer.pending ? ConfigTransfer.confirmImport() : ConfigTransfer.startImport()
+                }
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
+            Layout.topMargin: 4
+            visible: ConfigTransfer.status !== ""
+            text: ConfigTransfer.status
+            textFormat: Text.PlainText
+            elide: Text.ElideMiddle
+            color: Theme.textDim
+            font.pixelSize: 12
+        }
+
+        Item { height: 16 }
     }
 }

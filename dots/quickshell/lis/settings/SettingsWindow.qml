@@ -12,7 +12,8 @@ PanelWindow {
 
     property bool shown: false
 
-    visible: shown
+    // Hidden while a file chooser is open
+    visible: shown && !ConfigTransfer.picking
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -41,6 +42,7 @@ PanelWindow {
         anchors.centerIn: parent
         width: 780
         height: 560
+        shown: settingsWindow.shown
         onCloseRequested: settingsWindow.shown = false
 
         layer.enabled: true

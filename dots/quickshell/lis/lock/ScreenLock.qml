@@ -202,37 +202,61 @@ QtObject {
         }
     }
 
-    // Only unmuted on unlock if the lock muted it
+    // Only unmuted on unlock if the lock muted them
     property bool _micMutedByLock: false
+    property bool _speakerMutedByLock: false
 
-    property PwObjectTracker _micTracker: PwObjectTracker {
-        objects: [Pipewire.defaultAudioSource]
+    property PwObjectTracker _audioTracker: PwObjectTracker {
+        objects: [Pipewire.defaultAudioSource, Pipewire.defaultAudioSink]
     }
 
-    // Re-mute whenever the mic comes back unmuted while locked (Pipewire can undo it at startup)
+    // Re-mute whenever one comes back unmuted while locked (Pipewire can undo it at startup)
     property bool _micReady: Pipewire.defaultAudioSource?.ready ?? false
-    on_MicReadyChanged: root._muteMic()
+    on_MicReadyChanged: root._muteAudio()
+    property bool _speakerReady: Pipewire.defaultAudioSink?.ready ?? false
+    on_SpeakerReadyChanged: root._muteAudio()
 
     property Connections _micWatcher: Connections {
         target: Pipewire.defaultAudioSource?.audio ?? null
         function onMutedChanged() {
-            root._muteMic()
+            root._muteAudio()
         }
     }
 
-    function _muteMic() {
-        const audio = Pipewire.defaultAudioSource?.audio
-        if (!root.isLocked || !SettingsData.s.lockScreen.muteMicOnLock
-                || !root._micReady || !audio || audio.muted) return
-        audio.muted = true
-        root._micMutedByLock = true
+    property Connections _speakerWatcher: Connections {
+        target: Pipewire.defaultAudioSink?.audio ?? null
+        function onMutedChanged() {
+            root._muteAudio()
+        }
     }
 
-    function _restoreMic() {
-        if (!root._micMutedByLock) return
-        root._micMutedByLock = false
-        const audio = Pipewire.defaultAudioSource?.audio
-        if (audio) audio.muted = false
+    function _muteAudio() {
+        if (!root.isLocked) return
+
+        const mic = Pipewire.defaultAudioSource?.audio
+        if (SettingsData.s.lockScreen.muteMicOnLock && root._micReady && mic && !mic.muted) {
+            mic.muted = true
+            root._micMutedByLock = true
+        }
+
+        const speaker = Pipewire.defaultAudioSink?.audio
+        if (SettingsData.s.lockScreen.muteSpeakerOnLock && root._speakerReady && speaker && !speaker.muted) {
+            speaker.muted = true
+            root._speakerMutedByLock = true
+        }
+    }
+
+    function _restoreAudio() {
+        if (root._micMutedByLock) {
+            root._micMutedByLock = false
+            const mic = Pipewire.defaultAudioSource?.audio
+            if (mic) mic.muted = false
+        }
+        if (root._speakerMutedByLock) {
+            root._speakerMutedByLock = false
+            const speaker = Pipewire.defaultAudioSink?.audio
+            if (speaker) speaker.muted = false
+        }
     }
 
     // At boot the lock starts hyprpaper once it covers every screen, so no wallpaper shows first
@@ -263,7 +287,7 @@ QtObject {
         if (root.isLocked || _wlLock.locked) return
         root._init()
         root.isLocked = true
-        root._muteMic()
+        root._muteAudio()
 
         // Picks up runtime wallpaper changes; the known blur shows meanwhile
         if (SettingsData.s.lockScreen.enableBlur) {
@@ -284,7 +308,7 @@ QtObject {
     function _unlock() {
         _wlLock.locked = false
         root.isLocked = false
-        root._restoreMic()
+        root._restoreAudio()
 
         Qt.callLater(root._focusFirstHorizontalMonitor)
 
@@ -328,7 +352,7 @@ QtObject {
             if (!locked && root.isLocked) {
                 // The compositor ended the lock (another client, or a race); keep isLocked in sync
                 root.isLocked = false
-                root._restoreMic()
+                root._restoreAudio()
                 root.lockedChanged()
             }
         }

@@ -6,203 +6,262 @@ import qs.settings.components
 import qs.settings.data
 import qs.settings
 import qs.common
+import qs.tools
 
-ScrollView {
+// The preview stays above the list, so every change shows in it
+Item {
     id: root
-    clip: true
-    contentWidth: availableWidth
 
-    ColumnLayout {
-        width: root.availableWidth
-        spacing: 0
+    // What SettingsPanel's PgUp/PgDn scroll
+    readonly property Item contentItem: scroll.contentItem
 
-        Item { height: 16 }
-        SectionHeader { title: "Layout" }
+    // The StackLayout sizes from its pages' implicit size
+    implicitWidth: scroll.implicitWidth
+    implicitHeight: scroll.implicitHeight + preview.height + 36
 
-        SettingRow {
-            label: "Bar Position"
-            description: "Edge of the screen the bar docks to"
-            ChipSelector {
-                options: ["top", "bottom"]
-                value: SettingsData.s.bar.position
-                onSelected: v => SettingsData.s.bar.position = v
-            }
-        }
+    Loader {
+        id: preview
 
-        Item { height: 8 }
-        SectionHeader { title: "Workspace" }
+        // Under the panel's close button
+        anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 28; leftMargin: 16; rightMargin: 16 }
+        height: 72
+        active: root.visible && (QsWindow.window?.visible ?? false)
 
-        SettingRow {
-            label: "Workspace Numbers"
-            description: "Default for every screen"
-            IntSlider {
-                from: 5; to: 30; stepSize: 1
-                value: SettingsData.s.bar.workspaceNumbers
-                onChanged: v => SettingsData.s.bar.workspaceNumbers = v
-            }
-        }
+        sourceComponent: BarPreview {}
+    }
 
-        // A screen set to the default keeps following it
-        Repeater {
-            model: Quickshell.screens
+    ScrollView {
+        id: scroll
+
+        anchors { top: preview.bottom; left: parent.left; right: parent.right; bottom: parent.bottom; topMargin: 8 }
+        clip: true
+        contentWidth: availableWidth
+
+        ColumnLayout {
+            width: scroll.availableWidth
+            spacing: 0
+
+            SectionHeader { title: "Layout" }
 
             SettingRow {
-                id: screenRow
+                label: "Bar Position"
+                description: "Edge of the screen the bar docks to"
+                ChipSelector {
+                    options: ["top", "bottom"]
+                    value: SettingsData.s.bar.position
+                    onSelected: v => SettingsData.s.bar.position = v
+                }
+            }
 
-                required property var modelData
-                readonly property int count: SettingsData.s.bar.workspaceNumbersPerMonitor[modelData.name] ?? SettingsData.s.bar.workspaceNumbers
+            Item { height: 8 }
+            SectionHeader { title: "Workspace" }
 
-                Layout.leftMargin: 16
-                label: modelData.name
+            SettingRow {
+                label: "Workspace Numbers"
+                description: "Default for every screen"
                 IntSlider {
-                    id: screenSlider
                     from: 5; to: 30; stepSize: 1
-                    value: screenRow.count
-                    onChanged: v => {
-                        const counts = Object.assign({}, SettingsData.s.bar.workspaceNumbersPerMonitor)
-                        if (v === SettingsData.s.bar.workspaceNumbers) delete counts[screenRow.modelData.name]
-                        else counts[screenRow.modelData.name] = v
-                        SettingsData.s.bar.workspaceNumbersPerMonitor = counts
-                        // Dragging replaced the binding
-                        screenSlider.value = Qt.binding(() => screenRow.count)
+                    value: SettingsData.s.bar.workspaceNumbers
+                    onChanged: v => SettingsData.s.bar.workspaceNumbers = v
+                }
+            }
+
+            // A screen set to the default keeps following it
+            Repeater {
+                model: Quickshell.screens
+
+                SettingRow {
+                    id: screenRow
+
+                    required property var modelData
+                    readonly property int count: SettingsData.s.bar.workspaceNumbersPerMonitor[modelData.name] ?? SettingsData.s.bar.workspaceNumbers
+
+                    Layout.leftMargin: 16
+                    label: modelData.name
+                    IntSlider {
+                        id: screenSlider
+                        from: 5; to: 30; stepSize: 1
+                        value: screenRow.count
+                        onChanged: v => {
+                            const counts = Object.assign({}, SettingsData.s.bar.workspaceNumbersPerMonitor)
+                            if (v === SettingsData.s.bar.workspaceNumbers) delete counts[screenRow.modelData.name]
+                            else counts[screenRow.modelData.name] = v
+                            SettingsData.s.bar.workspaceNumbersPerMonitor = counts
+                            // Dragging replaced the binding
+                            screenSlider.value = Qt.binding(() => screenRow.count)
+                        }
                     }
                 }
             }
-        }
 
-        SettingRow {
-            label: "Workspace Style"
-            description: "Dots or numbers on the bar"
-            ChipSelector {
-                options: ["numbers", "dots"]
-                value: SettingsData.s.bar.workspaceStyle
-                onSelected: v => SettingsData.s.bar.workspaceStyle = v
+            SettingRow {
+                label: "Start Workspace"
+                description: "The workspace each screen opens on when Hyprland starts"
             }
-        }
 
-        SettingRow {
-            label: "Only Accessible Workspaces"
-            description: "Show only this screen's workspaces, hiding ones owned by other screens"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.onlyAccessibleWorkspaces
-                onToggled: v => SettingsData.s.bar.onlyAccessibleWorkspaces = v
-            }
-        }
+            // A screen set to its block's first keeps following it
+            Repeater {
+                model: Quickshell.screens
 
-        Item { height: 8 }
-        SectionHeader { title: "Modules" }
+                SettingRow {
+                    id: startRow
 
-        SettingRow {
-            label: "Show Clock And Date"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showClockAndDate
-                onToggled: v => SettingsData.s.bar.showClockAndDate = v
-            }
-        }
-        SettingRow {
-            label: "Show Clock Only"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showClockOnly
-                onToggled: v => SettingsData.s.bar.showClockOnly = v
-            }
-        }
-        SettingRow {
-            label: "Show Color Picker"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showColorPicker
-                onToggled: v => SettingsData.s.bar.showColorPicker = v
-            }
-        }
-        SettingRow {
-            label: "Show Screenshot"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showScreenshot
-                onToggled: v => SettingsData.s.bar.showScreenshot = v
-            }
-        }
-        SettingRow {
-            label: "Show Game Mode"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showGameMode
-                onToggled: v => SettingsData.s.bar.showGameMode = v
-            }
-        }
-        SettingRow {
-            label: "Show Bluetooth"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showBluetooth
-                onToggled: v => SettingsData.s.bar.showBluetooth = v
-            }
-        }
-        SettingRow {
-            label: "Show Network"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.showNetwork
-                onToggled: v => SettingsData.s.bar.showNetwork = v
-            }
-        }
+                    required property var modelData
+                    readonly property int start: WorkspaceBlocks.startOf(modelData.name)
 
-        Item { height: 8 }
-        SectionHeader { title: "Colors" }
-
-        SettingRow {
-            label: "Pill Color"
-            description: "Background of the bar's pills in " + (Theme.light ? "light" : "dark") + " mode"
-            ColorPicker {
-                value: Theme.light ? SettingsData.s.bar.pillColorLight : SettingsData.s.bar.pillColor
-                defaultValue: Theme.light ? "#c3f5f5f5" : "#c30f0f0f"
-                onSelected: v => {
-                    if (Theme.light) SettingsData.s.bar.pillColorLight = v
-                    else SettingsData.s.bar.pillColor = v
+                    Layout.leftMargin: 16
+                    label: modelData.name
+                    IntSlider {
+                        id: startSlider
+                        from: 1; to: 50; stepSize: 1
+                        value: startRow.start
+                        onChanged: v => {
+                            const name = startRow.modelData.name
+                            const starts = Object.assign({}, SettingsData.s.bar.startWorkspacePerMonitor)
+                            if (v === WorkspaceBlocks.firstOf(name)) delete starts[name]
+                            else starts[name] = v
+                            SettingsData.s.bar.startWorkspacePerMonitor = starts
+                            // Dragging replaced the binding
+                            startSlider.value = Qt.binding(() => startRow.start)
+                        }
+                    }
                 }
             }
-        }
-        SettingRow {
-            label: "Pill Border"
-            description: "Border width around the bar's pills, 0 for none"
-            IntSlider {
-                from: 0; to: 4; stepSize: 1; suffix: "px"
-                value: SettingsData.s.bar.pillBorderWidth
-                onChanged: v => SettingsData.s.bar.pillBorderWidth = v
-            }
-        }
-        SettingRow {
-            label: "Border Color"
-            description: "Color of the pills' border in " + (Theme.light ? "light" : "dark") + " mode"
-            ColorPicker {
-                value: Theme.light ? SettingsData.s.bar.pillBorderColorLight : SettingsData.s.bar.pillBorderColor
-                defaultValue: Theme.light ? "#26000000" : "#26ffffff"
-                onSelected: v => {
-                    if (Theme.light) SettingsData.s.bar.pillBorderColorLight = v
-                    else SettingsData.s.bar.pillBorderColor = v
+
+            SettingRow {
+                label: "Workspace Style"
+                description: "Dots or numbers on the bar"
+                ChipSelector {
+                    options: ["numbers", "dots"]
+                    value: SettingsData.s.bar.workspaceStyle
+                    onSelected: v => SettingsData.s.bar.workspaceStyle = v
                 }
             }
-        }
-        SettingRow {
-            label: "Pill Blur"
-            description: "Blur what's behind the bar's pills"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.pillBlur
-                onToggled: v => SettingsData.s.bar.pillBlur = v
-            }
-        }
-        SettingRow {
-            label: "Tint Tray Icons"
-            description: "Colorize system tray icons with the accent color"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.trayIconTint
-                onToggled: v => SettingsData.s.bar.trayIconTint = v
-            }
-        }
-        SettingRow {
-            label: "Tint Workspace Icons"
-            description: "Colorize workspace app icons with the accent color"
-            ToggleSwitch {
-                checked: SettingsData.s.bar.workspaceIconTint
-                onToggled: v => SettingsData.s.bar.workspaceIconTint = v
-            }
-        }
 
-        Item { height: 16 }
+            SettingRow {
+                label: "Only Accessible Workspaces"
+                description: "Show only this screen's workspaces, hiding ones owned by other screens"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.onlyAccessibleWorkspaces
+                    onToggled: v => SettingsData.s.bar.onlyAccessibleWorkspaces = v
+                }
+            }
+
+            Item { height: 8 }
+            SectionHeader { title: "Modules" }
+
+            SettingRow {
+                label: "Show Clock And Date"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showClockAndDate
+                    onToggled: v => SettingsData.s.bar.showClockAndDate = v
+                }
+            }
+            SettingRow {
+                label: "Show Clock Only"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showClockOnly
+                    onToggled: v => SettingsData.s.bar.showClockOnly = v
+                }
+            }
+            SettingRow {
+                label: "Show Color Picker"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showColorPicker
+                    onToggled: v => SettingsData.s.bar.showColorPicker = v
+                }
+            }
+            SettingRow {
+                label: "Show Screenshot"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showScreenshot
+                    onToggled: v => SettingsData.s.bar.showScreenshot = v
+                }
+            }
+            SettingRow {
+                label: "Show Game Mode"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showGameMode
+                    onToggled: v => SettingsData.s.bar.showGameMode = v
+                }
+            }
+            SettingRow {
+                label: "Show Bluetooth"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showBluetooth
+                    onToggled: v => SettingsData.s.bar.showBluetooth = v
+                }
+            }
+            SettingRow {
+                label: "Show Network"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showNetwork
+                    onToggled: v => SettingsData.s.bar.showNetwork = v
+                }
+            }
+
+            Item { height: 8 }
+            SectionHeader { title: "Colors" }
+
+            SettingRow {
+                label: "Pill Color"
+                description: "Background of the bar's pills in " + (Theme.light ? "light" : "dark") + " mode"
+                ColorPicker {
+                    value: Theme.light ? SettingsData.s.bar.pillColorLight : SettingsData.s.bar.pillColor
+                    defaultValue: Theme.light ? "#c3f5f5f5" : "#c30f0f0f"
+                    onSelected: v => {
+                        if (Theme.light) SettingsData.s.bar.pillColorLight = v
+                        else SettingsData.s.bar.pillColor = v
+                    }
+                }
+            }
+            SettingRow {
+                label: "Pill Border"
+                description: "Border width around the bar's pills, 0 for none"
+                IntSlider {
+                    from: 0; to: 4; stepSize: 1; suffix: "px"
+                    value: SettingsData.s.bar.pillBorderWidth
+                    onChanged: v => SettingsData.s.bar.pillBorderWidth = v
+                }
+            }
+            SettingRow {
+                label: "Border Color"
+                description: "Color of the pills' border in " + (Theme.light ? "light" : "dark") + " mode"
+                ColorPicker {
+                    value: Theme.light ? SettingsData.s.bar.pillBorderColorLight : SettingsData.s.bar.pillBorderColor
+                    defaultValue: Theme.light ? "#26000000" : "#26ffffff"
+                    onSelected: v => {
+                        if (Theme.light) SettingsData.s.bar.pillBorderColorLight = v
+                        else SettingsData.s.bar.pillBorderColor = v
+                    }
+                }
+            }
+            SettingRow {
+                label: "Pill Blur"
+                description: "Blur what's behind the bar's pills"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.pillBlur
+                    onToggled: v => SettingsData.s.bar.pillBlur = v
+                }
+            }
+            SettingRow {
+                label: "Tint Tray Icons"
+                description: "Colorize system tray icons with the accent color"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.trayIconTint
+                    onToggled: v => SettingsData.s.bar.trayIconTint = v
+                }
+            }
+            SettingRow {
+                label: "Tint Workspace Icons"
+                description: "Colorize workspace app icons with the accent color"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.workspaceIconTint
+                    onToggled: v => SettingsData.s.bar.workspaceIconTint = v
+                }
+            }
+
+            Item { height: 16 }
+        }
     }
 }

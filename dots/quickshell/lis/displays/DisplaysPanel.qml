@@ -3,6 +3,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import qs.brightness
 import qs.common
 import qs.settings.components
 
@@ -74,6 +75,11 @@ PanelFrame {
         root.monitors = monitors
         root.appliedState = JSON.stringify(monitors)
         if (root.selected >= monitors.length) root.selected = 0
+        root.refreshBrightness()
+    }
+
+    function refreshBrightness(): void {
+        if (root.current?.enabled) BrightnessService.device(root.current.name)?.refresh()
     }
 
     // The mode divided by the scale, turned by rotation
@@ -307,7 +313,10 @@ PanelFrame {
     }
 
     onShownChanged: if (shown && !confirming) load()
-    onSelectedChanged: wallpaperError = ""
+    onSelectedChanged: {
+        root.wallpaperError = ""
+        root.refreshBrightness()
+    }
 
     title: "Displays"
     subtitle: monitors.length + (monitors.length === 1 ? " display" : " displays")
@@ -668,6 +677,33 @@ done
                 visible: root.current !== null && root.current.enabled
                 Layout.fillWidth: true
                 spacing: 14
+
+                // Applied right away, not with Apply
+                RowLayout {
+                    id: brightnessRow
+
+                    readonly property var device: root.current ? BrightnessService.device(root.current.name) : null
+
+                    visible: brightnessRow.device?.ready ?? false
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    SettingLabel { text: "Brightness" }
+
+                    PanelSlider {
+                        Layout.fillWidth: true
+                        value: brightnessRow.device?.brightness ?? 0
+                        onMoved: v => brightnessRow.device?.setBrightness(v)
+                    }
+
+                    Text {
+                        text: Math.round((brightnessRow.device?.brightness ?? 0) * 100) + "%"
+                        color: Theme.adapt("#999999")
+                        font.pixelSize: 12
+                        Layout.preferredWidth: 36
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
 
                 SettingLabel { text: "Resolution" }
 

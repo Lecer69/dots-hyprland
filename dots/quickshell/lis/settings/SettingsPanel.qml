@@ -10,7 +10,50 @@ Rectangle {
     id: root
     // Up/Down switch pages from here
     readonly property Item initialFocus: nav
+    property bool shown: false
     signal closeRequested
+
+    onShownChanged: {
+        if (!root.shown)
+            search.text = ""
+    }
+
+    // Empties the search, with the keyboard back on the pages
+    function cancelSearch(): void {
+        nav.forceActiveFocus()
+        search.text = ""
+    }
+
+    // Focusing a row's control lights it and brings it into view
+    function openResult(page: int, row: Item): void {
+        pager.currentIndex = page
+        search.text = ""
+        nav.forceActiveFocus()
+        jump.row = row
+        jump.restart()
+    }
+
+    Timer {
+        id: jump
+
+        property Item row: null
+
+        // The page is laid out by then
+        interval: 30
+        onTriggered: {
+            const control = jump.row?.activeFocusOnTab ? jump.row : jump.row?.nextItemInFocusChain(true)
+            let parent = control
+            for (let i = 0; parent && parent !== jump.row && i < 100; i++)
+                parent = parent.parent
+            if (parent === jump.row)
+                control.forceActiveFocus(Qt.TabFocusReason)
+        }
+    }
+
+    Shortcut {
+        sequences: ["Ctrl+F"]
+        onActivated: search.forceActiveFocus()
+    }
 
     radius: 12
     color: Theme.panel
@@ -54,8 +97,8 @@ Rectangle {
             id: nav
 
             // Pager order; the bottom pages follow the top ones
-            readonly property var topPages: ["General", "Bar", "Lock", "Idle", "osu!"]
-            readonly property var bottomPages: ["Cleanup", "Dots Updater"]
+            readonly property var topPages: ["System", "General", "Bar", "Lock", "Idle", "Devices", "Phone Sync", "osu!"]
+            readonly property var bottomPages: ["Storage", "Dots Updater"]
 
             function shift(direction: int): void {
                 const count = nav.topPages.length + nav.bottomPages.length
@@ -65,8 +108,17 @@ Rectangle {
             activeFocusOnTab: true
             Keys.onUpPressed: nav.shift(-1)
             Keys.onDownPressed: nav.shift(1)
+            // Typing starts a search
+            Keys.onPressed: event => {
+                if (event.text.trim() !== "" && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
+                    search.text += event.text
+                    search.forceActiveFocus()
+                    event.accepted = true
+                }
+            }
 
             Layout.preferredWidth: 160
+            Layout.fillWidth: false
             Layout.fillHeight: true
             spacing: 2
 
@@ -76,7 +128,46 @@ Rectangle {
                 color: Theme.adapt("#ffffff")
                 Layout.leftMargin: 10
                 Layout.topMargin: 8
-                Layout.bottomMargin: 16
+                Layout.bottomMargin: 14
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.bottomMargin: 12
+                implicitHeight: 32
+                radius: 6
+                color: Theme.hover
+
+                TextInput {
+                    id: search
+
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.text
+                    selectionColor: Theme.adapt("#333333")
+                    selectedTextColor: Theme.adapt("#ffffff")
+                    font.pixelSize: 13
+                    clip: true
+                    selectByMouse: true
+                    activeFocusOnTab: true
+
+                    // Escape empties it first, then closes the panel
+                    Keys.onShortcutOverride: event => event.accepted = event.key === Qt.Key_Escape && search.text !== ""
+                    Keys.onEscapePressed: root.cancelSearch()
+                    Keys.onDownPressed: results.searching ? results.focusFirst() : nav.forceActiveFocus()
+                    Keys.onReturnPressed: results.chooseFirst()
+                    Keys.onEnterPressed: results.chooseFirst()
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: search.text.length === 0
+                        text: "Search"
+                        color: Theme.textDim
+                        font.pixelSize: 13
+                    }
+                }
             }
 
             Repeater {
@@ -124,15 +215,35 @@ Rectangle {
             id: pager
             Layout.fillWidth: true
             Layout.fillHeight: true
+            visible: !results.searching
             currentIndex: 0
 
+            SystemPage {}
             GeneralPage {}
             BarPage {}
             LockPage {}
             IdlePage {}
+            DevicesPage {}
+            PhonePage {}
             OsuPage {}
-            CleanupPage {}
+            StoragePage {}
             DotsUpdaterPage {}
+        }
+
+        SearchResults {
+            id: results
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: results.searching
+            pager: pager
+            pageNames: nav.topPages.concat(nav.bottomPages)
+            query: search.text
+            onChosen: (page, row) => root.openResult(page, row)
+            onCancelled: {
+                search.forceActiveFocus()
+                search.text = ""
+            }
         }
     }
 

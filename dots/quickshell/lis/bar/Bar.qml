@@ -32,7 +32,8 @@ PanelWindow {
     property int pageSize: SettingsData.s.bar.workspaceNumbersPerMonitor[bar.screen?.name] ?? SettingsData.s.bar.workspaceNumbers
     property var monitor: Hyprland.monitorFor(bar.screen)
     property int currentWs: monitor?.activeWorkspace?.id ?? 1
-    property int startWs: Math.floor((currentWs - 1) / pageSize) * pageSize + 1
+    readonly property int blockFirst: WorkspaceBlocks.firstOf(bar.screen?.name ?? "")
+    property int startWs: WorkspaceBlocks.pageOf(bar.screen?.name ?? "", currentWs, pageSize)
 
     readonly property bool onlyAccessibleWorkspaces: SettingsData.s.bar.onlyAccessibleWorkspaces
     readonly property string monitorName: bar.monitor?.name ?? ""
@@ -63,7 +64,7 @@ PanelWindow {
         if (ws >= bar.pageStart && bar.rowFrom(bar.pageStart, ws).includes(ws))
             return
 
-        let start = 1
+        let start = ws >= bar.blockFirst ? bar.blockFirst : 1
         for (let i = 0; i < 1000; ++i) {
             const row = bar.rowFrom(start, ws)
             if (row.length === 0 || row.includes(ws))

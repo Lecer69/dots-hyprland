@@ -75,6 +75,8 @@ Singleton {
                 property int workspaceNumbers: 10
                 // Screen name -> its own workspace count; others use workspaceNumbers
                 property var workspaceNumbersPerMonitor: ({})
+                // Screen name -> the workspace it opens on when Hyprland starts; others use their block's first
+                property var startWorkspacePerMonitor: ({})
                 property string workspaceStyle: "numbers"
                 property bool onlyAccessibleWorkspaces: false
                 property bool trayIconTint: true
@@ -102,9 +104,19 @@ Singleton {
                 property real brightness: 0.8
                 property bool blockVerticalScreens: false
                 property bool muteMicOnLock: true
+                property bool muteSpeakerOnLock: true
            }
 
             // Minutes
+            property JsonObject phone: JsonObject {
+                property bool enabled: false
+            }
+
+            property JsonObject devices: JsonObject {
+                // Only what was changed in Settings > Devices: "input.sensitivity" -> value
+                property var overrides: ({})
+            }
+
             property JsonObject hypridle: JsonObject {
                 property int lockTimeout: 5
                 property int screenOffTimeout: 10

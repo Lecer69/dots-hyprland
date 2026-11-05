@@ -286,7 +286,7 @@ Item {
             }
 
             SettingRow {
-                visible: root.info !== null
+                available: root.info !== null
                 label: "Installed"
                 description: root.installed === null ? "The installed files don't match a commit"
                     : (root.installed.differs > 0 ? root.installed.differs + (root.installed.differs === 1 ? " file" : " files") + " edited locally · " : "")
@@ -297,7 +297,7 @@ Item {
                 }
             }
             SettingRow {
-                visible: root.info !== null
+                available: root.info !== null
                 label: "Latest"
                 description: root.latest !== null ? root.ago(root.latest.time) + " · " + root.latest.subject : ""
                 CommitLink {

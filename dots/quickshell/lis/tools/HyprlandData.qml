@@ -105,6 +105,13 @@ Singleton {
             Hyprland.dispatch("workspace " + index)
     }
 
+    function dispatchWorkspaceOnCurrentMonitor(index) {
+        if (root.isLuaConfig)
+            Hyprland.dispatch('hl.dsp.focus({ workspace = "' + index + '", on_current_monitor = true })')
+        else
+            Hyprland.dispatch("focusworkspaceoncurrentmonitor " + index)
+    }
+
     function dispatchFocusMonitor(monitor) {
         if (root.isLuaConfig)
             Hyprland.dispatch('hl.dsp.focus({ monitor = "' + monitor + '" })')

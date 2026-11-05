@@ -77,6 +77,14 @@ Scope {
         },
         QtObject {
             property string section: "Devices"
+            property string label: "Phone"
+            property string icon: "../icons/phone.svg"
+            property var action: () => {
+                return phoneWindow.shown = true;
+            }
+        },
+        QtObject {
+            property string section: "Devices"
             property string label: "Bluetooth"
             property string icon: "../icons/bluetooth.svg"
             property var action: () => {

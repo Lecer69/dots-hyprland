@@ -33,27 +33,35 @@ import qs.desktop
 import qs.notes
 import qs.goals
 import qs.screenshot
+import qs.leftsidebar
+import qs.phone
 
 ShellRoot {
     id: root
 
-    property bool startupMode: Quickshell.env("ON_HYPRSTART") === "true"
+    // Kept across hot reloads, which would otherwise lock the screen again
+    PersistentProperties {
+        reloadableId: "bootLock"
+
+        property bool done: false
+
+        onLoaded: {
+            if (!done && Quickshell.env("ON_HYPRSTART") === "true") {
+                done = true
+                screenLock.lockAtBoot()
+                WorkspaceBlocks.focusStartWorkspaces()
+            }
+        }
+    }
 
     Connections {
         target: Quickshell
         function onReloadCompleted() {
             console.log("[shell] reload completed")
-            startupMode = false
         }
     }
 
-    Component.onCompleted: {
-        console.log("[shell] ShellRoot completed")
-        if (root.startupMode) {
-            screenLock.lockAtBoot()
-            root.startupMode = false
-        }
-    }
+    Component.onCompleted: console.log("[shell] ShellRoot completed")
 
     property ScreenLock screenLock: ScreenLock {
         Component.onCompleted: console.log("[shell] ScreenLock completed")
@@ -135,6 +143,12 @@ ShellRoot {
         Component.onCompleted: console.log("[shell] DisplaysWindow completed")
     }
 
+    PhoneWindow {
+        id: phoneWindow
+        onSettingsRequested: settingsWindow.shown = true
+        Component.onCompleted: console.log("[shell] PhoneWindow completed")
+    }
+
     TodoWindow {
         id: todoWindow
         Component.onCompleted: console.log("[shell] TodoWindow completed")
@@ -167,6 +181,12 @@ ShellRoot {
     SidebarMenu {
         id: sidebarMenu
         Component.onCompleted: console.log("[shell] SidebarMenu completed")
+    }
+
+    LeftSidebarWindow {
+        id: leftSidebar
+        onTodoRequested: todoWindow.shown = true
+        Component.onCompleted: console.log("[shell] LeftSidebarWindow completed")
     }
 
     BarBlur {
@@ -209,7 +229,8 @@ ShellRoot {
 
             property var bar: Bar {
                 screen: modelData
-                visible: !screenLock.isLocked && BarState.barShown
+                // Stays mapped while locked: Hyprland puts a newly mapped top layer above a fullscreen window
+                visible: BarState.barShown
                 sidebarOpen: sidebarMenu.isOpen && sidebarMenu.screen === modelData
                 onSidebarRequested: sidebarMenu.toggle(modelData)
                 Component.onCompleted: console.log("[shell] Bar completed")
@@ -239,6 +260,7 @@ ShellRoot {
                 sourceComponent: Component {
                     BrightnessHoverBar {
                         screen: modelData
+                        onClicked: leftSidebar.toggle(modelData)
                     }
                 }
             }

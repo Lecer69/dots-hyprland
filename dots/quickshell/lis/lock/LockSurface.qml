@@ -60,7 +60,6 @@ Item {
             }
         }
 
-        // Cached small, so a synchronous load costs ~1 ms and avoids an empty first frame
         Image {
             id: wallpaperImage
             anchors.fill: parent

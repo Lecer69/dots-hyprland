@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-# Prints the image picked in the portal's file chooser; exit 1 is cancelled, 2 an error
+# Prints the image picked in the portal's file chooser
+# After the title: "any" for any file, a pattern like "*.lisc", or "save:<name>" to pick where to save
+# Exit 1 is cancelled, 2 an error
 # The call and its answer share one D-Bus connection, or the portal closes the dialog
 
 import os
@@ -47,18 +49,26 @@ def main():
     expected = "%s/request/%s/%s" % (PORTAL_PATH, sender, token)
     subscribe(expected)
 
+    mode = sys.argv[2] if len(sys.argv) > 2 else ""
+    method = "OpenFile"
     image_types = ["image/png", "image/jpeg", "image/webp", "image/jxl", "image/bmp"]
     options = {
         "handle_token": GLib.Variant("s", token),
         "modal": GLib.Variant("b", True),
-        "filters": GLib.Variant("a(sa(us))", [("Images", [(1, t) for t in image_types])]),
     }
-    pictures = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
-    if pictures and os.path.isdir(pictures):
-        options["current_folder"] = GLib.Variant("ay", pictures.encode() + b"\0")
+    if mode.startswith("save:"):
+        method = "SaveFile"
+        options["current_name"] = GLib.Variant("s", mode[len("save:"):])
+    elif mode.startswith("*."):
+        options["filters"] = GLib.Variant("a(sa(us))", [(mode, [(0, mode)])])
+    elif mode != "any":
+        options["filters"] = GLib.Variant("a(sa(us))", [("Images", [(1, t) for t in image_types])])
+        pictures = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
+        if pictures and os.path.isdir(pictures):
+            options["current_folder"] = GLib.Variant("ay", pictures.encode() + b"\0")
 
     try:
-        reply = bus.call_sync(PORTAL, PORTAL_PATH, "org.freedesktop.portal.FileChooser", "OpenFile",
+        reply = bus.call_sync(PORTAL, PORTAL_PATH, "org.freedesktop.portal.FileChooser", method,
                               GLib.Variant("(ssa{sv})", ("", title, options)), GLib.VariantType("(o)"),
                               Gio.DBusCallFlags.NONE, -1, None)
     except GLib.Error as e:

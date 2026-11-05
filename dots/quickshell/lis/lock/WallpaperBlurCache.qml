@@ -26,12 +26,11 @@ if [ -s "$out" ] && [ "\${old%:*}" = "$src" ]; then
     echo "READY $old"; exit 0
 fi
 mkdir -p "$dir"
-# Stored downscaled by f with sigma/f: looks identical once the GPU scales
-# it back up (the blur removed the detail anyway), but is ~f^3 cheaper to
-# blur and ~f^2 cheaper to decode on every lock
+# Stored downscaled by f with sigma/f, cheaper to blur and decode on every
+# lock; past 1/2 the GPU upscale shows JPEG blocks in dark gradients
 read -r pct sig <<< "$(awk -v r="$bsize" -v p="$bpasses" 'BEGIN{
     sig=(r/2.0)*sqrt(p); if (sig<0.3) sig=0.3
-    f=int(sig/3); if (f<1) f=1; if (f>4) f=4
+    f=int(sig/3); if (f<1) f=1; if (f>2) f=2
     printf "%d %.2f", 100/f, sig/f }')"
 # magick = ImageMagick 7, convert = ImageMagick 6 (Debian/Ubuntu/Fedora)
 if command -v magick >/dev/null 2>&1; then
@@ -40,7 +39,7 @@ else
     blurcmd="convert"
 fi
 tmp="$out.$$"
-"$blurcmd" "$wp" -auto-orient -resize "$pct%" -blur "0x$sig" -strip -quality 92 "jpg:$tmp" 2>/dev/null \
+"$blurcmd" "$wp" -auto-orient -resize "$pct%" -blur "0x$sig" -strip -quality 95 -sampling-factor 1x1 "jpg:$tmp" 2>/dev/null \
     || { rm -f "$tmp"; echo "ERR magick"; exit 0; }
 mv -f "$tmp" "$out"
 new="$src:\${EPOCHREALTIME/[.,]/}"
@@ -49,7 +48,7 @@ echo "READY $new"
 `
 
     function nameFor(wallpaperPath, blurSize, blurPasses) {
-        return Qt.md5(wallpaperPath + "|v4|" + blurSize + "|" + blurPasses)
+        return Qt.md5(wallpaperPath + "|v5|" + blurSize + "|" + blurPasses)
     }
 
     function _setUrl(name, stamp) {

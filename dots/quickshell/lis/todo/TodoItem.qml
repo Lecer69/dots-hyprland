@@ -21,6 +21,8 @@ Rectangle {
     signal dragStarted(point p)
     signal dragMoved(point p)
     signal dragEnded()
+    // p in this item
+    signal menuRequested(point p, bool keyboard)
 
     readonly property real band: 44
     readonly property real textBottom: description.visible ? description.y + description.height
@@ -74,6 +76,18 @@ Rectangle {
         if (!KeyNav.step(root, true) && !KeyNav.step(root, false) && root.above)
             root.above.forceActiveFocus()
         TodoService.removeTask(id)
+    }
+    Keys.onMenuPressed: root.menuRequested(Qt.point(label.x, root.band), true)
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_F10 && (event.modifiers & Qt.ShiftModifier)) {
+            root.menuRequested(Qt.point(label.x, root.band), true)
+            event.accepted = true
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: point => root.menuRequested(point.position, false)
     }
 
     FontMetrics {

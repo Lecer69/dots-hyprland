@@ -23,6 +23,8 @@ Item {
     // Runs cleanup-root.sh beside it through pkexec
     readonly property string script: Quickshell.env("HOME") + "/.config/hypr/hyprland/scripts/cleanup.sh"
 
+    // { mount, used, free } in bytes
+    property var disks: []
     // By item: {bytes, count}
     property var sizes: ({})
     property var scanningItems: []
@@ -48,6 +50,7 @@ Item {
     onOpenChanged: if (open) scan([])
 
     function scan(items) {
+        diskReader.running = true
         if (scanner.running) {
             root.rescanAll = true
             return
@@ -81,6 +84,28 @@ Item {
         cleaner.freed = root.cleanableBytes
         cleaner.command = ["bash", root.script, "clean", String(root.keep)].concat(root.cleanable)
         cleaner.running = true
+    }
+
+    // Real disks only, each once: btrfs subvolumes and bind mounts share a source
+    Process {
+        id: diskReader
+
+        command: ["df", "-B1", "--output=source,used,avail,target"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const seen = {}
+                const disks = []
+                for (const line of text.split("\n")) {
+                    const m = /^(\/dev\/\S+)\s+(\d+)\s+(\d+)\s+(.+)$/.exec(line.trim())
+                    if (!m || seen[m[1]])
+                        continue
+                    seen[m[1]] = true
+                    disks.push({ mount: m[4], used: Number(m[2]), free: Number(m[3]) })
+                }
+                root.disks = disks
+            }
+        }
     }
 
     Process {
@@ -150,7 +175,35 @@ Item {
             spacing: 0
 
             Item { height: 16 }
-            SectionHeader { title: "System · asks for your password" }
+            SectionHeader { title: "Disks" }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                Layout.topMargin: 4
+                Layout.bottomMargin: 8
+                spacing: 14
+
+                // By count, so the meters stay as the figures change
+                Repeater {
+                    model: root.disks.length
+
+                    UsageMeter {
+                        required property int index
+                        readonly property var disk: root.disks[index] ?? ({})
+                        readonly property real total: (disk.used ?? 0) + (disk.free ?? 0)
+
+                        Layout.fillWidth: true
+                        label: disk.mount ?? ""
+                        value: total > 0 ? disk.used / total : 0
+                        valueText: Format.bytes(disk.used ?? 0) + " / " + Format.bytes(total) + " · " + Format.bytes(disk.free ?? 0) + " free"
+                    }
+                }
+            }
+
+            Item { height: 8 }
+            SectionHeader { title: "Clean Up System · asks for your password" }
 
             CheckRow {
                 label: "Pacman Cache"
@@ -182,7 +235,7 @@ Item {
             }
 
             Item { height: 16 }
-            SectionHeader { title: "Files" }
+            SectionHeader { title: "Clean Up Files" }
 
             CheckRow {
                 label: "AUR Build Cache"
