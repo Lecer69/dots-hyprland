@@ -116,6 +116,14 @@ Scope {
             }
         },
         QtObject {
+            property string section: "Games"
+            property string label: "Proton"
+            property string icon: "../icons/gamepad.svg"
+            property var action: () => {
+                return protonWindow.shown = true;
+            }
+        },
+        QtObject {
             property string section: "System"
             property string label: "Task Manager"
             property string icon: "../icons/taskmanager.svg"

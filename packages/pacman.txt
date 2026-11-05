@@ -97,3 +97,4 @@ ffmpeg                       # lis compress
 zip                          # backups and the updater
 unzip
 gamemode
+cava

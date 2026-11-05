@@ -35,6 +35,7 @@ import qs.goals
 import qs.screenshot
 import qs.leftsidebar
 import qs.phone
+import qs.proton
 
 ShellRoot {
     id: root
@@ -113,6 +114,10 @@ ShellRoot {
 
     TaskManagerWindow {
         id: taskManagerWindow
+    }
+
+    ProtonWindow {
+        id: protonWindow
     }
 
     DisplaysWindow {
