@@ -7,10 +7,10 @@ ColumnLayout {
     id: root
 
     property string appName: ""
-    property int seconds: 0
-    property int maxSeconds: 1
+    property real amount: 0
+    property real maxAmount: 1
     property bool isActive: false
-    property string timeLabel: "0s"
+    property string label: ""
     property string iconName: "application-x-executable"
     property bool _onScreen: root.visible && root.Window.window && root.Window.window.visible
 
@@ -107,7 +107,7 @@ ColumnLayout {
         }
 
         Text {
-            text: root.timeLabel
+            text: root.label
             color: Theme.adapt("#999999")
             font.pixelSize: 12
         }
@@ -129,7 +129,7 @@ ColumnLayout {
             anchors.bottom: parent.bottom
             radius: 1.5
             color: root.isActive ? Theme.text : Theme.adapt("#808080")
-            width: root.maxSeconds > 0 ? Math.max(5, parent.width * Math.min(root.seconds / root.maxSeconds, 1)) : 5
+            width: root.maxAmount > 0 ? Math.max(5, parent.width * Math.min(root.amount / root.maxAmount, 1)) : 5
 
             Behavior on width {
                 NumberAnimation {

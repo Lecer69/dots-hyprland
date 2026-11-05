@@ -10,10 +10,12 @@ Item {
     property bool isClipboard: false
     property bool isEmoji: false
     property bool isMath: false
+    property bool isSetting: false
     property bool highlighted: false
 
     signal entered()
     signal chosen()
+    signal removeRequested()
 
     // cliphist lines: "<id>\t<preview>"
     readonly property string clipLine: isClipboard && typeof entry === "string" ? entry : ""
@@ -77,7 +79,8 @@ Item {
         anchors {
             fill: parent
             leftMargin: 10
-            rightMargin: 10
+            // Room for the remove button
+            rightMargin: row.isClipboard ? 34 : 10
         }
         spacing: row.isImage ? 10 : 8
         opacity: row.appear
@@ -98,9 +101,13 @@ Item {
             Layout.alignment: Qt.AlignVCenter
         }
 
-        Image {
+        Icon {
             visible: !row.isClipboard && !row.isEmoji && !row.isMath
-            source: !row.isClipboard && (row.entry?.icon ?? "") !== "" ? "image://icon/" + row.entry.icon : ""
+            tint: row.isSetting
+            source: {
+                if (row.isSetting) return "../icons/settings.svg"
+                return !row.isClipboard && (row.entry?.icon ?? "") !== "" ? "image://icon/" + row.entry.icon : ""
+            }
             width: 18
             height: 18
             sourceSize.width: 18
@@ -192,6 +199,7 @@ Item {
             text: {
                 if (row.isMath) return row.entry.result
                 if (row.isEmoji) return row.emojiLine.slice(row.emoji.length + 1)
+                if (row.isSetting) return row.entry.label
                 if (!row.isClipboard) return row.entry?.name ?? ""
                 if (row.isImage) return "Image"
                 return ClipboardHistory.textOf(row.clipLine).slice(0, 120)
@@ -211,6 +219,7 @@ Item {
         Text {
             readonly property string info: {
                 if (row.isMath) return "Click to Copy"
+                if (row.isSetting) return row.entry.section !== "" ? row.entry.pageName + " · " + row.entry.section : row.entry.pageName
                 if (row.isImage) return row.imageInfo.width + "×" + row.imageInfo.height + " · " + row.imageInfo.size
                 if (!row.isClipboard && !row.isEmoji) return row.entry?.genericName ?? ""
                 return ""
@@ -232,5 +241,28 @@ Item {
 
         onEntered: row.entered()
         onClicked: row.chosen()
+    }
+
+    // Delete does the same from the keyboard
+    Text {
+        anchors.right: parent.right
+        anchors.rightMargin: 14
+        anchors.verticalCenter: parent.verticalCenter
+        visible: row.isClipboard
+        opacity: row.highlighted ? row.appear : 0
+        text: "✕"
+        font.pixelSize: 11
+        color: removeArea.containsMouse ? Theme.adapt("#dddddd") : Theme.adapt("#666666")
+
+        MouseArea {
+            id: removeArea
+
+            anchors.fill: parent
+            anchors.margins: -8
+            enabled: parent.opacity > 0
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: row.removeRequested()
+        }
     }
 }

@@ -13,7 +13,7 @@ QtObject {
     property string activeApp: ""
     property string todayKey: Qt.formatDate(new Date(), "yyyy-MM-dd")
     property var sessionTotals: ({})
-    property real currentSessionMB: 0
+    property real currentAmount: 0
     property var history: ({})
     property bool _loaded: false
     property int _tickSeconds: 0
@@ -182,7 +182,7 @@ QtObject {
         if (!enabled) {
             _netHogs.running = false;
             activeApp = "";
-            currentSessionMB = 0;
+            currentAmount = 0;
             _flush();
         } else if (_loaded) {
             interfaceWatcher.running = true;
@@ -201,7 +201,7 @@ QtObject {
         t[appName] = (t[appName] || 0) + mb;
         root.sessionTotals = t;
         root.activeApp = appName;
-        root.currentSessionMB = t[appName];
+        root.currentAmount = t[appName];
     }
 
     property Timer _ticker
@@ -302,7 +302,7 @@ QtObject {
         return out;
     }
 
-    function formatData(mb) {
+    function format(mb) {
         if (!mb || mb <= 0)
             return "0 MB";
 
@@ -318,11 +318,11 @@ QtObject {
         for (var k in totalsObj) if (totalsObj[k] > 0) {
             arr.push({
             "name": k,
-            "secs": totalsObj[k]
+            "amount": totalsObj[k]
         });
         }
         arr.sort(function(a, b) {
-            return b.secs - a.secs;
+            return b.amount - a.amount;
         });
         return arr;
     }

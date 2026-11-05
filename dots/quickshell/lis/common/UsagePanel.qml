@@ -8,6 +8,12 @@ import qs.common
 Rectangle {
     id: root
 
+    // WellbeingState or InternetUsageState, which keep tracking while this is closed
+    required property var tracker
+    property string title: ""
+    // Before the current app's name in the footer
+    property string currentLabel: ""
+
     // 0 today, 1 this week
     property int viewMode: 0
     readonly property Item initialFocus: viewTabs
@@ -25,10 +31,10 @@ Rectangle {
 
         return _daySortedCache[selectedDayKey] || [];
     }
-    property real currentMax: currentList.length > 0 ? currentList[0].secs : 1
-    property real totalMB: {
+    property real currentMax: currentList.length > 0 ? currentList[0].amount : 1
+    property real total: {
         var s = 0;
-        for (var i = 0; i < currentList.length; i++) s += currentList[i].secs
+        for (var i = 0; i < currentList.length; i++) s += currentList[i].amount
         return s;
     }
 
@@ -51,7 +57,7 @@ Rectangle {
             return c;
 
         c = {
-            "color": state.appColor(name),
+            "color": root.tracker.appColor(name),
             "iconName": root._guessIcon(name)
         };
         root._enrichCache[name] = c;
@@ -65,10 +71,10 @@ Rectangle {
             var stat = root._staticEnrich(item.name);
             out.push({
                 "name": item.name,
-                "secs": item.secs,
+                "amount": item.amount,
                 "color": stat.color,
-                "timeLabel": state.formatData(item.secs),
-                "isActive": item.name === state.activeApp,
+                "label": root.tracker.format(item.amount),
+                "isActive": item.name === root.tracker.activeApp,
                 "iconName": stat.iconName
             });
         }
@@ -80,30 +86,30 @@ Rectangle {
     property bool _daysDirty: true
 
     function _refreshDays() {
-        if (!state._loaded)
+        if (!root.tracker._loaded)
             return ;
 
-        root.weekDays = state.weekDays();
+        root.weekDays = root.tracker.weekDays();
         var cache = {};
         for (var i = 0; i < root.weekDays.length; i++) {
             var key = root.weekDays[i].key;
-            cache[key] = _enrich(state.sortedApps(state.dayTotals(key)));
+            cache[key] = _enrich(root.tracker.sortedApps(root.tracker.dayTotals(key)));
         }
         root._daySortedCache = cache;
         root._daysDirty = false;
     }
 
     function _refresh() {
-        if (!state._loaded)
+        if (!root.tracker._loaded)
             return ;
 
         if (root.viewMode === 0) {
-            _todaySorted = _enrich(state.sortedApps(state.todayTotals()));
+            _todaySorted = _enrich(root.tracker.sortedApps(root.tracker.todayTotals()));
             _todayDirty = false;
             _weekDirty = true; // week totals include today
             _daysDirty = true;
         } else {
-            _weekSorted = _enrich(state.sortedApps(state.weekTotals()));
+            _weekSorted = _enrich(root.tracker.sortedApps(root.tracker.weekTotals()));
             _weekDirty = false;
             _refreshDays();
         }
@@ -120,7 +126,7 @@ Rectangle {
     }
 
     onVisibleChanged: {
-        if (visible && state._loaded) {
+        if (visible && root.tracker._loaded) {
             if (viewMode === 0 && _todayDirty)
                 _refresh();
             else if (viewMode === 1 && (_weekDirty || _daysDirty))
@@ -136,7 +142,7 @@ Rectangle {
         try {
             return AppSearch.guessIcon(appClass);
         } catch (e) {
-            console.warn("[InternetUsage] no icon for " + appClass + ":", e);
+            console.warn("[usage] no icon for " + appClass + ":", e);
             return "application-x-executable";
         }
     }
@@ -147,10 +153,6 @@ Rectangle {
     border.color: Theme.border
     border.width: 1
 
-    InternetUsageState {
-        id: state
-    }
-
     Connections {
         function onTriggered() {
             if (root.visible)
@@ -159,16 +161,16 @@ Rectangle {
                 root._todayDirty = root._weekDirty = root._daysDirty = true; // rebuilt on next show
         }
 
-        target: state._ticker
+        target: root.tracker._ticker
     }
 
     Connections {
         function on_LoadedChanged() {
-            if (state._loaded)
+            if (root.tracker._loaded)
                 root._refresh();
         }
 
-        target: state
+        target: root.tracker
     }
 
     Item {
@@ -181,7 +183,7 @@ Rectangle {
             anchors.left: parent.left
             anchors.leftMargin: 24
             anchors.verticalCenter: parent.verticalCenter
-            text: "Internet Usage"
+            text: root.title
             font.pixelSize: 15
             font.weight: Font.DemiBold
             color: Theme.adapt("#ffffff")
@@ -347,8 +349,8 @@ Rectangle {
             }
 
             Text {
-                // formatData needs the state loaded
-                text: state._loaded ? (state.formatData(root.totalMB) + " total") : ""
+                // format needs the tracker loaded
+                text: root.tracker._loaded ? (root.tracker.format(root.total) + " total") : ""
                 color: Theme.textDim
                 font.pixelSize: 12
             }
@@ -361,7 +363,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 visible: root.currentList.length === 0
-                text: state._loaded ? "No usage recorded yet" : "Loading…"
+                text: root.tracker._loaded ? "No usage recorded yet" : "Loading…"
                 font.pixelSize: 13
                 color: Theme.textDim
             }
@@ -381,13 +383,13 @@ Rectangle {
                     Repeater {
                         model: root.currentList
 
-                        InternetUsageBar {
+                        UsageBar {
                             width: appColumn.width
                             appName: modelData.name
-                            megabytes: modelData.secs
-                            maxMegabytes: root.currentMax
+                            amount: modelData.amount
+                            maxAmount: root.currentMax
                             isActive: modelData.isActive
-                            dataLabel: modelData.timeLabel
+                            label: modelData.label
                             iconName: modelData.iconName
                         }
                     }
@@ -398,7 +400,7 @@ Rectangle {
         Item {
             Layout.fillWidth: true
             height: 28
-            visible: state.activeApp !== "" && state._loaded
+            visible: root.tracker.activeApp !== "" && root.tracker._loaded
 
             RowLayout {
                 anchors.fill: parent
@@ -416,10 +418,10 @@ Rectangle {
                         sourceSize.width: 16
                         sourceSize.height: 16
                         source: {
-                            if (!state._loaded || state.activeApp === "")
+                            if (!root.tracker._loaded || root.tracker.activeApp === "")
                                 return "";
 
-                            var name = root._guessIcon(state.activeApp);
+                            var name = root._guessIcon(root.tracker.activeApp);
                             return Quickshell.iconPath(name, true);
                         }
                         fillMode: Image.PreserveAspectFit
@@ -432,11 +434,11 @@ Rectangle {
                     width: 6
                     height: 6
                     radius: 3
-                    visible: !footerIcon.visible && state.activeApp !== ""
+                    visible: !footerIcon.visible && root.tracker.activeApp !== ""
                     color: Theme.adapt("#808080")
 
                     SequentialAnimation on opacity {
-                        running: state.activeApp !== "" && root.visible
+                        running: root.tracker.activeApp !== "" && root.visible
                         loops: Animation.Infinite
 
                         NumberAnimation {
@@ -454,13 +456,13 @@ Rectangle {
                 }
 
                 Text {
-                    text: "Latest: "
+                    text: root.currentLabel
                     color: Theme.textDim
                     font.pixelSize: 12
                 }
 
                 Text {
-                    text: state.activeApp
+                    text: root.tracker.activeApp
                     color: Theme.text
                     font.pixelSize: 12
                     elide: Text.ElideRight
@@ -468,7 +470,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: (state._loaded && state.activeApp !== "") ? state.formatData(state.currentSessionMB) : ""
+                    text: (root.tracker._loaded && root.tracker.activeApp !== "") ? root.tracker.format(root.tracker.currentAmount) : ""
                     color: Theme.adapt("#999999")
                     font.pixelSize: 12
                 }

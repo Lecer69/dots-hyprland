@@ -46,9 +46,10 @@ PanelWindow {
                 summary: notif.summary,
                 body: notif.body,
                 appIcon: iconSource,
-                image: notif.image ?? "",
-                time: Qt.formatTime(new Date(), "hh:mm"),
-                defaultAction: () => notif.invokeAction("default")
+                // A provider's image goes with the notification; the app icon stands in
+                image: (notif.image ?? "").startsWith("image://") ? "" : (notif.image ?? ""),
+                timestamp: Date.now(),
+                transient: notif.transient
             })
 
             if (!SettingsData.s.general.notificationsEnabled) return

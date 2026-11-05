@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.common
+import qs.settings.data
 
-// Finds settings among the rows the pages have now, so a new row needs no listing
 Item {
     id: root
 
@@ -12,18 +12,8 @@ Item {
     property string query: ""
 
     readonly property bool searching: root.query.trim() !== ""
-    // { label, description, section, page, row, name, text }, in page order
     property var _index: []
-    readonly property var results: {
-        const words = root.query.trim().toLowerCase().split(/\s+/).filter(w => w !== "");
-        if (words.length === 0)
-            return [];
-
-        const hits = root._index.filter(e => words.every(w => e.text.includes(w)));
-        return hits.filter(e => e.name.startsWith(words[0]))
-            .concat(hits.filter(e => !e.name.startsWith(words[0]) && e.name.includes(words[0])))
-            .concat(hits.filter(e => !e.name.includes(words[0])));
-    }
+    readonly property var results: SettingsIndex.search(root._index, root.query)
 
     signal chosen(int page, Item row)
     signal cancelled()
@@ -37,38 +27,10 @@ Item {
             root.chosen(root.results[0].page, root.results[0].row);
     }
 
-    function _collect(item: Item, page: int, context: var, entries: var): void {
-        for (const child of item.children) {
-            if (typeof child.label === "string" && typeof child.description === "string") {
-                if (child.label !== "" && child.available !== false) {
-                    const name = child.label.toLowerCase();
-                    entries.push({
-                        label: child.label,
-                        description: child.description,
-                        section: context.section,
-                        page: page,
-                        row: child,
-                        name: name,
-                        text: [name, child.description, context.section, root.pageNames[page]].join(" ").toLowerCase()
-                    });
-                }
-            } else if (typeof child.title === "string") {
-                context.section = child.title;
-            } else {
-                root._collect(child, page, context, entries);
-            }
-        }
-    }
-
     // Rows come and go, so read them each time a search starts
     onSearchingChanged: {
-        if (!root.searching)
-            return;
-
-        const entries = [];
-        for (let i = 0; i < root.pager.children.length; i++)
-            root._collect(root.pager.children[i], i, { section: "" }, entries);
-        root._index = entries;
+        if (root.searching)
+            root._index = SettingsIndex.rows(root.pager, root.pageNames);
     }
 
     ListView {

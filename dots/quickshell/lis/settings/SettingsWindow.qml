@@ -1,57 +1,70 @@
 import QtQuick
-import Quickshell
-import Quickshell.Wayland
-import Quickshell.Hyprland
-import qs.settings.components
-import qs.settings.data
-import qs.settings.pages
 import qs.common
+import qs.settings.data
 
-PanelWindow {
-    id: settingsWindow
+PanelHost {
+    id: root
 
-    property bool shown: false
+    name: "settings"
+    description: "Opens settings"
+    // While a file chooser is open
+    hidden: ConfigTransfer.picking
 
-    // Hidden while a file chooser is open
-    visible: shown && !ConfigTransfer.picking
-    color: "transparent"
+    property var _target: null
+    property bool _indexing: false
 
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: keyboard.mode
-
-    anchors {
-        top: true
-        bottom: true
-        left: true
-        right: true
+    // Opens on a setting the launcher found
+    function openSetting(page: int, label: string): void {
+        root._target = { page: page, label: label };
+        if (root.panelShown)
+            root._openTarget();
+        else
+            root.shown = true;
     }
 
-    PanelKeyboard {
-        id: keyboard
-        open: settingsWindow.shown
-        initialFocus: settingsPanel.initialFocus
+    function _openTarget(): void {
+        root.item.openSetting(root._target.page, root._target.label);
+        root._target = null;
     }
 
-    Shortcut {
-        sequences: ["Escape"]
-        onActivated: settingsWindow.shown = false
+    function _finishIndex(): void {
+        SettingsIndex.remember(root.item.rows());
+        root._indexing = false;
+        root.release();
+    }
+
+    onPanelShownChanged: {
+        if (root.panelShown && root._target)
+            root._openTarget();
+        // Rows come and go with what was set
+        else if (!root.panelShown && root.item)
+            SettingsIndex.remember(root.item.rows());
+    }
+
+    // Built once for the launcher to search; read a moment later, as some rows wait for their data
+    readonly property Timer indexTimer: Timer {
+        interval: 5000
+        running: true
+        onTriggered: {
+            if (root._indexing) {
+                root._finishIndex();
+            } else if (!root.item) {
+                root._indexing = true;
+                root.build();
+                interval = 2000;
+                restart();
+            }
+        }
     }
 
     SettingsPanel {
-        id: settingsPanel
         anchors.centerIn: parent
         width: 780
         height: 560
-        shown: settingsWindow.shown
-        onCloseRequested: settingsWindow.shown = false
+        shown: root.panelShown
+        onCloseRequested: root.close()
 
         layer.enabled: true
         layer.effect: null
-    }
-
-    GlobalShortcut {
-        name: "settings"
-        description: "Opens settings"
-        onPressed: settingsWindow.shown = !settingsWindow.shown
     }
 }

@@ -12,8 +12,12 @@ QtObject {
     signal unlocked()
     signal unlockedWithPassword(string password)
     signal authFailed()
+    // Someone is at the keyboard
+    signal attention()
 
     property bool active: false
+    // Shown as a hint: a phone can end this lock
+    property bool phoneUnlock: false
 
     property bool authenticating: false
     property string password: ""
@@ -129,6 +133,7 @@ QtObject {
 
     // Shared by every screen, blocked ones too
     function handleKey(event) {
+        root.attention()
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             root.submit()
             event.accepted = true

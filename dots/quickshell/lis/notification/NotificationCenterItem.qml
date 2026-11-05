@@ -10,6 +10,13 @@ Rectangle {
 
     property var entry
 
+    // The day too once it isn't today's
+    readonly property string timeText: {
+        if (!root.entry.timestamp) return ""
+        const t = new Date(root.entry.timestamp)
+        return t.toDateString() === new Date().toDateString() ? Qt.formatTime(t, "hh:mm") : Qt.formatDateTime(t, "d MMM, hh:mm")
+    }
+
     radius: 8
     color: itemHover.containsMouse || root.activeFocus ? Theme.hover : "transparent"
     implicitHeight: rowLayout.implicitHeight + 20
@@ -112,7 +119,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: root.entry.time ?? ""
+                    text: root.timeText
                     color: Theme.textDim
                     font.pixelSize: 11
                 }

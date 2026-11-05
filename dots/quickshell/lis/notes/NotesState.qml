@@ -11,17 +11,25 @@ QtObject {
     property bool _loaded: false
     // { id, title, body } waiting to be saved
     property var _pending: null
+    // What the file holds as far as this knows, as saving fires the watcher too
+    property string _fileText: ""
+
+    // A change from elsewhere, which an open editor has to show
+    signal changedOutside()
 
     // Atomic writes, done before setText returns, so a save on quit completes
     property FileView _store: FileView {
         path: Quickshell.env("HOME") + "/.config/lis/notes.json"
         blockWrites: true
         printErrors: false
+        // Phone Sync replaces it
+        watchChanges: true
 
+        onFileChanged: reload()
         onLoaded: root._load(text())
         onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound) root._load("[]")
-            else console.warn("[notes] can't read notes.json:", FileViewError.toString(error))
+            if (error !== FileViewError.FileNotFound) console.warn("[notes] can't read notes.json:", FileViewError.toString(error))
+            else if (!root._loaded) root._load("[]")
         }
     }
 
@@ -31,13 +39,23 @@ QtObject {
     }
 
     function _load(text: string): void {
+        if (root._loaded && text === root._fileText)
+            return;
+
+        const reloading = root._loaded;
+        root._fileText = text;
         try {
             const parsed = JSON.parse(text);
             root.notes = Array.isArray(parsed) ? parsed : [];
         } catch (e) {
+            // What's open stays, rather than being wiped by a file someone is fixing
+            if (reloading)
+                return;
             root.notes = [];
         }
         root._loaded = true;
+        if (reloading)
+            root.changedOutside();
     }
 
     function _save(): void {
@@ -45,7 +63,8 @@ QtObject {
         if (!root._loaded)
             return;
 
-        root._store.setText(JSON.stringify(root.notes));
+        root._fileText = JSON.stringify(root.notes);
+        root._store.setText(root._fileText);
     }
 
     function find(id: real): var {

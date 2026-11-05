@@ -1,69 +1,18 @@
-import QtQuick
-import Quickshell
-import Quickshell.Io
-import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.common
 
-PanelWindow {
+PanelHost {
     id: root
 
-    property bool shown: false
+    name: "gamma"
+    description: "Toggles the color settings panel"
 
-    visible: shown
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: keyboard.mode
-    WlrLayershell.exclusiveZone: -1
-
-    anchors {
-        top: true
-        bottom: true
-        left: true
-        right: true
-    }
-
-    PanelKeyboard {
-        id: keyboard
-        open: root.shown
-    }
-
-    Shortcut {
-        sequences: ["Escape"]
-        onActivated: root.shown = false
-    }
+    // Made at startup, so a night light left on comes back
+    readonly property var service: GammaService
 
     GammaPanel {
-        id: gammaPanel
-
         anchors.centerIn: parent
-        width: gammaPanel.implicitWidth
-        height: Math.min(gammaPanel.implicitHeight, parent.height - 80)
-        onCloseRequested: root.shown = false
-    }
-
-
-    IpcHandler {
-        target: "gamma"
-
-        function toggle(): void {
-            root.shown = !root.shown
-        }
-
-        function open(): void {
-            root.shown = true
-        }
-
-        function close(): void {
-            root.shown = false
-        }
-    }
-
-    GlobalShortcut {
-        name: "gamma"
-        description: "Toggles the color settings panel"
-        onPressed: {
-            root.shown = !root.shown
-        }
+        width: implicitWidth
+        height: Math.min(implicitHeight, parent.height - 80)
+        onCloseRequested: root.close()
     }
 }

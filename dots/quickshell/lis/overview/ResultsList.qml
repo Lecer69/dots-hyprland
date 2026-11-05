@@ -25,6 +25,17 @@ Item {
     function moveUp() { if (listView.currentIndex > 0) listView.currentIndex-- }
     function moveDown() { if (listView.currentIndex < root.results.length - 1) listView.currentIndex++ }
 
+    function deleteAt(index: int): void {
+        if (!root.isClipboard || index < 0 || index >= root.results.length) return
+        ClipboardHistory.remove(root.results[index])
+        // The next row takes its place
+        Qt.callLater(() => listView.currentIndex = Math.min(index, root.results.length - 1))
+    }
+
+    function deleteCurrentItem(): void {
+        root.deleteAt(listView.currentIndex)
+    }
+
     // Only on a new query; history updates keep the selection
     function resetSelection() {
         listView.currentIndex = 0
@@ -35,6 +46,8 @@ Item {
     function _doActivate(entry) {
         if (entry?.isMath) {
             Quickshell.execDetached(["wl-copy", "--", entry.result])
+        } else if (entry?.isSetting) {
+            settingsWindow.openSetting(entry.page, entry.label)
         } else if (root.isEmoji) {
             const emoji = (entry ?? "").split(" ")[0]
             Quickshell.execDetached(["wl-copy", "--", emoji])
@@ -150,12 +163,14 @@ Item {
             isClipboard: typeof modelData === "string" && modelData.includes("\t")
             isEmoji: typeof modelData === "string" && !modelData.includes("\t")
             isMath: modelData?.isMath ?? false
+            isSetting: modelData?.isSetting ?? false
             entry: modelData
             highlighted: listView.currentIndex === index
 
             // A row fading out has index -1
             onEntered: if (index >= 0) listView.currentIndex = index
             onChosen: if (index >= 0) root._doActivate(modelData)
+            onRemoveRequested: root.deleteAt(index)
 
             // Here, not in an add transition: the view skips that for an empty list and for moves
             ListView.onAdd: enter(Math.min(index, 10) * 18)

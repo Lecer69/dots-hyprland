@@ -24,6 +24,10 @@ Singleton {
     property bool _loaded: false
     property bool _dirty: false
     property real _lastId: 0
+    // What the file holds as far as this knows, as saving fires the watcher too
+    property string _fileText: ""
+    // The edit still being typed, done again over a change from elsewhere
+    property var _typing: null
 
     // Atomic writes, done before setText returns, so a save on quit completes
     FileView {
@@ -32,11 +36,14 @@ Singleton {
         path: Quickshell.env("HOME") + "/.config/lis/todo.json"
         blockWrites: true
         printErrors: false
+        // Phone Sync replaces it
+        watchChanges: true
 
+        onFileChanged: reload()
         onLoaded: root._load(text())
         onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound) root._load("")
-            else console.warn("[todo] can't read todo.json:", FileViewError.toString(error))
+            if (error !== FileViewError.FileNotFound) console.warn("[todo] can't read todo.json:", FileViewError.toString(error))
+            else if (!root._loaded) root._load("")
         }
     }
 
@@ -68,6 +75,11 @@ Singleton {
     }
 
     function _load(text: string): void {
+        if (root._loaded && text === root._fileText)
+            return;
+
+        root._fileText = text;
+        const typing = root._typing;
         let parsed = null;
         if (text !== "") {
             try {
@@ -95,6 +107,8 @@ Singleton {
         root._loaded = true;
         root._purgeTrash();
         root._checkDay();
+        if (typing)
+            typing();
     }
 
     // From the older formats: the CLI's file plus stars and lists by text, or a plain array
@@ -190,7 +204,9 @@ Singleton {
             return;
 
         root._dirty = false;
-        store.setText(JSON.stringify({ tasks: root.tasks, lists: root.lists, trash: root.trash, dailyDate: root._dailyDate }));
+        root._typing = null;
+        root._fileText = JSON.stringify({ tasks: root.tasks, lists: root.lists, trash: root.trash, dailyDate: root._dailyDate });
+        store.setText(root._fileText);
     }
 
     function sorted(): var {
@@ -215,6 +231,7 @@ Singleton {
 
     // Saved once the typing pauses
     function setDescription(id: real, description: string): void {
+        root._typing = () => root.setDescription(id, description);
         root.tasks = root.tasks.map(t => t.id === id ? Object.assign({}, t, { description: description }) : t);
         root._dirty = true;
         saveTimer.restart();
@@ -309,6 +326,7 @@ Singleton {
         if (id === root.dailyList)
             return;
 
+        root._typing = () => root.renameList(id, name);
         root.lists = root.lists.map(l => l.id === id ? { id: id, name: name } : l);
         root._dirty = true;
         saveTimer.restart();

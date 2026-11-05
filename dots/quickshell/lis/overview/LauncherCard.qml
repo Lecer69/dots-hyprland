@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.common
+import qs.settings.data
 
 Rectangle {
     id: card
@@ -145,6 +146,11 @@ Rectangle {
             .slice(0, 30)
     }
 
+    property var settingResults: {
+        if (isClipboard || isEmoji || cleanQuery.trim().length < 2) return []
+        return SettingsIndex.search(SettingsIndex.entries, cleanQuery).slice(0, 5)
+    }
+
     // The whole history; the list only makes rows on screen
     property var clipResults: {
         if (!isClipboard) return []
@@ -161,7 +167,7 @@ Rectangle {
     property var results: {
         if (isClipboard) return clipResults
         if (isEmoji)     return emojiResults
-        return [...mathResults, ...appResults]
+        return [...mathResults, ...appResults, ...settingResults]
     }
 
     width: 520
@@ -209,6 +215,7 @@ Rectangle {
             onEnterPressed: resultsList.activateCurrentItem()
             onArrowUp:      resultsList.moveUp()
             onArrowDown:    resultsList.moveDown()
+            onDeleteRequested: resultsList.deleteCurrentItem()
             onCloseRequested: card.closeRequested()
         }
 

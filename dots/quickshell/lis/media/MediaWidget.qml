@@ -80,6 +80,10 @@ Item {
     readonly property bool hasMedia: activePlayer !== null
     property bool panelOpen: false
 
+    // Built on the first open
+    property bool panelBuilt: false
+
+    onPanelOpenChanged: if (panelOpen) panelBuilt = true
     onHasMediaChanged: if (!hasMedia) panelOpen = false
 
     visible: hasMedia
@@ -157,13 +161,14 @@ Item {
     }
 
     Loader {
-        active: root.screen !== null
+        active: root.screen !== null && root.panelBuilt
         sourceComponent: MediaWindow {
             player: root.activePlayer
-            shown: root.panelOpen
             anchorItem: root
             screen: root.screen
             onCloseRequested: root.panelOpen = false
         }
+        // After it exists, so its first open is a change too
+        onLoaded: item.shown = Qt.binding(() => root.panelOpen)
     }
 }

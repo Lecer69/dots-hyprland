@@ -16,19 +16,15 @@ Rectangle {
     readonly property int presetColumns: 2
     readonly property int presetCellHeight: 56
     readonly property int presetCellSpacing: 8
-    readonly property int presetRows: Math.max(2, Math.min(Math.ceil(gammaState.presets.length / presetColumns), 6))
+    readonly property int presetRows: Math.max(2, Math.min(Math.ceil(GammaService.presets.length / presetColumns), 6))
     readonly property int presetListHeight: presetRows * (presetCellHeight + presetCellSpacing) - presetCellSpacing
 
     implicitWidth: 460
     implicitHeight: header.height + content.implicitHeight + content.anchors.topMargin + content.anchors.bottomMargin
 
-    GammaState {
-        id: gammaState
-    }
-
     // Removing a preset rebuilds every cell, so focus returns once they're back
     function removePreset(index: int, id: real): void {
-        gammaState.removePreset(id)
+        GammaService.removePreset(id)
         Qt.callLater(() => presetRepeater.itemAt(Math.min(index, presetRepeater.count - 1))?.forceActiveFocus())
     }
 
@@ -82,49 +78,49 @@ Rectangle {
 
         GammaSlider {
             label: "Brightness"
-            value: gammaState.brightness
+            value: GammaService.brightness
             onMoved: function(v) {
-                gammaState.brightness = v;
+                GammaService.brightness = v;
             }
             onReleased: function(v) {
-                gammaState.brightness = v;
-                gammaState.apply();
+                GammaService.brightness = v;
+                GammaService.apply();
             }
         }
 
         GammaSlider {
             label: "Contrast"
-            value: gammaState.contrast
+            value: GammaService.contrast
             onMoved: function(v) {
-                gammaState.contrast = v;
+                GammaService.contrast = v;
             }
             onReleased: function(v) {
-                gammaState.contrast = v;
-                gammaState.apply();
+                GammaService.contrast = v;
+                GammaService.apply();
             }
         }
 
         GammaSlider {
             label: "Gamma"
-            value: gammaState.gamma
+            value: GammaService.gamma
             onMoved: function(v) {
-                gammaState.gamma = v;
+                GammaService.gamma = v;
             }
             onReleased: function(v) {
-                gammaState.gamma = v;
-                gammaState.apply();
+                GammaService.gamma = v;
+                GammaService.apply();
             }
         }
 
         GammaSlider {
             label: "Saturation"
-            value: gammaState.saturation
+            value: GammaService.saturation
             onMoved: function(v) {
-                gammaState.saturation = v;
+                GammaService.saturation = v;
             }
             onReleased: function(v) {
-                gammaState.saturation = v;
-                gammaState.apply();
+                GammaService.saturation = v;
+                GammaService.apply();
             }
         }
 
@@ -146,7 +142,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: gammaState.presets.length > 0 ? gammaState.presets.length : ""
+                    text: GammaService.presets.length > 0 ? GammaService.presets.length : ""
                     color: Theme.textDim
                     font.pixelSize: 12
                 }
@@ -185,11 +181,11 @@ Rectangle {
                         }
 
                         Keys.onReturnPressed: {
-                            gammaState.addPreset(input.text);
+                            GammaService.addPreset(input.text);
                             input.text = "";
                         }
                         Keys.onEnterPressed: {
-                            gammaState.addPreset(input.text);
+                            GammaService.addPreset(input.text);
                             input.text = "";
                         }
                     }
@@ -207,7 +203,7 @@ Rectangle {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                gammaState.addPreset(input.text);
+                                GammaService.addPreset(input.text);
                                 input.text = "";
                             }
                         }
@@ -242,7 +238,7 @@ Rectangle {
                         Repeater {
                             id: presetRepeater
 
-                            model: gammaState.presets
+                            model: GammaService.presets
 
                             delegate: GammaPresetItem {
                                 id: preset
@@ -262,8 +258,8 @@ Rectangle {
                                 brightness: modelData.brightness
                                 contrast: modelData.contrast
                                 saturation: modelData.saturation
-                                onApplyRequested: gammaState.applyPreset(presetId)
-                                onRemoveRequested: gammaState.removePreset(presetId)
+                                onApplyRequested: GammaService.applyPreset(presetId)
+                                onRemoveRequested: GammaService.removePreset(presetId)
 
                                 Keys.onLeftPressed: preset.focusAt(preset.index - 1)
                                 Keys.onRightPressed: preset.focusAt(preset.index + 1)
@@ -279,7 +275,7 @@ Rectangle {
 
                 Text {
                     anchors.centerIn: parent
-                    visible: gammaState.presets.length === 0
+                    visible: GammaService.presets.length === 0
                     text: "No presets yet"
                     color: Theme.textDim
                     font.pixelSize: 13
@@ -298,9 +294,9 @@ Rectangle {
             color: resetHover.pressed ? Theme.adapt("#333333") : resetHover.containsMouse || activeFocus ? Theme.adapt("#2a2a2a") : Theme.border
 
             activeFocusOnTab: true
-            Keys.onSpacePressed: gammaState.reset()
-            Keys.onReturnPressed: gammaState.reset()
-            Keys.onEnterPressed: gammaState.reset()
+            Keys.onSpacePressed: GammaService.reset()
+            Keys.onReturnPressed: GammaService.reset()
+            Keys.onEnterPressed: GammaService.reset()
 
             Text {
                 id: resetLabel
@@ -318,7 +314,7 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: gammaState.reset()
+                onClicked: GammaService.reset()
             }
 
         }

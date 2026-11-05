@@ -104,6 +104,56 @@ ScrollView {
         }
 
         Item { height: 16 }
+        SectionHeader { title: "Night Light" }
+
+        SettingRow {
+            label: "Night Light"
+            description: "Applied with wl-gammactl-rust; the bar's button turns it on and off too"
+            ToggleSwitch {
+                id: nightLightSwitch
+                checked: SettingsData.s.nightLight.enabled
+                onToggled: v => {
+                    SettingsData.s.nightLight.enabled = v
+                    // Flipping replaced the binding, and the bar's button can change it too
+                    nightLightSwitch.checked = Qt.binding(() => SettingsData.s.nightLight.enabled)
+                }
+            }
+        }
+        SettingRow {
+            label: "Brightness"
+            FloatSlider {
+                from: 0.6; to: 1.2; stepSize: 0.01; decimals: 2
+                value: SettingsData.s.nightLight.brightness
+                onChanged: v => SettingsData.s.nightLight.brightness = v
+            }
+        }
+        SettingRow {
+            label: "Contrast"
+            FloatSlider {
+                from: 0.4; to: 1.2; stepSize: 0.01; decimals: 2
+                value: SettingsData.s.nightLight.contrast
+                onChanged: v => SettingsData.s.nightLight.contrast = v
+            }
+        }
+        SettingRow {
+            label: "Gamma"
+            FloatSlider {
+                from: 0.5; to: 1.5; stepSize: 0.01; decimals: 2
+                value: SettingsData.s.nightLight.gamma
+                onChanged: v => SettingsData.s.nightLight.gamma = v
+            }
+        }
+        SettingRow {
+            label: "Saturation"
+            description: "Lower cuts blue light the most"
+            FloatSlider {
+                from: 0.2; to: 1.2; stepSize: 0.01; decimals: 2
+                value: SettingsData.s.nightLight.saturation
+                onChanged: v => SettingsData.s.nightLight.saturation = v
+            }
+        }
+
+        Item { height: 16 }
         SectionHeader { title: "Notifications" }
 
         SettingRow {
@@ -119,6 +169,14 @@ ScrollView {
             ToggleSwitch {
                 checked: SettingsData.s.general.notificationsMainMonitorOnly
                 onToggled: v => SettingsData.s.general.notificationsMainMonitorOnly = v
+            }
+        }
+        SettingRow {
+            label: "Keep History After Restart"
+            description: "Saves notification text to ~/.local/state/lis"
+            ToggleSwitch {
+                checked: SettingsData.s.general.keepNotificationHistory
+                onToggled: v => SettingsData.s.general.keepNotificationHistory = v
             }
         }
         SettingRow {

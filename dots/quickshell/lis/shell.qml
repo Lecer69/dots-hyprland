@@ -54,173 +54,133 @@ ShellRoot {
         }
     }
 
-    Connections {
-        target: Quickshell
-        function onReloadCompleted() {
-            console.log("[shell] reload completed")
-        }
-    }
-
-    Component.onCompleted: console.log("[shell] ShellRoot completed")
-
     property ScreenLock screenLock: ScreenLock {
-        Component.onCompleted: console.log("[shell] ScreenLock completed")
     }
 
     HypridleService {
-        Component.onCompleted: console.log("[shell] HypridleService completed")
     }
 
     WorkspaceOverviewLayer {
         id: workspaceOverviewLayer
-        Component.onCompleted: console.log("[shell] WorkspaceOverviewLayer completed")
     }
 
     DesktopOverview {
         locked: screenLock.isLocked
         onTodoRequested: todoWindow.shown = true
         onCalendarRequested: calendarWindow.shown = true
-        Component.onCompleted: console.log("[shell] DesktopOverview completed")
     }
 
     WellbeingWindow {
         id: wellbeingWindow
-        Component.onCompleted: console.log("[shell] WellbeingWindow completed")
+        locked: screenLock.isLocked
     }
 
     InternetUsageWindow {
         id: internetUsageWindow
-        Component.onCompleted: console.log("[shell] InternetUsageWindow completed")
     }
 
     BatteryWindow {
         id: batteryWindow
-        Component.onCompleted: console.log("[shell] BatteryWindow completed")
     }
 
     CheatsheetWindow {
         id: cheatsheetWindow
-        Component.onCompleted: console.log("[shell] CheatsheetWindow completed")
     }
 
     SettingsWindow {
         id: settingsWindow
-        Component.onCompleted: console.log("[shell] SettingsWindow completed")
     }
 
     NotificationCenterWindow {
         id: notificationCenterWindow
-        Component.onCompleted: console.log("[shell] NotificationCenterWindow completed")
     }
 
     GammaWindow {
         id: gammaWindow
-        Component.onCompleted: console.log("[shell] GammaWindow completed")
     }
 
     NetworkWindow {
         id: networkWindow
-        Component.onCompleted: console.log("[shell] NetworkWindow completed")
     }
 
     BluetoothWindow {
         id: bluetoothWindow
-        Component.onCompleted: console.log("[shell] BluetoothWindow completed")
     }
 
     AudioWindow {
         id: audioWindow
-        Component.onCompleted: console.log("[shell] AudioWindow completed")
     }
 
     TaskManagerWindow {
         id: taskManagerWindow
-        Component.onCompleted: console.log("[shell] TaskManagerWindow completed")
     }
 
     DisplaysWindow {
         id: displaysWindow
-        Component.onCompleted: console.log("[shell] DisplaysWindow completed")
     }
 
     PhoneWindow {
         id: phoneWindow
         onSettingsRequested: settingsWindow.shown = true
-        Component.onCompleted: console.log("[shell] PhoneWindow completed")
     }
 
     TodoWindow {
         id: todoWindow
-        Component.onCompleted: console.log("[shell] TodoWindow completed")
     }
 
     NotesWindow {
         id: notesWindow
-        Component.onCompleted: console.log("[shell] NotesWindow completed")
     }
 
     GoalsWindow {
         id: goalsWindow
-        Component.onCompleted: console.log("[shell] GoalsWindow completed")
     }
 
     ScreenFreeze {
-        Component.onCompleted: console.log("[shell] ScreenFreeze completed")
     }
 
     CalendarWindow {
         id: calendarWindow
-        Component.onCompleted: console.log("[shell] CalendarWindow completed")
     }
 
     PowerDialog {
         id: powerDialog
-        Component.onCompleted: console.log("[shell] PowerDialog completed")
     }
 
     SidebarMenu {
         id: sidebarMenu
-        Component.onCompleted: console.log("[shell] SidebarMenu completed")
     }
 
     LeftSidebarWindow {
         id: leftSidebar
         onTodoRequested: todoWindow.shown = true
-        Component.onCompleted: console.log("[shell] LeftSidebarWindow completed")
     }
 
     BarBlur {
-        Component.onCompleted: console.log("[shell] BarBlur completed")
     }
 
     Process {
         command: ["snixembed", "--fork"]
         running: true
-        Component.onCompleted: console.log("[shell] snixembed Process completed")
     }
 
     NotificationPopup {
         visible: !screenLock.isLocked
-        Component.onCompleted: console.log("[shell] NotificationPopup completed")
     }
 
     OsuBackdrop {
-        Component.onCompleted: console.log("[shell] OsuBackdrop completed")
     }
 
     Overview {
-        Component.onCompleted: console.log("[shell] Overview completed")
     }
 
     Variants {
         model: Quickshell.screens
-        Component.onCompleted: console.log("[shell] Variants completed")
         delegate: QtObject {
             id: screenCtx
 
             required property var modelData
 
-            Component.onCompleted: console.log("[shell] Variants delegate completed for screen: " + modelData)
 
             property var hyprMonitor: Hyprland.monitorFor(modelData)
             property int wsId: hyprMonitor?.activeWorkspace?.id ?? -1
@@ -233,11 +193,9 @@ ShellRoot {
                 visible: BarState.barShown
                 sidebarOpen: sidebarMenu.isOpen && sidebarMenu.screen === modelData
                 onSidebarRequested: sidebarMenu.toggle(modelData)
-                Component.onCompleted: console.log("[shell] Bar completed")
             }
             property var volBar: Loader {
                 active: screenCtx.show
-                Component.onCompleted: console.log("[shell] volBar Loader completed")
                 sourceComponent: Component {
                     VolumeHoverBar {
                         screen: modelData
@@ -247,7 +205,6 @@ ShellRoot {
             }
             property var volPop: Loader {
                 active: screenCtx.show
-                Component.onCompleted: console.log("[shell] volPop Loader completed")
                 sourceComponent: Component {
                     VolumePopup {
                         screen: modelData
@@ -256,7 +213,6 @@ ShellRoot {
             }
             property var briBar: Loader {
                 active: screenCtx.show
-                Component.onCompleted: console.log("[shell] briBar Loader completed")
                 sourceComponent: Component {
                     BrightnessHoverBar {
                         screen: modelData
@@ -266,7 +222,6 @@ ShellRoot {
             }
             property var briPop: Loader {
                 active: screenCtx.show
-                Component.onCompleted: console.log("[shell] briPop Loader completed")
                 sourceComponent: Component {
                     BrightnessPopup {
                         screen: modelData
@@ -278,6 +233,5 @@ ShellRoot {
 
     PolkitPopup {
         visible: !screenLock.isLocked
-        Component.onCompleted: console.log("[shell] PolkitPopup completed")
     }
 }

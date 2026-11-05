@@ -114,6 +114,12 @@ PanelFrame {
                 onClicked: picker.running = true
             }
 
+            PanelButton {
+                enabled: PhoneService.connected
+                text: PhoneService.ringing ? "Stop Ringing" : "Find Phone"
+                onClicked: PhoneService.ring(!PhoneService.ringing)
+            }
+
             Text {
                 Layout.fillWidth: true
                 text: PhoneService.transfer

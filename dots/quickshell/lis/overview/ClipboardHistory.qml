@@ -61,6 +61,19 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", 'id="$1"; shift; cliphist decode "$id" | wl-copy "$@"', "sh", id].concat(type))
     }
 
+    // Gone from the list right away; the database watch catches up
+    function remove(line) {
+        const h = root.history
+        const i = h.lines.indexOf(line)
+        if (i < 0) return
+
+        root.history = {
+            lines: h.lines.filter((_, n) => n !== i),
+            search: h.search.filter((_, n) => n !== i)
+        }
+        Quickshell.execDetached(["sh", "-c", 'printf "%s\\n" "$1" | cliphist delete', "sh", line])
+    }
+
     // At startup and when the view opens; the database watch covers the rest
     function refresh() {
         if (listProc.running) root._relist = true

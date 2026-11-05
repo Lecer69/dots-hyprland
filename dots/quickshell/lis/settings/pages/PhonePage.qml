@@ -140,6 +140,214 @@ ScrollView {
             }
         }
 
+        Item {
+            implicitHeight: 16
+            visible: root.usable && PhoneService.phones.length > 0
+        }
+        SectionHeader {
+            visible: root.usable && PhoneService.phones.length > 0
+            title: "Phone Unlock"
+        }
+
+        Repeater {
+            model: ScriptModel {
+                values: root.usable ? PhoneService.phones : []
+                objectProp: "fingerprint"
+            }
+
+            delegate: SettingRow {
+                id: unlockRow
+
+                required property var modelData
+                readonly property string state: unlockRow.modelData.unlock ?? "off"
+
+                label: unlockRow.state === "pending" ? unlockRow.modelData.name + " asks to unlock this PC" : unlockRow.modelData.name
+                description: {
+                    if (unlockRow.state === "pending")
+                        return "Allow only if you just asked for this on the phone";
+                    if (unlockRow.state === "on")
+                        return "Unlocks with its fingerprint. The first unlock after a boot still takes the password";
+                    return "Off. Turn it on in Lis App, under Setup";
+                }
+
+                Row {
+                    spacing: 6
+
+                    PanelButton {
+                        visible: unlockRow.state === "pending"
+                        text: "Allow"
+                        onClicked: PhoneService.answerUnlock(unlockRow.modelData.fingerprint, true)
+                    }
+
+                    PanelButton {
+                        visible: unlockRow.state === "pending"
+                        text: "Decline"
+                        onClicked: PhoneService.answerUnlock(unlockRow.modelData.fingerprint, false)
+                    }
+
+                    PanelButton {
+                        visible: unlockRow.state === "on"
+                        text: "Turn Off"
+                        onClicked: PhoneService.disableUnlock(unlockRow.modelData.fingerprint)
+                    }
+                }
+            }
+        }
+
+        Item {
+            implicitHeight: 16
+            visible: root.usable
+        }
+        SectionHeader {
+            visible: root.usable
+            title: "USB Connection"
+        }
+
+        SettingRow {
+            available: root.usable
+            label: "Use the USB cable"
+            description: {
+                if (!PhoneService.usb)
+                    return "Steadier for the camera. Needs adb, and USB debugging on the phone";
+                return PhoneService.usbForwarding ? "Ready: turn on Use the USB cable in Lis App" : "No phone found over USB";
+            }
+            ToggleSwitch {
+                checked: PhoneService.usb
+                onToggled: v => SettingsData.s.phone.usb = v
+            }
+        }
+
+        Item {
+            implicitHeight: 16
+            visible: root.usable
+        }
+        SectionHeader {
+            visible: root.usable
+            title: "Phone Actions"
+        }
+
+        Repeater {
+            model: ScriptModel {
+                values: root.usable ? PhoneService.actions : []
+                objectProp: "id"
+            }
+
+            delegate: SettingRow {
+                id: actionRow
+
+                required property var modelData
+                property bool armed: false
+
+                label: actionRow.modelData.name
+                description: actionRow.modelData.command
+
+                Timer {
+                    interval: 3000
+                    running: actionRow.armed
+                    onTriggered: actionRow.armed = false
+                }
+
+                PanelButton {
+                    text: actionRow.armed ? "Confirm" : "Remove"
+                    onClicked: {
+                        if (actionRow.armed)
+                            PhoneService.setActions(PhoneService.actions.filter(a => a.id !== actionRow.modelData.id));
+                        else
+                            actionRow.armed = true;
+                    }
+                }
+            }
+        }
+
+        SettingRow {
+            available: root.usable
+            label: "Add an action"
+            description: PhoneService.actionError !== "" ? PhoneService.actionError : "A button in Lis App that runs a command here, even while locked"
+
+            PanelButton {
+                enabled: newName.text.trim() !== "" && newCommand.text.trim() !== ""
+                text: "Add"
+                onClicked: {
+                    const action = { id: String(Date.now()), name: newName.text.trim(), command: newCommand.text.trim() };
+                    PhoneService.setActions(PhoneService.actions.concat([action]));
+                    newName.text = "";
+                    newCommand.text = "";
+                }
+            }
+        }
+
+        RowLayout {
+            visible: root.usable
+            Layout.fillWidth: true
+            Layout.leftMargin: 16
+            Layout.rightMargin: 16
+            spacing: 8
+
+            Rectangle {
+                Layout.preferredWidth: 160
+                implicitHeight: 32
+                radius: 6
+                color: Theme.hover
+
+                TextInput {
+                    id: newName
+
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.text
+                    selectionColor: Theme.adapt("#333333")
+                    selectedTextColor: Theme.adapt("#ffffff")
+                    font.pixelSize: 12
+                    clip: true
+                    selectByMouse: true
+                    activeFocusOnTab: true
+
+                    Text {
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        visible: newName.text === ""
+                        text: "Name"
+                        color: Theme.textDim
+                        font.pixelSize: 12
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 32
+                radius: 6
+                color: Theme.hover
+
+                TextInput {
+                    id: newCommand
+
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.text
+                    selectionColor: Theme.adapt("#333333")
+                    selectedTextColor: Theme.adapt("#ffffff")
+                    font.pixelSize: 12
+                    clip: true
+                    selectByMouse: true
+                    activeFocusOnTab: true
+
+                    Text {
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        visible: newCommand.text === ""
+                        text: "~/.local/bin/lis-daemon obs scene Main"
+                        color: Theme.textDim
+                        font.pixelSize: 12
+                    }
+                }
+            }
+        }
+
         Item { implicitHeight: 16 }
     }
 }

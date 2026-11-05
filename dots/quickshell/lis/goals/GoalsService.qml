@@ -17,6 +17,10 @@ Singleton {
     property bool _loaded: false
     property bool _dirty: false
     property real _lastId: 0
+    // What the file holds as far as this knows, as saving fires the watcher too
+    property string _fileText: ""
+    // The edit still being typed, done again over a change from elsewhere
+    property var _typing: null
 
     // Atomic writes, done before setText returns, so a save on quit completes
     FileView {
@@ -25,11 +29,14 @@ Singleton {
         path: Quickshell.env("HOME") + "/.config/lis/goals.json"
         blockWrites: true
         printErrors: false
+        // Phone Sync replaces it
+        watchChanges: true
 
+        onFileChanged: reload()
         onLoaded: root._load(text())
         onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound) root._load("[]")
-            else console.warn("[goals] can't read goals.json:", FileViewError.toString(error))
+            if (error !== FileViewError.FileNotFound) console.warn("[goals] can't read goals.json:", FileViewError.toString(error))
+            else if (!root._loaded) root._load("[]")
         }
     }
 
@@ -41,6 +48,11 @@ Singleton {
     }
 
     function _load(text: string): void {
+        if (root._loaded && text === root._fileText)
+            return;
+
+        root._fileText = text;
+        const typing = root._typing;
         let parsed;
         try {
             parsed = JSON.parse(text);
@@ -63,6 +75,8 @@ Singleton {
         });
         root._lastId = Math.max(...ids);
         root._loaded = true;
+        if (typing)
+            typing();
     }
 
     // Unique even within a millisecond
@@ -95,7 +109,9 @@ Singleton {
             return;
 
         root._dirty = false;
-        store.setText(JSON.stringify(root.goals));
+        root._typing = null;
+        root._fileText = JSON.stringify(root.goals);
+        store.setText(root._fileText);
     }
 
     // After the open goals; returns the id, -1 for none
@@ -111,6 +127,7 @@ Singleton {
 
     // Saved once the typing pauses
     function edit(id: real, title: string): void {
+        root._typing = () => root.edit(id, title);
         root._set(root.goals.map(g => g.id === id ? Object.assign({}, g, { title: root._clean(title) }) : g), true);
     }
 
@@ -139,6 +156,7 @@ Singleton {
     }
 
     function editSubgoal(goalId: real, id: real, title: string): void {
+        root._typing = () => root.editSubgoal(goalId, id, title);
         root._set(root.goals.map(g => g.id !== goalId ? g : Object.assign({}, g, {
             subgoals: g.subgoals.map(s => s.id === id ? Object.assign({}, s, { title: root._clean(title) }) : s)
         })), true);

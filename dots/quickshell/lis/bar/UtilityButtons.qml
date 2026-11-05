@@ -7,10 +7,13 @@ import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import qs.settings.data
 import qs.common
+import qs.gamma
 
 Grid {
     id: root
     property bool vertical: false
+    // Made while the shell loads, as only then does a reload hand it its old state
+    readonly property bool gameMode: GameModeState.active
 
     rows: root.vertical ? 0 : 1
     columns: root.vertical ? 1 : 0
@@ -122,14 +125,43 @@ Grid {
     }
 
     Loader {
-        active: SettingsData.s.bar.showGameMode
+        active: SettingsData.s.bar.showNightLight
         visible: active
         sourceComponent: Item {
-            id: gameModeItem
             width: 16
             height: 16
 
-            property bool toggled: false
+            Icon {
+                anchors.centerIn: parent
+                width: 16
+                height: 16
+
+                smooth: true
+                antialiasing: true
+                mipmap: true
+                sourceSize: Qt.size(32, 32)
+
+                source: GammaService.nightLight ? "../icons/night-light-on.svg" : "../icons/night-light.svg"
+                opacity: GammaService.nightLight ? 1.0 : 0.5
+                fillMode: Image.PreserveAspectFit
+
+                Behavior on opacity { NumberAnimation { duration: 120 } }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: GammaService.toggleNightLight()
+            }
+        }
+    }
+
+    Loader {
+        active: SettingsData.s.bar.showGameMode
+        visible: active
+        sourceComponent: Item {
+            width: 16
+            height: 16
 
             Icon {
                 anchors.centerIn: parent
@@ -140,8 +172,8 @@ Grid {
                 antialiasing: true
                 sourceSize: Qt.size(16, 16)
 
-                source: gameModeItem.toggled ? "../icons/gamemode-on.svg" : "../icons/gamemode-off.svg"
-                opacity: gameModeItem.toggled ? 1.0 : 0.5
+                source: root.gameMode ? "../icons/gamemode-on.svg" : "../icons/gamemode-off.svg"
+                opacity: root.gameMode ? 1.0 : 0.5
                 fillMode: Image.PreserveAspectFit
 
                 Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -150,30 +182,7 @@ Grid {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    gameModeItem.toggled = !gameModeItem.toggled
-
-                    if (gameModeItem.toggled) {
-                        Quickshell.execDetached(["hyprctl", "eval", `
-                            hl.config({
-                                animations = { enabled = false },
-                                decoration = {
-                                    shadow = { enabled = false },
-                                    blur = { enabled = false },
-                                    rounding = 0,
-                                },
-                                general = {
-                                    gaps_in = 0,
-                                    gaps_out = 5,
-                                    border_size = 1,
-                                    allow_tearing = true,
-                                },
-                            })
-                        `])
-                    } else {
-                        Quickshell.execDetached(["hyprctl", "reload"])
-                    }
-                }
+                onClicked: GameModeState.toggle()
             }
         }
     }

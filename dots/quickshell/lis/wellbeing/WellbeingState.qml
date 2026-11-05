@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Wayland
 import qs.settings.data
 import qs.common
 
@@ -14,10 +15,38 @@ QtObject {
     property string activeApp: ""
     property string todayKey: Qt.formatDate(new Date(), "yyyy-MM-dd")
     property var sessionTotals: ({})
-    property int currentSessionSecs: 0
+    property real currentAmount: 0
     property var history: ({})
     property bool _loaded: false
     property int _tickSeconds: 0
+
+    // From the lock screen
+    property bool locked: false
+    // A fullscreen window can be watched or played without touching the keyboard
+    readonly property bool _fullscreen: ToplevelManager.activeToplevel?.fullscreen ?? false
+    readonly property bool away: root.locked || (root._idle.isIdle && !root._fullscreen)
+
+    // Ignores inhibitors, as the bar's keep-awake button says nothing about who's there
+    property IdleMonitor _idle: IdleMonitor {
+        enabled: root.enabled
+        respectInhibitors: false
+        timeout: 300
+        onIsIdleChanged: {
+            if (isIdle && !root.locked && !root._fullscreen)
+                root._takeBack(timeout);
+        }
+    }
+
+    // The wait before counting as away was counted already
+    function _takeBack(secs) {
+        if (root.activeApp === "")
+            return ;
+
+        var t = root.sessionTotals;
+        t[root.activeApp] = (t[root.activeApp] || 0) - secs;
+        root.sessionTotals = t;
+    }
+
     property Connections _hyprConn
 
     _hyprConn: Connections {
@@ -48,13 +77,13 @@ QtObject {
         repeat: true
         running: root._loaded && root.enabled
         onTriggered: {
-            if (root.activeApp !== "") {
+            if (root.activeApp === "") {
+                root.currentAmount = 0;
+            } else if (!root.away) {
                 var t = root.sessionTotals;
                 t[root.activeApp] = (t[root.activeApp] || 0) + 1;
                 root.sessionTotals = t; // reassigned to notify
-                root.currentSessionSecs = t[root.activeApp];
-            } else {
-                root.currentSessionSecs = 0;
+                root.currentAmount = t[root.activeApp];
             }
             root._tickSeconds++;
             if (root._tickSeconds % 30 === 0)
@@ -145,7 +174,7 @@ QtObject {
         return out;
     }
 
-    function formatTime(secs) {
+    function format(secs) {
         if (!secs || secs <= 0)
             return "0s";
 
@@ -165,11 +194,11 @@ QtObject {
         for (var k in totalsObj) if (totalsObj[k] > 0) {
             arr.push({
             "name": k,
-            "secs": totalsObj[k]
+            "amount": totalsObj[k]
         });
         }
         arr.sort(function(a, b) {
-            return b.secs - a.secs;
+            return b.amount - a.amount;
         });
         return arr;
     }
@@ -189,7 +218,7 @@ QtObject {
 
         var snap = root.history;
         var day = Object.assign({}, snap[root.todayKey] || {});
-        for (var app in root.sessionTotals) day[app] = (day[app] || 0) + root.sessionTotals[app]
+        for (var app in root.sessionTotals) day[app] = Math.max(0, (day[app] || 0) + root.sessionTotals[app])
         snap = Object.assign({}, snap);
         snap[root.todayKey] = day;
 
@@ -208,7 +237,7 @@ QtObject {
     }
 
     onActiveAppChanged: {
-        currentSessionSecs = activeApp !== "" ? (sessionTotals[activeApp] || 0) : 0;
+        currentAmount = activeApp !== "" ? (sessionTotals[activeApp] || 0) : 0;
     }
 
     Component.onDestruction: {

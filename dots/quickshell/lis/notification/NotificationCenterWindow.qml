@@ -1,70 +1,17 @@
-import QtQuick
-import Quickshell
-import Quickshell.Io
-import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.common
 
-PanelWindow {
+PanelHost {
     id: root
 
-    property bool shown: false
+    name: "notificationCenter"
+    description: "Toggles the notification center panel"
 
-    onShownChanged: if (shown) panel.showNewest()
-
-    visible: shown
-    color: "transparent"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: keyboard.mode
-    WlrLayershell.exclusiveZone: -1
-
-    anchors {
-        top: true
-        bottom: true
-        left: true
-        right: true
-    }
-
-    PanelKeyboard {
-        id: keyboard
-        open: root.shown
-        initialFocus: panel.initialFocus
-    }
-
-    Shortcut {
-        sequences: ["Escape"]
-        onActivated: root.shown = false
-    }
+    onPanelShownChanged: if (panelShown) item.showNewest()
 
     NotificationCenterPanel {
-        id: panel
         anchors.centerIn: parent
         width: 460
         height: 580
-        onCloseRequested: root.shown = false
-    }
-
-    IpcHandler {
-        target: "notificationCenter"
-
-        function toggle(): void {
-            root.shown = !root.shown
-        }
-
-        function open(): void {
-            root.shown = true
-        }
-
-        function close(): void {
-            root.shown = false
-        }
-    }
-
-    GlobalShortcut {
-        name: "notificationCenter"
-        description: "Toggles the notification center panel"
-        onPressed: {
-            root.shown = !root.shown
-        }
+        onCloseRequested: root.close()
     }
 }

@@ -16,7 +16,8 @@ Item {
 
     readonly property bool hasPlayer: player !== null
     readonly property bool playing: !!(root.player && root.player.isPlaying)
-    readonly property string artUrl: root.player ? root.player.trackArtUrl : ""
+    readonly property string playerArtUrl: root.player ? root.player.trackArtUrl : ""
+    readonly property string artUrl: ArtCache.sourceFor(root.playerArtUrl)
     readonly property real contentHeight: content.implicitHeight + content.anchors.margins * 2
 
     // Matched against desktop entry, name and D-Bus name
@@ -78,6 +79,16 @@ Item {
     transformOrigin: Item.Top
     Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+    onArtUrlChanged: if (root.artUrl === "") ArtCache.fetch(root.playerArtUrl)
+    Component.onCompleted: if (root.artUrl === "") ArtCache.fetch(root.playerArtUrl)
+
+    // A blocked host takes far longer than this to fail
+    Timer {
+        interval: 3000
+        running: cover.status === Image.Loading && ArtCache.isRemote(root.artUrl)
+        onTriggered: ArtCache.fetch(root.playerArtUrl)
+    }
 
     ArtPalette {
         id: palette
@@ -296,7 +307,14 @@ Item {
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
                             opacity: status === Image.Ready ? 1 : 0
-                            onStatusChanged: if (status === Image.Ready) palette.refresh()
+                            onStatusChanged: {
+                                if (status === Image.Ready) {
+                                    palette.refresh()
+                                    if (ArtCache.isRemote(root.artUrl)) ArtCache.viaProxy = false
+                                } else if (status === Image.Error) {
+                                    ArtCache.fetch(root.playerArtUrl)
+                                }
+                            }
 
                             Behavior on opacity { NumberAnimation { duration: 300 } }
                         }

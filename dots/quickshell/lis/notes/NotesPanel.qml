@@ -50,6 +50,19 @@ PanelFrame {
 
     NotesState {
         id: notesState
+
+        // What's still being typed wins, and saves over this when the typing pauses
+        onChangedOutside: {
+            if (!root.selected || notesState._pending)
+                return;
+
+            root._loading = true;
+            if (titleInput.text !== root.selected.title)
+                titleInput.text = root.selected.title;
+            if (noteBody.text !== root.selected.body)
+                noteBody.text = root.selected.body;
+            root._loading = false;
+        }
     }
 
     // Saves the open note, and drops it if empty

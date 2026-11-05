@@ -24,6 +24,21 @@ Rectangle {
         search.text = ""
     }
 
+    function rows(): var {
+        return SettingsIndex.rows(pager, nav.topPages.concat(nav.bottomPages))
+    }
+
+    // For a setting found outside the panel
+    function openSetting(page: int, label: string): void {
+        const row = root.rows().find(e => e.page === page && e.label === label)?.row ?? null
+        if (row) {
+            root.openResult(page, row)
+        } else {
+            pager.currentIndex = page
+            search.text = ""
+        }
+    }
+
     // Focusing a row's control lights it and brings it into view
     function openResult(page: int, row: Item): void {
         pager.currentIndex = page

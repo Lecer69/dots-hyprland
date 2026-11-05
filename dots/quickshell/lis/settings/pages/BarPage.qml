@@ -172,6 +172,13 @@ Item {
                 }
             }
             SettingRow {
+                label: "Show Night Light"
+                ToggleSwitch {
+                    checked: SettingsData.s.bar.showNightLight
+                    onToggled: v => SettingsData.s.bar.showNightLight = v
+                }
+            }
+            SettingRow {
                 label: "Show Screenshot"
                 ToggleSwitch {
                     checked: SettingsData.s.bar.showScreenshot

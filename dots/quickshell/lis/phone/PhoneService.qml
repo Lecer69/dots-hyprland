@@ -29,9 +29,26 @@ Singleton {
 
     property string transfer: ""
 
+    readonly property bool usb: SettingsData.s.phone?.usb ?? false
+    readonly property bool usbForwarding: root.status?.usb?.forwarding === true
+    readonly property bool ringing: root.phone?.ringing === true
+    // { id, name, command }; a phone only ever gets the names
+    readonly property var actions: root.status?.actions ?? []
+    property string actionError: ""
+    // A connected phone that may unlock this PC
+    readonly property bool canUnlock: root.phones.some(p => p.connected && p.unlock === "on")
+
+    // Only after the daemon checked a signature from the phone's hardware key
+    signal unlockGranted(string by)
+
+    property bool _locked: false
+    property bool _passwordRequired: true
+
     property var _callbacks: ({})
     property int _nextId: 1
     property int _attempts: 0
+
+    onUsbChanged: root._sendUsb()
 
     onEnabledChanged: {
         root._attempts = 0;
@@ -92,6 +109,46 @@ Singleton {
         });
     }
 
+    function ring(on: bool): void {
+        root.request({ cmd: "ring_phone", ring: on });
+    }
+
+    function setActions(actions: var): void {
+        root.actionError = "";
+        root.request({ cmd: "actions_set", actions: actions }, reply => {
+            if (!reply.ok)
+                root.actionError = reply.error;
+        });
+    }
+
+    function answerUnlock(fingerprint: string, accept: bool): void {
+        root.request({ cmd: "unlock_answer", fingerprint: fingerprint, accept: accept });
+    }
+
+    function disableUnlock(fingerprint: string): void {
+        root.request({ cmd: "unlock_disable", fingerprint: fingerprint });
+    }
+
+    // The daemon only offers phone unlock while this says so
+    function reportLock(locked: bool, passwordRequired: bool): void {
+        root._locked = locked;
+        root._passwordRequired = passwordRequired;
+        root._sendLock();
+    }
+
+    // Someone is at the lock screen, so the phone can offer its fingerprint prompt
+    function askToUnlock(): void {
+        root.request({ cmd: "unlock_prompt" });
+    }
+
+    function _sendLock(): void {
+        root.request({ cmd: "lock_state", locked: root._locked, password_required: root._passwordRequired });
+    }
+
+    function _sendUsb(): void {
+        root.request({ cmd: "usb_mode", enabled: root.usb });
+    }
+
     function _onLine(line: string): void {
         let message;
         try {
@@ -123,6 +180,9 @@ Singleton {
         case "file_finished":
             root.transfer = message.ok ? (message.incoming ? "Saved " : "Sent ") + message.name : "Couldn't transfer " + message.name;
             break;
+        case "unlock_granted":
+            root.unlockGranted(message.by ?? "");
+            break;
         }
     }
 
@@ -139,6 +199,8 @@ Singleton {
             if (connected) {
                 root._attempts = 0;
                 root.refresh();
+                root._sendLock();
+                root._sendUsb();
             } else {
                 root.status = null;
                 root._callbacks = {};

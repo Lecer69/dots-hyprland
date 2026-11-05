@@ -171,6 +171,20 @@ Item {
         }
     }
 
+    Text {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            top: bottomCol.bottom
+            topMargin: 10
+        }
+        visible: root.context.phoneUnlock === true && errorText.opacity === 0
+        text: "Or unlock from your phone"
+        color: root.overlay0
+        font {
+            pixelSize: 12
+        }
+    }
+
     Row {
         id: capsRow
         anchors {

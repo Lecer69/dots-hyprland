@@ -14,6 +14,7 @@ SearchPill {
     signal arrowUp()
     signal arrowDown()
     signal closeRequested()
+    signal deleteRequested()
 
     function clear()         { input.text = "" }
     function setQuery(text)  { input.text = text }
@@ -147,9 +148,14 @@ SearchPill {
 
             Keys.onEscapePressed: bar.closeRequested()
 
-            Keys.onDeletePressed: {
+            Keys.onDeletePressed: event => {
                 if (input.text === "")
                     bar.closeRequested()
+                // With no text after the cursor it's for the selected row
+                else if (bar.isClipboard && input.cursorPosition === input.length && input.selectedText === "")
+                    bar.deleteRequested()
+                else
+                    event.accepted = false
             }
         }
 

@@ -8,12 +8,57 @@ import Quickshell.Services.Pipewire
 import QtQuick
 import qs.tools
 import qs.settings.data
+import qs.phone
 
 QtObject {
     id: root
 
     property bool isLocked: false
     signal lockedChanged()
+
+    onIsLockedChanged: root._reportLock()
+
+    // The first unlock after booting takes the password, which also opens the keyring.
+    // Kept across hot reloads, like the boot lock.
+    property PersistentProperties _kept: PersistentProperties {
+        reloadableId: "lockPassword"
+
+        property bool passwordUsed: false
+
+        onLoaded: root._reportLock()
+    }
+
+    function _reportLock() {
+        PhoneService.reportLock(root.isLocked, !root._kept.passwordUsed)
+    }
+
+    // Every lock comes through the same shortcut. Having been away means it's the idle timer, which
+    // shouldn't wake the phone in the night.
+    property IdleMonitor _idle: IdleMonitor {
+        timeout: 10
+        respectInhibitors: false
+    }
+
+    property real _askedPhoneAt: 0
+
+    // Not once per key
+    function _askPhone() {
+        const now = Date.now()
+        if (now - root._askedPhoneAt < 5000) return
+        root._askedPhoneAt = now
+        PhoneService.askToUnlock()
+    }
+
+    // PhoneService only says so after the daemon checked the phone's signature
+    property Connections _phoneWatcher: Connections {
+        target: PhoneService
+        function onUnlockGranted(by) {
+            if (!root.isLocked || !root._kept.passwordUsed) return
+            console.log("[lock] unlocked by", by)
+            lockCtx.clearPassword()
+            root._unlock()
+        }
+    }
 
     // Pre-blurred wallpaper cache, for an instant lock
     property WallpaperBlurCache _blurCache: WallpaperBlurCache {}
@@ -288,6 +333,7 @@ QtObject {
         root._init()
         root.isLocked = true
         root._muteAudio()
+        if (!root._idle.isIdle) root._askPhone()
 
         // Picks up runtime wallpaper changes; the known blur shows meanwhile
         if (SettingsData.s.lockScreen.enableBlur) {
@@ -318,8 +364,12 @@ QtObject {
     property LockContext _ctx: LockContext {
         id: lockCtx
         active: root.isLocked
+        phoneUnlock: root.isLocked && root._kept.passwordUsed && PhoneService.canUnlock
         onUnlocked: root._unlock()
+        onAttention: root._askPhone()
         onUnlockedWithPassword: (pw) => {
+            root._kept.passwordUsed = true
+            root._reportLock()
             if (root._keyringUnlock.running) return
             root._keyringUnlock.password = pw
             root._keyringUnlock.running = true

@@ -53,6 +53,17 @@ Singleton {
                 property string accentColor: '#822828'
                 property string colorScheme: 'expressive'
                 property bool lightMode: false
+                // Writes notification text to ~/.local/state/lis
+                property bool keepNotificationHistory: false
+            }
+
+            // wl-gammactl-rust's values; they scale what Color Settings has set
+            property JsonObject nightLight: JsonObject {
+                property bool enabled: false
+                property real brightness: 1.0
+                property real contrast: 0.9
+                property real gamma: 1.0
+                property real saturation: 0.8
             }
 
             property JsonObject bar: JsonObject {
@@ -72,6 +83,7 @@ Singleton {
                 property bool showClockOnly: false
                 property bool showColorPicker: true
                 property bool showScreenshot: true
+                property bool showNightLight: true
                 property int workspaceNumbers: 10
                 // Screen name -> its own workspace count; others use workspaceNumbers
                 property var workspaceNumbersPerMonitor: ({})
@@ -110,6 +122,7 @@ Singleton {
             // Minutes
             property JsonObject phone: JsonObject {
                 property bool enabled: false
+                property bool usb: false
             }
 
             property JsonObject devices: JsonObject {
