@@ -128,6 +128,7 @@ hl.layer_rule({ match = { namespace = "quickshell:osubackdrop" }, no_anim = true
 hl.layer_rule({ match = { namespace = "quickshell:media" }, no_anim = true})
 -- The shell's right sidebar: Hyprland slides it in, with the layersIn/Out timing
 hl.layer_rule({ match = { namespace = "quickshell:sidebar" }, animation = "slide right"})
+hl.layer_rule({ match = { namespace = "quickshell:leftsidebar" }, animation = "slide left"})
 hl.layer_rule({ match = { namespace = "quickshell:traymenu" }, no_anim = true})
 hl.layer_rule({ match = { namespace = "quickshell:launcher" }, no_anim = true})
 hl.layer_rule({ match = { namespace = "quickshell:desktop" }, no_anim = true})
